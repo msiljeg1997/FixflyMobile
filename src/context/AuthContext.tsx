@@ -1,8 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authApi from '../api/auth';
-import { registerSessionExpiredHandler } from '../api/client';
+import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
 import type { AgentLoginRequest, AgentProfile } from '../api/types';
+
+// Realtime is an enhancement, never a gate: a SignalR failure (server hub
+// method missing, hub down, flaky network) must not fail login/startup —
+// pull-to-refresh is the guide's designated fallback (§12).
+function connectRealtimeSafe(): void {
+  signalRService.connect().catch(() => {});
+}
 
 interface AuthContextValue {
   agent: AgentProfile | null;
@@ -41,14 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = await authApi.fetchCurrentAgent();
         setAgent(profile);
         setStatus('signedIn');
-        await signalRService.connect();
-      } catch {
-        // Token dead and refresh already failed (interceptor cleared it) —
-        // or the network is down. Either way, fall back to the login screen;
-        // the offline task cache (cross-cutting layer, not built yet) is what
-        // will eventually let a genuinely-offline-but-still-logged-in agent
-        // keep working without this refetch succeeding.
-        await doLogout();
+        connectRealtimeSafe();
+      } catch (error) {
+        if (isNetworkError(error)) {
+          // Offline at cold start: keep the stored session intact and show
+          // the login screen — next launch (or a later login) with network
+          // resumes normally. The offline task cache (not built yet) is what
+          // will eventually let this path stay signed in.
+          setStatus('signedOut');
+        } else {
+          // Server explicitly rejected the session — clean local logout.
+          await doLogout();
+        }
       }
     })();
   }, [doLogout]);
@@ -57,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile = await authApi.login(credentials);
     setAgent(profile);
     setStatus('signedIn');
-    await signalRService.connect();
+    connectRealtimeSafe();
   }, []);
 
   const value = useMemo<AuthContextValue>(

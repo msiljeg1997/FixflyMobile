@@ -13,11 +13,20 @@ export async function login(credentials: AgentLoginRequest): Promise<AgentProfil
 
 export async function logout(): Promise<void> {
   const refreshToken = await tokenStorage.getRefreshToken();
-  await tokenStorage.clear();
   if (refreshToken) {
-    // Best-effort — don't block logout on network.
-    apiClient.post('/api/agent/auth/revoke', { refreshToken }).catch(() => {});
+    // Revoke BEFORE clearing — the revoke endpoint is [Authorize], so it needs
+    // the access token still present in storage for the request interceptor.
+    // Best-effort with a short wait; never block logout on network.
+    try {
+      await Promise.race([
+        apiClient.post('/api/agent/auth/revoke', { refreshToken }),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ]);
+    } catch {
+      // offline / already-dead token — local logout still proceeds
+    }
   }
+  await tokenStorage.clear();
 }
 
 export async function hasStoredSession(): Promise<boolean> {

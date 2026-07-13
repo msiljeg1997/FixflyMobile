@@ -49,7 +49,9 @@ class SignalRService {
 
     try {
       await this.connection.start();
-      await this.connection.invoke('JoinMyGroups'); // new hub method — backend W7
+      // New hub method — backend W7. Non-fatal until it ships: a missing
+      // method must not tear down an otherwise healthy connection.
+      await this.connection.invoke('JoinMyGroups').catch(() => {});
     } finally {
       this.connecting = null;
     }

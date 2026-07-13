@@ -28,6 +28,11 @@ apiClient.interceptors.request.use(async (config: InternalAxiosRequestConfig) =>
 // of 401s doesn't trigger a burst of refresh calls.
 let refreshPromise: Promise<string | null> | null = null;
 
+/** True when the request never reached the server (offline, DNS, timeout). */
+export function isNetworkError(error: unknown): boolean {
+  return axios.isAxiosError(error) && !error.response;
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = await tokenStorage.getRefreshToken();
   if (!refreshToken) return null;
@@ -40,8 +45,13 @@ async function refreshAccessToken(): Promise<string | null> {
     );
     await tokenStorage.setTokens(data.accessToken, data.refreshToken);
     return data.accessToken;
-  } catch {
-    await tokenStorage.clear();
+  } catch (error) {
+    // Clear only when the server actually rejected the token — a network
+    // failure must not destroy a valid session (retry succeeds when back
+    // online).
+    if (!isNetworkError(error)) {
+      await tokenStorage.clear();
+    }
     return null;
   }
 }
@@ -74,7 +84,12 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       }
 
-      onSessionExpired?.();
+      // Fire session-expired only when the refresh token is truly gone
+      // (server rejected it) — after a mere network failure the tokens are
+      // still stored and the session survives for a later retry.
+      if (!(await tokenStorage.getRefreshToken())) {
+        onSessionExpired?.();
+      }
     }
 
     return Promise.reject(error);
