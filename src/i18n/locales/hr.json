@@ -1,0 +1,23 @@
+{
+  "common": {
+    "loading": "Učitavanje...",
+    "retry": "Pokušaj ponovo",
+    "cancel": "Odustani",
+    "save": "Spremi",
+    "logout": "Odjava"
+  },
+  "login": {
+    "title": "Fixfly Pro",
+    "subtitle": "Prijavite se za upravljanje zadacima",
+    "email": "Email",
+    "password": "Lozinka",
+    "submit": "Prijava",
+    "error": "Pogrešan email ili lozinka"
+  },
+  "tasks": {
+    "title": "Moji zadaci",
+    "tabActive": "Aktivni",
+    "tabCompleted": "Završeni",
+    "empty": "Nema zadataka"
+  }
+}

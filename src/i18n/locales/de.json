@@ -1,0 +1,23 @@
+{
+  "common": {
+    "loading": "Wird geladen...",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "logout": "Abmelden"
+  },
+  "login": {
+    "title": "Fixfly Pro",
+    "subtitle": "Anmelden, um Aufgaben zu verwalten",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "error": "Ungültige E-Mail oder Passwort"
+  },
+  "tasks": {
+    "title": "Meine Aufgaben",
+    "tabActive": "Aktiv",
+    "tabCompleted": "Abgeschlossen",
+    "empty": "Keine Aufgaben"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Fixfly Pro",
+    "subtitle": "Sign in to manage your tasks",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "error": "Invalid email or password"
+  },
+  "tasks": {
+    "title": "My tasks",
+    "tabActive": "Active",
+    "tabCompleted": "Completed",
+    "empty": "No tasks here"
+  }
+}
