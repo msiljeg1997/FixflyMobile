@@ -4,6 +4,7 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "save": "Save",
+    "back": "Back",
     "logout": "Log out"
   },
   "login": {
@@ -18,6 +19,34 @@
     "title": "My tasks",
     "tabActive": "Active",
     "tabCompleted": "Completed",
-    "empty": "No tasks here"
+    "empty": "No tasks here",
+    "loadError": "Couldn't load tasks.",
+    "urgent": "URGENT",
+    "room": "Room"
+  },
+  "status": {
+    "New": "New",
+    "ForwardedToTechnician": "Awaiting acceptance",
+    "Accepted": "In progress",
+    "Returned": "Returned",
+    "Done": "Done",
+    "Closed": "Closed"
+  },
+  "taskDetail": {
+    "description": "Description",
+    "reporterPhoto": "Reported photo",
+    "resolutionProof": "Resolution proof",
+    "accept": "Accept task",
+    "reject": "Reject",
+    "rejectReason": "Reason for rejecting",
+    "rejectPlaceholder": "Why can't you take this task?",
+    "rejectConfirm": "Reject task",
+    "resolve": "Mark as resolved",
+    "resolveComment": "What was done?",
+    "resolvePlaceholder": "Describe the fix (required)...",
+    "resolvePhotos": "Proof photos",
+    "resolveConfirm": "Confirm resolution",
+    "errorTitle": "Action failed",
+    "actionError": "Something went wrong. Please try again."
   }
 }

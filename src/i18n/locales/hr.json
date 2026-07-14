@@ -4,6 +4,7 @@
     "retry": "Pokušaj ponovo",
     "cancel": "Odustani",
     "save": "Spremi",
+    "back": "Natrag",
     "logout": "Odjava"
   },
   "login": {
@@ -18,6 +19,34 @@
     "title": "Moji zadaci",
     "tabActive": "Aktivni",
     "tabCompleted": "Završeni",
-    "empty": "Nema zadataka"
+    "empty": "Nema zadataka",
+    "loadError": "Zadaci se nisu mogli učitati.",
+    "urgent": "HITNO",
+    "room": "Soba"
+  },
+  "status": {
+    "New": "Novi",
+    "ForwardedToTechnician": "Čeka prihvat",
+    "Accepted": "U tijeku",
+    "Returned": "Vraćen",
+    "Done": "Gotovo",
+    "Closed": "Zatvoren"
+  },
+  "taskDetail": {
+    "description": "Opis",
+    "reporterPhoto": "Prijavljena fotografija",
+    "resolutionProof": "Dokaz o rješenju",
+    "accept": "Prihvati zadatak",
+    "reject": "Odbij",
+    "rejectReason": "Razlog odbijanja",
+    "rejectPlaceholder": "Zašto ne možete preuzeti ovaj zadatak?",
+    "rejectConfirm": "Odbij zadatak",
+    "resolve": "Označi kao riješeno",
+    "resolveComment": "Što je napravljeno?",
+    "resolvePlaceholder": "Opišite popravak (obavezno)...",
+    "resolvePhotos": "Fotografije dokaza",
+    "resolveConfirm": "Potvrdi rješenje",
+    "errorTitle": "Akcija nije uspjela",
+    "actionError": "Nešto je pošlo po zlu. Pokušajte ponovo."
   }
 }

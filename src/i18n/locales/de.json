@@ -4,6 +4,7 @@
     "retry": "Erneut versuchen",
     "cancel": "Abbrechen",
     "save": "Speichern",
+    "back": "Zurück",
     "logout": "Abmelden"
   },
   "login": {
@@ -18,6 +19,34 @@
     "title": "Meine Aufgaben",
     "tabActive": "Aktiv",
     "tabCompleted": "Abgeschlossen",
-    "empty": "Keine Aufgaben"
+    "empty": "Keine Aufgaben",
+    "loadError": "Aufgaben konnten nicht geladen werden.",
+    "urgent": "DRINGEND",
+    "room": "Zimmer"
+  },
+  "status": {
+    "New": "Neu",
+    "ForwardedToTechnician": "Wartet auf Annahme",
+    "Accepted": "In Bearbeitung",
+    "Returned": "Zurückgegeben",
+    "Done": "Erledigt",
+    "Closed": "Geschlossen"
+  },
+  "taskDetail": {
+    "description": "Beschreibung",
+    "reporterPhoto": "Gemeldetes Foto",
+    "resolutionProof": "Lösungsnachweis",
+    "accept": "Aufgabe annehmen",
+    "reject": "Ablehnen",
+    "rejectReason": "Ablehnungsgrund",
+    "rejectPlaceholder": "Warum können Sie diese Aufgabe nicht übernehmen?",
+    "rejectConfirm": "Aufgabe ablehnen",
+    "resolve": "Als erledigt markieren",
+    "resolveComment": "Was wurde gemacht?",
+    "resolvePlaceholder": "Beschreiben Sie die Reparatur (erforderlich)...",
+    "resolvePhotos": "Nachweisfotos",
+    "resolveConfirm": "Lösung bestätigen",
+    "errorTitle": "Aktion fehlgeschlagen",
+    "actionError": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
   }
 }
