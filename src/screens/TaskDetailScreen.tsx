@@ -19,6 +19,7 @@ import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
 import { AgentRole, TaskDetail, TicketStatus } from '../api/types';
 import type { RootStackParamList } from '../navigation/RootNavigator';
+import { categoryLabel } from '../utils/format';
 import { colors, radius, spacing } from '../theme/tokens';
 
 const MAX_PHOTOS = 5;
@@ -166,11 +167,7 @@ export function TaskDetailScreen() {
         {task.locationName || task.location}
         {task.roomNumber ? ` · ${t('tasks.room')} ${task.roomNumber}` : ''}
       </Text>
-      {task.category && (
-        <Text style={styles.category}>
-          {task.category.icon} {task.category.name}
-        </Text>
-      )}
+      {task.category && <Text style={styles.category}>{categoryLabel(task.category)}</Text>}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>

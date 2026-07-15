@@ -16,6 +16,7 @@ import { signalRService } from '../realtime/signalr';
 import * as tasksApi from '../api/tasks';
 import { TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { RootStackParamList } from '../navigation/RootNavigator';
+import { categoryLabel } from '../utils/format';
 import { colors, radius, spacing } from '../theme/tokens';
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -96,7 +97,7 @@ export function TasksScreen() {
         </View>
         {item.category && (
           <Text style={styles.cardCategory} numberOfLines={1}>
-            {item.category.icon} {item.category.name}
+            {categoryLabel(item.category)}
           </Text>
         )}
         <Text style={styles.cardTime}>{new Date(item.createdAt).toLocaleDateString()}</Text>
