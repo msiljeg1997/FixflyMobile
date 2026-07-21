@@ -35,6 +35,13 @@
   "taskDetail": {
     "description": "Description",
     "assignmentNote": "Dispatcher note",
+    "reportedAt": "Reported",
+    "assignedAt": "Assigned",
+    "assignedBy": "Assigned by",
+    "locationInfo": "Location",
+    "call": "Call",
+    "history": "Activity history",
+    "historyEmpty": "No activity recorded.",
     "reporterPhoto": "Reported photo",
     "resolutionProof": "Resolution proof",
     "accept": "Accept task",

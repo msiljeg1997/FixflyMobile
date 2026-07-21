@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,9 +18,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
-import { AgentRole, TaskDetail, TicketStatus } from '../api/types';
+import { AgentRole, TaskDetail, TaskHistoryEvent, TicketStatus } from '../api/types';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { categoryLabel } from '../utils/format';
+import { categoryLabel, formatDateTime } from '../utils/format';
 import { colors, radius, spacing } from '../theme/tokens';
 
 const MAX_PHOTOS = 5;
@@ -35,6 +36,10 @@ export function TaskDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [acting, setActing] = useState(false);
+
+  // Read-only activity timeline
+  const [history, setHistory] = useState<TaskHistoryEvent[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   // Reject form
   const [rejecting, setRejecting] = useState(false);
@@ -57,11 +62,29 @@ export function TaskDetailScreen() {
     }
   }, [ticketId]);
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      setHistory(await tasksApi.getTaskHistory(ticketId));
+    } catch {
+      setHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [ticketId]);
+
   useFocusEffect(
     useCallback(() => {
       load();
-    }, [load])
+      loadHistory();
+    }, [load, loadHistory])
   );
+
+  const callContact = () => {
+    if (task?.locationContactPhone) Linking.openURL(`tel:${task.locationContactPhone}`);
+  };
+
+  const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
   const showError = (e: unknown) => {
     const msg =
@@ -171,6 +194,46 @@ export function TaskDetailScreen() {
         {task.roomNumber ? ` · ${t('tasks.room')} ${task.roomNumber}` : ''}
       </Text>
       {task.category && <Text style={styles.category}>{categoryLabel(task.category)}</Text>}
+
+      <View style={styles.metaGrid}>
+        <View style={styles.metaItem}>
+          <Text style={styles.sectionLabel}>{t('taskDetail.reportedAt')}</Text>
+          <Text style={styles.metaValue}>{formatDateTime(task.createdAt)}</Text>
+        </View>
+        {(task.forwardedAt || task.acceptedAt) && (
+          <View style={styles.metaItem}>
+            <Text style={styles.sectionLabel}>{t('taskDetail.assignedAt')}</Text>
+            <Text style={styles.metaValue}>{formatDateTime(task.forwardedAt ?? task.acceptedAt)}</Text>
+          </View>
+        )}
+        {task.assignedByName && (
+          <View style={styles.metaItem}>
+            <Text style={styles.sectionLabel}>{t('taskDetail.assignedBy')}</Text>
+            <Text style={styles.metaValue}>{task.assignedByName}</Text>
+          </View>
+        )}
+      </View>
+
+      {(task.locationAddress || task.locationContactName || task.locationContactPhone) && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>{t('taskDetail.locationInfo')}</Text>
+          {task.locationAddress && <Text style={styles.description}>{task.locationAddress}</Text>}
+          {(task.locationContactName || task.locationContactPhone) && (
+            <TouchableOpacity
+              style={styles.contactRow}
+              onPress={callContact}
+              disabled={!task.locationContactPhone}
+            >
+              <Text style={styles.contactText}>
+                {task.locationContactName}
+                {task.locationContactName && task.locationContactPhone ? ' · ' : ''}
+                {task.locationContactPhone}
+              </Text>
+              {task.locationContactPhone && <Text style={styles.callLink}>{t('taskDetail.call')}</Text>}
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {task.assignmentNote && (
         <View style={[styles.section, styles.noteSection]}>
@@ -304,6 +367,27 @@ export function TaskDetailScreen() {
           </View>
         </View>
       )}
+
+      {/* Read-only activity timeline */}
+      <View style={[styles.section, styles.historySection]}>
+        <Text style={styles.sectionLabel}>{t('taskDetail.history')}</Text>
+        {historyLoading ? (
+          <ActivityIndicator color={colors.muted} style={{ marginTop: spacing.sm }} />
+        ) : history.length === 0 ? (
+          <Text style={styles.muted}>{t('taskDetail.historyEmpty')}</Text>
+        ) : (
+          history.map((h) => (
+            <View key={h.id} style={styles.historyItem}>
+              <Text style={styles.historyStatus}>{statusLabel(h.newStatus)}</Text>
+              <Text style={styles.historyMeta}>
+                {formatDateTime(h.changedAt)} · {h.changedByName}
+                {h.targetAgentName ? ` → ${h.targetAgentName}` : ''}
+              </Text>
+              {h.notes && <Text style={styles.historyNote}>{h.notes}</Text>}
+            </View>
+          ))
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -330,6 +414,38 @@ const styles = StyleSheet.create({
   ticketId: { fontSize: 13, color: colors.muted, marginBottom: 2 },
   location: { fontSize: 20, fontWeight: '700', color: colors.forest },
   category: { fontSize: 14, color: colors.muted, marginTop: 2 },
+
+  metaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  metaItem: { minWidth: '40%' },
+  metaValue: { fontSize: 14, color: colors.text, fontWeight: '600' },
+
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  contactText: { fontSize: 15, color: colors.text, flex: 1 },
+  callLink: { fontSize: 14, fontWeight: '700', color: colors.green, marginLeft: spacing.sm },
+
+  historySection: { marginBottom: spacing.xl },
+  historyItem: {
+    borderLeftWidth: 2,
+    borderLeftColor: colors.border,
+    paddingLeft: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  historyStatus: { fontSize: 14, fontWeight: '700', color: colors.forest },
+  historyMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  historyNote: { fontSize: 13, color: colors.text, marginTop: 4, fontStyle: 'italic' },
 
   section: { marginTop: spacing.lg },
   proofSection: {

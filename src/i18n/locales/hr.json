@@ -35,6 +35,13 @@
   "taskDetail": {
     "description": "Opis",
     "assignmentNote": "Poruka dispečera",
+    "reportedAt": "Prijavljeno",
+    "assignedAt": "Dodijeljeno",
+    "assignedBy": "Dodijelio",
+    "locationInfo": "Lokacija",
+    "call": "Nazovi",
+    "history": "Povijest aktivnosti",
+    "historyEmpty": "Nema zabilježenih aktivnosti.",
     "reporterPhoto": "Prijavljena fotografija",
     "resolutionProof": "Dokaz o rješenju",
     "accept": "Prihvati zadatak",

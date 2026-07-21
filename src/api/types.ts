@@ -129,6 +129,22 @@ export interface TaskDetail extends TaskListItem {
   resolutionComment: string | null; // W4
   resolutionPhotos: ResolutionPhoto[]; // W4
   assignmentNote: string | null; // dispatcher/admin's comment when forwarding or accepting
+  assignedByName: string | null; // who forwarded/accepted this ticket last
+  locationAddress: string | null;
+  locationContactName: string | null;
+  locationContactPhone: string | null;
+}
+
+// GET /api/agent/tasks/{id}/history — read-only activity timeline (mirrors
+// the dashboard's ticket history view)
+export interface TaskHistoryEvent {
+  id: number;
+  oldStatus: TicketStatus;
+  newStatus: TicketStatus;
+  changedAt: string;
+  changedByName: string;
+  targetAgentName: string | null;
+  notes: string | null;
 }
 
 export interface ResolutionPhoto {

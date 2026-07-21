@@ -3,6 +3,7 @@ import type {
   AgentProfile,
   PutAvailabilityRequest,
   TaskDetail,
+  TaskHistoryEvent,
   TaskListResponse,
   TaskTab,
   TechnicianOption,
@@ -20,6 +21,11 @@ export async function getTasks(tab: TaskTab, page = 1, pageSize = 20): Promise<T
 
 export async function getTask(ticketId: string): Promise<TaskDetail> {
   const { data } = await apiClient.get<TaskDetail>(`/api/agent/tasks/${encodeURIComponent(ticketId)}`);
+  return data;
+}
+
+export async function getTaskHistory(ticketId: string): Promise<TaskHistoryEvent[]> {
+  const { data } = await apiClient.get<TaskHistoryEvent[]>(`/api/agent/tasks/${encodeURIComponent(ticketId)}/history`);
   return data;
 }
 

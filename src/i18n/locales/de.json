@@ -35,6 +35,13 @@
   "taskDetail": {
     "description": "Beschreibung",
     "assignmentNote": "Notiz des Disponenten",
+    "reportedAt": "Gemeldet",
+    "assignedAt": "Zugewiesen",
+    "assignedBy": "Zugewiesen von",
+    "locationInfo": "Standort",
+    "call": "Anrufen",
+    "history": "Aktivitätsverlauf",
+    "historyEmpty": "Keine Aktivität aufgezeichnet.",
     "reporterPhoto": "Gemeldetes Foto",
     "resolutionProof": "Lösungsnachweis",
     "accept": "Aufgabe annehmen",
