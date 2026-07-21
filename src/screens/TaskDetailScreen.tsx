@@ -368,7 +368,9 @@ export function TaskDetailScreen() {
         </View>
       )}
 
-      {/* Read-only activity timeline */}
+      {/* Read-only activity timeline — its own scrollable bubble, capped to
+          ~5 visible entries so a long history doesn't push the actions off
+          the bottom of the outer screen scroll. */}
       <View style={[styles.section, styles.historySection]}>
         <Text style={styles.sectionLabel}>{t('taskDetail.history')}</Text>
         {historyLoading ? (
@@ -376,16 +378,24 @@ export function TaskDetailScreen() {
         ) : history.length === 0 ? (
           <Text style={styles.muted}>{t('taskDetail.historyEmpty')}</Text>
         ) : (
-          history.map((h) => (
-            <View key={h.id} style={styles.historyItem}>
-              <Text style={styles.historyStatus}>{statusLabel(h.newStatus)}</Text>
-              <Text style={styles.historyMeta}>
-                {formatDateTime(h.changedAt)} · {h.changedByName}
-                {h.targetAgentName ? ` → ${h.targetAgentName}` : ''}
-              </Text>
-              {h.notes && <Text style={styles.historyNote}>{h.notes}</Text>}
-            </View>
-          ))
+          <View style={styles.historyBubble}>
+            <ScrollView
+              style={styles.historyScroll}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={history.length > 5}
+            >
+              {history.map((h, i) => (
+                <View key={h.id} style={[styles.historyItem, i === history.length - 1 && styles.historyItemLast]}>
+                  <Text style={styles.historyStatus}>{statusLabel(h.newStatus)}</Text>
+                  <Text style={styles.historyMeta}>
+                    {formatDateTime(h.changedAt)} · {h.changedByName}
+                    {h.targetAgentName ? ` → ${h.targetAgentName}` : ''}
+                  </Text>
+                  {h.notes && <Text style={styles.historyNote}>{h.notes}</Text>}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
         )}
       </View>
     </ScrollView>
@@ -437,12 +447,22 @@ const styles = StyleSheet.create({
   callLink: { fontSize: 14, fontWeight: '700', color: colors.green, marginLeft: spacing.sm },
 
   historySection: { marginBottom: spacing.xl },
+  historyBubble: {
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    maxHeight: 340, // ~5 entries; more scrolls inside the bubble
+    overflow: 'hidden',
+  },
+  historyScroll: { padding: spacing.md },
   historyItem: {
     borderLeftWidth: 2,
     borderLeftColor: colors.border,
     paddingLeft: spacing.md,
     paddingBottom: spacing.md,
   },
+  historyItemLast: { paddingBottom: 0 },
   historyStatus: { fontSize: 14, fontWeight: '700', color: colors.forest },
   historyMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
   historyNote: { fontSize: 13, color: colors.text, marginTop: 4, fontStyle: 'italic' },
