@@ -82,7 +82,10 @@ export function TaskDetailScreen() {
   };
 
   const onReject = async () => {
-    if (!rejectReason.trim()) return;
+    if (!rejectReason.trim()) {
+      Alert.alert(t('taskDetail.rejectReasonRequiredTitle'), t('taskDetail.rejectReasonRequiredBody'));
+      return;
+    }
     setActing(true);
     try {
       await tasksApi.rejectTask(ticketId, rejectReason.trim());
@@ -241,7 +244,7 @@ export function TaskDetailScreen() {
             <TouchableOpacity
               style={[styles.dangerButton, { flex: 1 }]}
               onPress={onReject}
-              disabled={acting || !rejectReason.trim()}
+              disabled={acting}
             >
               {acting ? <ActivityIndicator color={colors.white} /> : (
                 <Text style={styles.dangerButtonText}>{t('taskDetail.rejectConfirm')}</Text>

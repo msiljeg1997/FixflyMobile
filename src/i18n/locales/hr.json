@@ -42,6 +42,8 @@
     "rejectReason": "Razlog odbijanja",
     "rejectPlaceholder": "Zašto ne možete preuzeti ovaj zadatak?",
     "rejectConfirm": "Odbij zadatak",
+    "rejectReasonRequiredTitle": "Obrazloženje je obavezno",
+    "rejectReasonRequiredBody": "Morate unijeti razlog prije nego što odbijete zadatak.",
     "resolve": "Označi kao riješeno",
     "resolveComment": "Što je napravljeno?",
     "resolvePlaceholder": "Opišite popravak (obavezno)...",

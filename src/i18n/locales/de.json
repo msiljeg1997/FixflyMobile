@@ -42,6 +42,8 @@
     "rejectReason": "Ablehnungsgrund",
     "rejectPlaceholder": "Warum können Sie diese Aufgabe nicht übernehmen?",
     "rejectConfirm": "Aufgabe ablehnen",
+    "rejectReasonRequiredTitle": "Begründung erforderlich",
+    "rejectReasonRequiredBody": "Sie müssen einen Grund angeben, bevor Sie die Aufgabe ablehnen.",
     "resolve": "Als erledigt markieren",
     "resolveComment": "Was wurde gemacht?",
     "resolvePlaceholder": "Beschreiben Sie die Reparatur (erforderlich)...",

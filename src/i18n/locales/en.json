@@ -42,6 +42,8 @@
     "rejectReason": "Reason for rejecting",
     "rejectPlaceholder": "Why can't you take this task?",
     "rejectConfirm": "Reject task",
+    "rejectReasonRequiredTitle": "Reason required",
+    "rejectReasonRequiredBody": "You must enter a reason before rejecting the task.",
     "resolve": "Mark as resolved",
     "resolveComment": "What was done?",
     "resolvePlaceholder": "Describe the fix (required)...",
