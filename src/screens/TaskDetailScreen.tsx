@@ -169,6 +169,13 @@ export function TaskDetailScreen() {
       </Text>
       {task.category && <Text style={styles.category}>{categoryLabel(task.category)}</Text>}
 
+      {task.assignmentNote && (
+        <View style={[styles.section, styles.noteSection]}>
+          <Text style={styles.sectionLabel}>{t('taskDetail.assignmentNote')}</Text>
+          <Text style={styles.description}>{task.assignmentNote}</Text>
+        </View>
+      )}
+
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>
         <Text style={styles.description}>{task.description}</Text>
@@ -324,6 +331,11 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.lg },
   proofSection: {
     backgroundColor: '#eafaf1',
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  noteSection: {
+    backgroundColor: '#fff7e6',
     borderRadius: radius.md,
     padding: spacing.md,
   },

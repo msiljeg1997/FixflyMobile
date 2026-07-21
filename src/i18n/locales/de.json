@@ -34,6 +34,7 @@
   },
   "taskDetail": {
     "description": "Beschreibung",
+    "assignmentNote": "Notiz des Disponenten",
     "reporterPhoto": "Gemeldetes Foto",
     "resolutionProof": "Lösungsnachweis",
     "accept": "Aufgabe annehmen",

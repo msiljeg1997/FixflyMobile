@@ -34,6 +34,7 @@
   },
   "taskDetail": {
     "description": "Opis",
+    "assignmentNote": "Poruka dispečera",
     "reporterPhoto": "Prijavljena fotografija",
     "resolutionProof": "Dokaz o rješenju",
     "accept": "Prihvati zadatak",

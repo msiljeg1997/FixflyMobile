@@ -34,6 +34,7 @@
   },
   "taskDetail": {
     "description": "Description",
+    "assignmentNote": "Dispatcher note",
     "reporterPhoto": "Reported photo",
     "resolutionProof": "Resolution proof",
     "accept": "Accept task",

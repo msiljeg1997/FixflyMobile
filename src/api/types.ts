@@ -128,6 +128,7 @@ export interface TaskDetail extends TaskListItem {
   role: 'guest' | 'worker';
   resolutionComment: string | null; // W4
   resolutionPhotos: ResolutionPhoto[]; // W4
+  assignmentNote: string | null; // dispatcher/admin's comment when forwarding or accepting
 }
 
 export interface ResolutionPhoto {
