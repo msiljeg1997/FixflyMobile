@@ -58,5 +58,29 @@
     "resolveConfirm": "Potvrdi rješenje",
     "errorTitle": "Akcija nije uspjela",
     "actionError": "Nešto je pošlo po zlu. Pokušajte ponovo."
+  },
+  "tabs": {
+    "tasks": "Zadaci",
+    "chat": "Chat",
+    "profile": "Profil"
+  },
+  "chat": {
+    "comingSoonTitle": "Chat uskoro stiže",
+    "comingSoonBody": "Razgovor po zadatku bit će dostupan u sljedećoj nadogradnji aplikacije."
+  },
+  "role": {
+    "technician": "Tehničar",
+    "dispatcher": "Dispečer"
+  },
+  "profile": {
+    "resolvedToday": "Riješeno danas",
+    "avgResolution": "Prosj. rješavanje",
+    "successRate": "Uspješnost ovaj mj.",
+    "activeTasks": "Aktivni zadaci",
+    "settings": "Postavke",
+    "pushNotifications": "Push notifikacije",
+    "language": "Jezik",
+    "logoutConfirmTitle": "Odjava",
+    "logoutConfirmBody": "Jeste li sigurni da se želite odjaviti?"
   }
 }

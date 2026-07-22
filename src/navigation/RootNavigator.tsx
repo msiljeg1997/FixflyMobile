@@ -4,16 +4,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
-import { TasksScreen } from '../screens/TasksScreen';
-import { TaskDetailScreen } from '../screens/TaskDetailScreen';
+import { MainTabs } from './MainTabs';
 import { colors } from '../theme/tokens';
 
-// Remaining screens (chat, profile/settings) are added as this stack grows —
-// see guide §15 for the full 5-screen list.
 export type RootStackParamList = {
   Login: undefined;
-  Tasks: undefined;
-  TaskDetail: { ticketId: string };
+  Main: undefined; // MainTabs — Tasks/Chat/Profile, always-visible bottom bar
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,10 +29,7 @@ export function RootNavigator() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {status === 'signedIn' ? (
-          <>
-            <Stack.Screen name="Tasks" component={TasksScreen} />
-            <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
-          </>
+          <Stack.Screen name="Main" component={MainTabs} />
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}

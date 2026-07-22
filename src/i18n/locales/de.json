@@ -58,5 +58,29 @@
     "resolveConfirm": "Lösung bestätigen",
     "errorTitle": "Aktion fehlgeschlagen",
     "actionError": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+  },
+  "tabs": {
+    "tasks": "Aufgaben",
+    "chat": "Chat",
+    "profile": "Profil"
+  },
+  "chat": {
+    "comingSoonTitle": "Chat kommt bald",
+    "comingSoonBody": "Gespräche pro Aufgabe werden in einem zukünftigen App-Update verfügbar sein."
+  },
+  "role": {
+    "technician": "Techniker",
+    "dispatcher": "Disponent"
+  },
+  "profile": {
+    "resolvedToday": "Heute gelöst",
+    "avgResolution": "Ø Bearbeitungszeit",
+    "successRate": "Erfolgsquote diesen Mon.",
+    "activeTasks": "Aktive Aufgaben",
+    "settings": "Einstellungen",
+    "pushNotifications": "Push-Benachrichtigungen",
+    "language": "Sprache",
+    "logoutConfirmTitle": "Abmelden",
+    "logoutConfirmBody": "Möchten Sie sich wirklich abmelden?"
   }
 }

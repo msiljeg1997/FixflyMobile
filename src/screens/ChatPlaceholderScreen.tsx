@@ -1,0 +1,26 @@
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { colors, spacing } from '../theme/tokens';
+
+// Backend chat (W8 — per-ticket thread, read receipts, realtime + push) is
+// already live; this placeholder just reserves the tab until Screen 4 (the
+// actual conversation UI) is built.
+export function ChatPlaceholderScreen() {
+  const { t } = useTranslation();
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.glyph}>💬</Text>
+      <Text style={styles.title}>{t('chat.comingSoonTitle')}</Text>
+      <Text style={styles.subtitle}>{t('chat.comingSoonBody')}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl, backgroundColor: colors.surface },
+  glyph: { fontSize: 48, marginBottom: spacing.md },
+  title: { fontSize: 18, fontWeight: '700', color: colors.forest, marginBottom: spacing.xs },
+  subtitle: { fontSize: 14, color: colors.muted, textAlign: 'center' },
+});

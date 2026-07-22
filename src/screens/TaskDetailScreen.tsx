@@ -19,7 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
 import { AgentRole, TaskDetail, TaskHistoryEvent, TicketStatus } from '../api/types';
-import type { RootStackParamList } from '../navigation/RootNavigator';
+import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { categoryLabel, formatDateTime } from '../utils/format';
 import { colors, radius, spacing } from '../theme/tokens';
 
@@ -28,8 +28,8 @@ const MAX_PHOTOS = 5;
 export function TaskDetailScreen() {
   const { t } = useTranslation();
   const { agent } = useAuth();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const route = useRoute<RouteProp<RootStackParamList, 'TaskDetail'>>();
+  const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
+  const route = useRoute<RouteProp<TasksStackParamList, 'TaskDetail'>>();
   const { ticketId } = route.params;
 
   const [task, setTask] = useState<TaskDetail | null>(null);

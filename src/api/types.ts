@@ -211,6 +211,15 @@ export interface PushDataPayload {
   description?: string; // short preview
 }
 
+// ── Profile stats (Screen 5) — GET /api/agent/me/stats ──────────────────────
+
+export interface AgentStats {
+  resolvedToday: number;
+  avgResolutionMinutes: number;
+  successRatePercent: number;
+  activeTasks: number;
+}
+
 // ── §13 — Chat (W8) ──────────────────────────────────────────────────────────
 
 export interface ChatMessage {

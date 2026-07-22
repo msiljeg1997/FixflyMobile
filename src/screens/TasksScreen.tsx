@@ -15,7 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { signalRService } from '../realtime/signalr';
 import * as tasksApi from '../api/tasks';
 import { TaskListItem, TaskTab, TicketStatus } from '../api/types';
-import type { RootStackParamList } from '../navigation/RootNavigator';
+import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { categoryLabel } from '../utils/format';
 import { colors, radius, spacing } from '../theme/tokens';
 
@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
 export function TasksScreen() {
   const { t } = useTranslation();
   const { agent, logout } = useAuth();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
 
   const [tab, setTab] = useState<TaskTab>('active');
   const [items, setItems] = useState<TaskListItem[]>([]);

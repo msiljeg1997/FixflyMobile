@@ -58,5 +58,29 @@
     "resolveConfirm": "Confirm resolution",
     "errorTitle": "Action failed",
     "actionError": "Something went wrong. Please try again."
+  },
+  "tabs": {
+    "tasks": "Tasks",
+    "chat": "Chat",
+    "profile": "Profile"
+  },
+  "chat": {
+    "comingSoonTitle": "Chat is coming soon",
+    "comingSoonBody": "Per-task conversations will be available in a future app update."
+  },
+  "role": {
+    "technician": "Technician",
+    "dispatcher": "Dispatcher"
+  },
+  "profile": {
+    "resolvedToday": "Resolved today",
+    "avgResolution": "Avg. resolution",
+    "successRate": "Success rate this mo.",
+    "activeTasks": "Active tasks",
+    "settings": "Settings",
+    "pushNotifications": "Push notifications",
+    "language": "Language",
+    "logoutConfirmTitle": "Log out",
+    "logoutConfirmBody": "Are you sure you want to log out?"
   }
 }
