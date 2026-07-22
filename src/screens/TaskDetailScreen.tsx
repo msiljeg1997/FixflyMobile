@@ -20,9 +20,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
-import { AgentRole, TaskDetail, TaskHistoryEvent, TicketStatus } from '../api/types';
+import { AgentAvailability, AgentRole, TaskDetail, TaskHistoryEvent, TechnicianOption, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
-import { categoryLabel, formatDateTime } from '../utils/format';
+import { categoryLabel, formatDateTime, getInitials } from '../utils/format';
 import { ImageViewerModal } from '../components/ImageViewerModal';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -35,6 +35,12 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
   [TicketStatus.Returned]: colors.statusReturned,
   [TicketStatus.Done]: colors.statusDone,
   [TicketStatus.Closed]: colors.statusClosed,
+};
+
+const AVAILABILITY_COLOR: Record<AgentAvailability, string> = {
+  [AgentAvailability.Available]: colors.green,
+  [AgentAvailability.OnBreak]: colors.warning,
+  [AgentAvailability.DayOff]: colors.muted,
 };
 
 function InfoRow({
@@ -88,6 +94,11 @@ export function TaskDetailScreen() {
   const [resolving, setResolving] = useState(false);
   const [comment, setComment] = useState('');
   const [photos, setPhotos] = useState<ResolveImage[]>([]);
+
+  // Forward sheet (Dispatcher/Hausmajstor only) — hand the task to a technician
+  const [forwarding, setForwarding] = useState(false);
+  const [technicians, setTechnicians] = useState<TechnicianOption[]>([]);
+  const [techniciansLoading, setTechniciansLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -191,6 +202,30 @@ export function TaskDetailScreen() {
     }
   };
 
+  const openForward = async () => {
+    setForwarding(true);
+    setTechniciansLoading(true);
+    try {
+      setTechnicians(await tasksApi.getTechnicians());
+    } catch {
+      setTechnicians([]);
+    } finally {
+      setTechniciansLoading(false);
+    }
+  };
+
+  const onForward = async (technicianId: number) => {
+    setActing(true);
+    try {
+      setTask(await tasksApi.forwardTask(ticketId, technicianId));
+      setForwarding(false);
+    } catch (e) {
+      showError(e);
+    } finally {
+      setActing(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -210,15 +245,40 @@ export function TaskDetailScreen() {
     );
   }
 
+  const isDispatcher = agent?.role === AgentRole.Hausmajstor;
   const isMineToAccept =
     task.status === TicketStatus.ForwardedToTechnician ||
-    (agent?.role === AgentRole.Hausmajstor &&
-      (task.status === TicketStatus.New || task.status === TicketStatus.Returned));
+    (isDispatcher && (task.status === TicketStatus.New || task.status === TicketStatus.Returned));
   const canResolve = task.status === TicketStatus.Accepted;
   const canReject = task.status === TicketStatus.ForwardedToTechnician && agent?.role === AgentRole.Technician;
+  const canForward =
+    isDispatcher &&
+    task.status !== TicketStatus.ForwardedToTechnician &&
+    task.status !== TicketStatus.Done &&
+    task.status !== TicketStatus.Closed;
   const isDone = task.status === TicketStatus.Done || task.status === TicketStatus.Closed;
-  const hasFooter = isMineToAccept || canResolve || canReject;
   const statusColor = STATUS_COLORS[task.status];
+
+  // A dispatcher's primary job is routing work, not doing it — Forward leads
+  // when a technician hasn't been picked yet; once they've personally
+  // accepted, Resolve becomes the lead action and Forward is still offered
+  // as a secondary escape hatch. Technicians keep the original Accept/Reject.
+  type Action = { key: string; label: string; onPress: () => void; variant: 'primary' | 'secondary' | 'danger' };
+  const actions: Action[] = [];
+  if (isDispatcher) {
+    if (canResolve) {
+      actions.push({ key: 'resolve', label: t('taskDetail.resolve'), onPress: () => setResolving(true), variant: 'primary' });
+      if (canForward) actions.push({ key: 'forward', label: t('taskDetail.forward'), onPress: openForward, variant: 'secondary' });
+    } else if (isMineToAccept) {
+      actions.push({ key: 'forward', label: t('taskDetail.forward'), onPress: openForward, variant: 'primary' });
+      actions.push({ key: 'accept', label: t('taskDetail.accept'), onPress: onAccept, variant: 'secondary' });
+    }
+  } else {
+    if (isMineToAccept) actions.push({ key: 'accept', label: t('taskDetail.accept'), onPress: onAccept, variant: 'primary' });
+    if (canResolve) actions.push({ key: 'resolve', label: t('taskDetail.resolve'), onPress: () => setResolving(true), variant: 'primary' });
+    if (canReject) actions.push({ key: 'reject', label: t('taskDetail.reject'), onPress: () => setRejecting(true), variant: 'danger' });
+  }
+  const hasFooter = actions.length > 0;
 
   const hasMeta = task.forwardedAt || task.acceptedAt || task.assignedByName;
   const hasLocationInfo = task.locationAddress || task.locationContactName || task.locationContactPhone;
@@ -359,21 +419,32 @@ export function TaskDetailScreen() {
           being buried at the bottom of a long page. */}
       {hasFooter && (
         <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.sm }]}>
-          {isMineToAccept && (
-            <TouchableOpacity style={styles.primaryButton} onPress={onAccept} disabled={acting}>
-              {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryButtonText}>{t('taskDetail.accept')}</Text>}
+          {actions.map((a) => (
+            <TouchableOpacity
+              key={a.key}
+              style={
+                a.variant === 'primary' ? styles.primaryButton : a.variant === 'danger' ? styles.dangerButtonOutline : styles.secondaryButtonOutline
+              }
+              onPress={a.onPress}
+              disabled={acting}
+            >
+              {acting && a.variant === 'primary' ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text
+                  style={
+                    a.variant === 'primary'
+                      ? styles.primaryButtonText
+                      : a.variant === 'danger'
+                        ? styles.dangerButtonOutlineText
+                        : styles.secondaryButtonOutlineText
+                  }
+                >
+                  {a.label}
+                </Text>
+              )}
             </TouchableOpacity>
-          )}
-          {canResolve && (
-            <TouchableOpacity style={styles.primaryButton} onPress={() => setResolving(true)} disabled={acting}>
-              <Text style={styles.primaryButtonText}>{t('taskDetail.resolve')}</Text>
-            </TouchableOpacity>
-          )}
-          {canReject && (
-            <TouchableOpacity style={styles.dangerButtonOutline} onPress={() => setRejecting(true)} disabled={acting}>
-              <Text style={styles.dangerButtonOutlineText}>{t('taskDetail.reject')}</Text>
-            </TouchableOpacity>
-          )}
+          ))}
         </View>
       )}
 
@@ -461,6 +532,65 @@ export function TaskDetailScreen() {
               {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryButtonText}>{t('taskDetail.resolveConfirm')}</Text>}
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Forward — dispatcher picks a technician; tapping a row forwards
+          immediately (a picker, not a form that needs a separate confirm) */}
+      <Modal visible={forwarding} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setForwarding(false)}>
+        <View style={[styles.sheet, { paddingTop: insets.top + spacing.md }]}>
+          <View style={styles.sheetHeader}>
+            <TouchableOpacity onPress={() => setForwarding(false)} disabled={acting}>
+              <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.sheetTitle}>{t('taskDetail.forward')}</Text>
+            <View style={styles.sheetHeaderSpacer} />
+          </View>
+
+          <ScrollView style={styles.sheetBody}>
+            {techniciansLoading ? (
+              <ActivityIndicator color={colors.green} style={{ marginTop: spacing.lg }} />
+            ) : technicians.length === 0 ? (
+              <Text style={styles.muted}>{t('taskDetail.noTechnicians')}</Text>
+            ) : (
+              technicians.map((tech) => {
+                const available = tech.availability === AgentAvailability.Available;
+                const availabilityLabel =
+                  tech.availability === AgentAvailability.Available
+                    ? t('technician.available')
+                    : tech.availability === AgentAvailability.OnBreak
+                      ? t('technician.onBreak')
+                      : t('technician.dayOff');
+                return (
+                  <TouchableOpacity
+                    key={tech.id}
+                    style={[styles.techRow, !available && styles.techRowDisabled]}
+                    onPress={() => onForward(tech.id)}
+                    disabled={!available || acting}
+                    activeOpacity={0.6}
+                  >
+                    <View style={styles.techAvatar}>
+                      <Text style={styles.techAvatarText}>{getInitials(tech.name)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.techName}>{tech.name}</Text>
+                      {tech.technicianSpecializations && (
+                        <Text style={styles.techSpec} numberOfLines={1}>
+                          {tech.technicianSpecializations.split('|').join(', ')}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={styles.availability}>
+                      <View style={[styles.statusDot, { backgroundColor: AVAILABILITY_COLOR[tech.availability] }]} />
+                      <Text style={[styles.availabilityText, { color: AVAILABILITY_COLOR[tech.availability] }]}>
+                        {availabilityLabel}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </ScrollView>
         </View>
       </Modal>
 
@@ -608,6 +738,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dangerButtonOutlineText: { color: colors.error, fontSize: 15, fontWeight: '700' },
+  secondaryButtonOutline: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm + 4,
+    alignItems: 'center',
+  },
+  secondaryButtonOutlineText: { color: colors.text, fontSize: 15, fontWeight: '700' },
+
+  techRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  techRowDisabled: { opacity: 0.45 },
+  techAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: tint(colors.statusAccepted, '2A'),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  techAvatarText: { fontSize: 14, fontWeight: '700', color: colors.forest },
+  techName: { fontSize: 15, fontWeight: '600', color: colors.forest },
+  techSpec: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  availability: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  availabilityText: { fontSize: 11, fontWeight: '700' },
 
   sheet: { flex: 1, backgroundColor: colors.surface },
   sheetHeader: {

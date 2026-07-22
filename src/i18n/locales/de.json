@@ -52,6 +52,8 @@
     "rejectConfirm": "Aufgabe ablehnen",
     "rejectReasonRequiredTitle": "Begründung erforderlich",
     "rejectReasonRequiredBody": "Sie müssen einen Grund angeben, bevor Sie die Aufgabe ablehnen.",
+    "forward": "An Techniker weiterleiten",
+    "noTechnicians": "Keine Techniker verfügbar",
     "resolve": "Als erledigt markieren",
     "resolveComment": "Was wurde gemacht?",
     "resolvePlaceholder": "Beschreiben Sie die Reparatur (erforderlich)...",
@@ -72,6 +74,11 @@
   "role": {
     "technician": "Techniker",
     "dispatcher": "Disponent"
+  },
+  "technician": {
+    "available": "Verfügbar",
+    "onBreak": "In Pause",
+    "dayOff": "Freier Tag"
   },
   "profile": {
     "resolvedToday": "Heute gelöst",

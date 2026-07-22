@@ -52,6 +52,8 @@
     "rejectConfirm": "Reject task",
     "rejectReasonRequiredTitle": "Reason required",
     "rejectReasonRequiredBody": "You must enter a reason before rejecting the task.",
+    "forward": "Forward to technician",
+    "noTechnicians": "No technicians available",
     "resolve": "Mark as resolved",
     "resolveComment": "What was done?",
     "resolvePlaceholder": "Describe the fix (required)...",
@@ -72,6 +74,11 @@
   "role": {
     "technician": "Technician",
     "dispatcher": "Dispatcher"
+  },
+  "technician": {
+    "available": "Available",
+    "onBreak": "On break",
+    "dayOff": "Day off"
   },
   "profile": {
     "resolvedToday": "Resolved today",

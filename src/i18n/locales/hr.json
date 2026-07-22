@@ -52,6 +52,8 @@
     "rejectConfirm": "Odbij zadatak",
     "rejectReasonRequiredTitle": "Obrazloženje je obavezno",
     "rejectReasonRequiredBody": "Morate unijeti razlog prije nego što odbijete zadatak.",
+    "forward": "Proslijedi tehničaru",
+    "noTechnicians": "Nema dostupnih tehničara",
     "resolve": "Označi kao riješeno",
     "resolveComment": "Što je napravljeno?",
     "resolvePlaceholder": "Opišite popravak (obavezno)...",
@@ -72,6 +74,11 @@
   "role": {
     "technician": "Tehničar",
     "dispatcher": "Dispečer"
+  },
+  "technician": {
+    "available": "Dostupan",
+    "onBreak": "Na pauzi",
+    "dayOff": "Slobodan dan"
   },
   "profile": {
     "resolvedToday": "Riješeno danas",

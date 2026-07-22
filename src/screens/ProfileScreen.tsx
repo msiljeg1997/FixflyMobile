@@ -8,19 +8,11 @@ import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
 import { AgentRole, AgentStats } from '../api/types';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
+import { getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = { hr: 'Hrvatski', en: 'English', de: 'Deutsch' };
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('');
-}
 
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
