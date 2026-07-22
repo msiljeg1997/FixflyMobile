@@ -11,12 +11,13 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { signalRService } from '../realtime/signalr';
 import * as tasksApi from '../api/tasks';
 import { TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
-import { categoryLabel } from '../utils/format';
+import { categoryLabel, formatDateTime } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -30,8 +31,9 @@ const STATUS_COLORS: Record<TicketStatus, string> = {
 
 export function TasksScreen() {
   const { t } = useTranslation();
-  const { agent, logout } = useAuth();
+  const { agent } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
+  const insets = useSafeAreaInsets();
 
   const [tab, setTab] = useState<TaskTab>('active');
   const [items, setItems] = useState<TaskListItem[]>([]);
@@ -76,45 +78,45 @@ export function TasksScreen() {
 
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
-  const renderItem = ({ item }: { item: TaskListItem }) => (
-    <TouchableOpacity
-      style={[styles.card, item.isUrgent && styles.cardUrgent]}
-      onPress={() => navigation.navigate('TaskDetail', { ticketId: item.ticketId })}
-    >
-      <View style={styles.cardTop}>
-        <Text style={styles.cardLocation} numberOfLines={1}>
-          {item.locationName || item.location}
-          {item.roomNumber ? ` · ${t('tasks.room')} ${item.roomNumber}` : ''}
-        </Text>
-        {item.isUrgent && <Text style={styles.urgentBadge}>{t('tasks.urgent')}</Text>}
-      </View>
-      <Text style={styles.cardDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-      <View style={styles.cardBottom}>
-        <View style={[styles.statusPill, { backgroundColor: tint(STATUS_COLORS[item.status]) }]}>
-          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>{statusLabel(item.status)}</Text>
+  const renderItem = ({ item }: { item: TaskListItem }) => {
+    const statusColor = STATUS_COLORS[item.status];
+    return (
+      <TouchableOpacity
+        style={[styles.card, { borderLeftColor: statusColor }]}
+        onPress={() => navigation.navigate('TaskDetail', { ticketId: item.ticketId })}
+        activeOpacity={0.75}
+      >
+        <View style={styles.cardTop}>
+          <Text style={styles.cardLocation} numberOfLines={1}>
+            {item.locationName || item.location}
+            {item.roomNumber ? ` · ${t('tasks.room')} ${item.roomNumber}` : ''}
+          </Text>
+          {item.isUrgent && <Text style={styles.urgentBadge}>{t('tasks.urgent')}</Text>}
         </View>
         {item.category && (
           <Text style={styles.cardCategory} numberOfLines={1}>
             {categoryLabel(item.category)}
           </Text>
         )}
-        <Text style={styles.cardTime}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+        <Text style={styles.cardDescription} numberOfLines={2}>
+          {item.description}
+        </Text>
+        <View style={styles.cardBottom}>
+          <View style={[styles.statusPill, { backgroundColor: tint(statusColor) }]}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel(item.status)}</Text>
+          </View>
+          <Text style={styles.cardTime}>{formatDateTime(item.createdAt)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{t('tasks.title')}</Text>
-          {agent && <Text style={styles.subtitle}>{agent.name}</Text>}
-        </View>
-        <TouchableOpacity onPress={logout} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={styles.logoutText}>{t('common.logout')}</Text>
-        </TouchableOpacity>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Text style={styles.title}>{t('tasks.title')}</Text>
+        {agent && <Text style={styles.subtitle}>{agent.name}</Text>}
       </View>
 
       <View style={styles.tabs}>
@@ -161,16 +163,12 @@ export function TasksScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xl + spacing.md,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
   },
   title: { fontSize: 24, fontWeight: '700', color: colors.forest },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  logoutText: { color: colors.error, fontSize: 14, fontWeight: '600' },
 
   tabs: {
     flexDirection: 'row',
@@ -207,13 +205,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md,
-    gap: spacing.xs,
+    gap: 4,
     borderWidth: 1,
     borderColor: colors.border,
+    borderLeftWidth: 3,
   },
-  cardUrgent: { borderLeftWidth: 3, borderLeftColor: colors.error },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  cardLocation: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.forest },
+  cardLocation: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.forest },
   urgentBadge: {
     fontSize: 11,
     fontWeight: '700',
@@ -224,14 +222,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     overflow: 'hidden',
   },
-  cardDescription: { fontSize: 14, color: colors.text, lineHeight: 20 },
-  cardBottom: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  cardCategory: { fontSize: 12, color: colors.muted, fontWeight: '600' },
+  cardDescription: { fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 2 },
+  cardBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
   statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: radius.pill,
   },
+  statusDot: { width: 5, height: 5, borderRadius: 2.5 },
   statusText: { fontSize: 11, fontWeight: '700' },
-  cardCategory: { flex: 1, fontSize: 12, color: colors.muted },
-  cardTime: { fontSize: 12, color: colors.muted },
+  cardTime: { fontSize: 11, color: colors.muted },
 });

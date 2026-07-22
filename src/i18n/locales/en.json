@@ -39,6 +39,7 @@
     "assignedAt": "Assigned",
     "assignedBy": "Assigned by",
     "locationInfo": "Location",
+    "contact": "Contact",
     "call": "Call",
     "history": "Activity history",
     "historyEmpty": "No activity recorded.",

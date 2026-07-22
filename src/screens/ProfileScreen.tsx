@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
@@ -24,6 +25,7 @@ function getInitials(name: string): string {
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { agent, logout } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -84,13 +86,17 @@ export function ProfileScreen() {
   const currentLanguage = LANGUAGE_NAMES[(i18n.language as SupportedLanguage) ?? 'en'] ?? i18n.language;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl }]}
+    >
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{getInitials(agent.name)}</Text>
         </View>
         <Text style={styles.name}>{agent.name}</Text>
         <Text style={styles.role}>{roleLabel}</Text>
+        {agent.companyName ? <Text style={styles.company}>{agent.companyName}</Text> : null}
       </View>
 
       <View style={styles.statsGrid}>
@@ -123,7 +129,9 @@ export function ProfileScreen() {
       <Text style={styles.sectionLabel}>{t('profile.settings')}</Text>
       <View style={styles.settingsCard}>
         <View style={styles.settingRow}>
-          <Text style={styles.settingIcon}>🔔</Text>
+          <View style={[styles.settingIconChip, { backgroundColor: tint(colors.green, '26') }]}>
+            <Text style={styles.settingIcon}>🔔</Text>
+          </View>
           <Text style={styles.settingLabel}>{t('profile.pushNotifications')}</Text>
           <Switch
             value={pushEnabled}
@@ -134,23 +142,29 @@ export function ProfileScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.settingRow} onPress={pickLanguage}>
-          <Text style={styles.settingIcon}>🌐</Text>
+        <TouchableOpacity style={styles.settingRow} onPress={pickLanguage} activeOpacity={0.6}>
+          <View style={[styles.settingIconChip, { backgroundColor: tint(colors.statusNew, '26') }]}>
+            <Text style={styles.settingIcon}>🌐</Text>
+          </View>
           <Text style={styles.settingLabel}>{t('profile.language')}</Text>
-          <Text style={styles.settingValue}>{currentLanguage} ›</Text>
+          <Text style={styles.settingValue}>{currentLanguage}</Text>
+          <Text style={styles.chevron}>›</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.settingRow, styles.logoutRow]} onPress={confirmLogout}>
-          <Text style={styles.settingIcon}>🚪</Text>
+        <TouchableOpacity style={[styles.settingRow, styles.logoutRow]} onPress={confirmLogout} activeOpacity={0.6}>
+          <View style={[styles.settingIconChip, { backgroundColor: tint(colors.error, '26') }]}>
+            <Text style={styles.settingIcon}>🚪</Text>
+          </View>
           <Text style={styles.logoutLabel}>{t('common.logout')}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface, padding: spacing.lg, paddingTop: spacing.xl + spacing.md },
+  container: { flex: 1, backgroundColor: colors.surface },
+  content: { padding: spacing.lg },
 
   header: { alignItems: 'center', marginBottom: spacing.lg },
   avatar: {
@@ -167,6 +181,7 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 26, fontWeight: '700', color: colors.forest },
   name: { fontSize: 18, fontWeight: '700', color: colors.forest },
   role: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  company: { fontSize: 12, color: colors.muted, marginTop: 2 },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   statTile: {
@@ -204,9 +219,17 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     gap: spacing.sm,
   },
-  settingIcon: { fontSize: 18, width: 24 },
+  settingIconChip: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingIcon: { fontSize: 16 },
   settingLabel: { flex: 1, fontSize: 15, color: colors.text, fontWeight: '600' },
   settingValue: { fontSize: 14, color: colors.muted },
+  chevron: { fontSize: 18, color: colors.muted, marginLeft: spacing.xs },
   logoutRow: { borderBottomWidth: 0 },
   logoutLabel: { flex: 1, fontSize: 15, color: colors.error, fontWeight: '700' },
 });

@@ -31,9 +31,11 @@ export function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
+        // No explicit height — react-navigation sizes the bar itself using
+        // the device's safe-area bottom inset (home indicator etc.); setting
+        // a fixed height here would short-circuit that and either clip the
+        // bar or leave a dead gap depending on the device.
         tabBarStyle: {
-          height: 60 + spacing.xs,
-          paddingBottom: spacing.xs,
           paddingTop: spacing.xs,
           backgroundColor: colors.card,
           borderTopColor: colors.border,
