@@ -31,7 +31,14 @@ export function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.green,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { height: 60 + spacing.xs, paddingBottom: spacing.xs, paddingTop: spacing.xs },
+        tabBarStyle: {
+          height: 60 + spacing.xs,
+          paddingBottom: spacing.xs,
+          paddingTop: spacing.xs,
+          backgroundColor: colors.card,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+        },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >

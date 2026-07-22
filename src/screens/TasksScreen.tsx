@@ -17,7 +17,7 @@ import * as tasksApi from '../api/tasks';
 import { TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { categoryLabel } from '../utils/format';
-import { colors, radius, spacing } from '../theme/tokens';
+import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
   [TicketStatus.New]: colors.statusNew,
@@ -92,8 +92,8 @@ export function TasksScreen() {
         {item.description}
       </Text>
       <View style={styles.cardBottom}>
-        <View style={[styles.statusPill, { backgroundColor: STATUS_COLORS[item.status] }]}>
-          <Text style={styles.statusText}>{statusLabel(item.status)}</Text>
+        <View style={[styles.statusPill, { backgroundColor: tint(STATUS_COLORS[item.status]) }]}>
+          <Text style={[styles.statusText, { color: STATUS_COLORS[item.status] }]}>{statusLabel(item.status)}</Text>
         </View>
         {item.category && (
           <Text style={styles.cardCategory} numberOfLines={1}>
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl + spacing.md,
     paddingBottom: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
   },
   title: { fontSize: 24, fontWeight: '700', color: colors.forest },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
@@ -174,18 +174,20 @@ const styles = StyleSheet.create({
 
   tabs: {
     flexDirection: 'row',
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
     gap: spacing.sm,
   },
   tab: {
     paddingVertical: spacing.xs + 2,
     paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  tabActive: { backgroundColor: colors.forest },
+  tabActive: { backgroundColor: colors.green, borderColor: colors.green },
   tabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
   tabTextActive: { color: colors.white },
 
@@ -202,19 +204,21 @@ const styles = StyleSheet.create({
   retryText: { color: colors.white, fontWeight: '700' },
 
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  cardUrgent: { borderLeftWidth: 4, borderLeftColor: colors.error },
+  cardUrgent: { borderLeftWidth: 3, borderLeftColor: colors.error },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   cardLocation: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.forest },
   urgentBadge: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.white,
-    backgroundColor: colors.error,
+    color: colors.error,
+    backgroundColor: tint(colors.error),
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
@@ -227,7 +231,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: radius.pill,
   },
-  statusText: { fontSize: 11, fontWeight: '700', color: colors.white },
+  statusText: { fontSize: 11, fontWeight: '700' },
   cardCategory: { flex: 1, fontSize: 12, color: colors.muted },
   cardTime: { fontSize: 12, color: colors.muted },
 });

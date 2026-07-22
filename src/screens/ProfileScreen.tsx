@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
 import { AgentRole, AgentStats } from '../api/types';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
-import { colors, radius, spacing } from '../theme/tokens';
+import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = { hr: 'Hrvatski', en: 'English', de: 'Deutsch' };
@@ -129,6 +129,8 @@ export function ProfileScreen() {
             value={pushEnabled}
             onValueChange={togglePush}
             trackColor={{ true: colors.green, false: colors.border }}
+            thumbColor={colors.white}
+            ios_backgroundColor={colors.border}
           />
         </View>
 
@@ -155,7 +157,9 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#d7f5e6',
+    backgroundColor: tint(colors.green, '2A'),
+    borderWidth: 1,
+    borderColor: tint(colors.green, '55'),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
@@ -167,9 +171,11 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   statTile: {
     width: '47.5%',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statValue: { fontSize: 22, fontWeight: '800', color: colors.forest },
   statValueGreen: { color: colors.green },
@@ -183,8 +189,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   settingsCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   settingRow: {
@@ -193,7 +201,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.surface,
+    borderBottomColor: colors.border,
     gap: spacing.sm,
   },
   settingIcon: { fontSize: 18, width: 24 },

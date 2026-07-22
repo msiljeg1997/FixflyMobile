@@ -21,7 +21,7 @@ import type { ResolveImage } from '../api/tasks';
 import { AgentRole, TaskDetail, TaskHistoryEvent, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { categoryLabel, formatDateTime } from '../utils/format';
-import { colors, radius, spacing } from '../theme/tokens';
+import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const MAX_PHOTOS = 5;
 
@@ -296,6 +296,7 @@ export function TaskDetailScreen() {
           <TextInput
             style={styles.input}
             placeholder={t('taskDetail.rejectPlaceholder')}
+            placeholderTextColor={colors.muted}
             value={rejectReason}
             onChangeText={setRejectReason}
             multiline
@@ -324,6 +325,7 @@ export function TaskDetailScreen() {
           <TextInput
             style={styles.input}
             placeholder={t('taskDetail.resolvePlaceholder')}
+            placeholderTextColor={colors.muted}
             value={comment}
             onChangeText={setComment}
             multiline
@@ -413,8 +415,8 @@ const styles = StyleSheet.create({
   urgentBadge: {
     fontSize: 11,
     fontWeight: '700',
-    color: colors.white,
-    backgroundColor: colors.error,
+    color: colors.error,
+    backgroundColor: tint(colors.error),
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
@@ -430,9 +432,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.md,
     marginTop: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   metaItem: { minWidth: '40%' },
   metaValue: { fontSize: 14, color: colors.text, fontWeight: '600' },
@@ -448,7 +452,7 @@ const styles = StyleSheet.create({
 
   historySection: { marginBottom: spacing.xl },
   historyBubble: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
@@ -469,14 +473,18 @@ const styles = StyleSheet.create({
 
   section: { marginTop: spacing.lg },
   proofSection: {
-    backgroundColor: '#eafaf1',
+    backgroundColor: tint(colors.green, '1A'),
     borderRadius: radius.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: tint(colors.green, '40'),
   },
   noteSection: {
-    backgroundColor: '#fff7e6',
+    backgroundColor: tint(colors.warning, '1A'),
     borderRadius: radius.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: tint(colors.warning, '40'),
   },
   sectionLabel: {
     fontSize: 12,
@@ -486,9 +494,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   description: { fontSize: 15, color: colors.text, lineHeight: 22 },
-  photo: { width: '100%', height: 220, borderRadius: radius.md, backgroundColor: colors.border },
+  photo: { width: '100%', height: 220, borderRadius: radius.md, backgroundColor: colors.card },
   photoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
-  thumb: { width: 72, height: 72, borderRadius: radius.sm, backgroundColor: colors.border },
+  thumb: { width: 72, height: 72, borderRadius: radius.sm, backgroundColor: colors.card },
   thumbRemove: {
     position: 'absolute',
     top: -6,
@@ -519,11 +527,15 @@ const styles = StyleSheet.create({
   actions: { marginTop: spacing.xl, gap: spacing.sm },
   formCard: {
     marginTop: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   input: {
+    backgroundColor: colors.surface,
+    color: colors.forest,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
@@ -548,6 +560,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     alignItems: 'center',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   secondaryButtonText: { color: colors.text, fontSize: 15, fontWeight: '600' },
   dangerButton: {

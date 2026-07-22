@@ -16,7 +16,7 @@ export default function App() {
 
   if (!i18nReady) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
         <ActivityIndicator color={colors.green} size="large" />
       </View>
     );
@@ -27,7 +27,7 @@ export default function App() {
       <AuthProvider>
         <RootNavigator />
       </AuthProvider>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </SafeAreaProvider>
   );
 }
