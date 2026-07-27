@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import * as tasksApi from '../api/tasks';
+import * as chatApi from '../api/chat';
 import { signalRService } from '../realtime/signalr';
 import type { ChatMessage } from '../api/types';
 
 interface UnreadContextValue {
-  /** Total unread chat messages across the agent's active tasks. */
+  /** Total unread chat messages across the agent's conversations. */
   total: number;
   /** Refetch counts from the server (after opening a thread, etc). */
   refresh: () => void;
@@ -22,10 +22,13 @@ export function UnreadProvider({ children }: { children: React.ReactNode }) {
   const [banner, setBanner] = useState<UnreadContextValue['banner']>(null);
   const activeThread = useRef<string | null>(null);
 
+  // Counted over the same threads the Chat tab lists. Summing the active-task
+  // list instead (as this used to) both missed unread messages on returned or
+  // closed tickets and let the badge disagree with what the list showed.
   const refresh = useCallback(async () => {
     try {
-      const res = await tasksApi.getTasks('active');
-      setTotal(res.items.reduce((sum, i) => sum + (i.unreadChatCount ?? 0), 0));
+      const threads = await chatApi.getThreads();
+      setTotal(threads.reduce((sum, x) => sum + (x.unreadCount ?? 0), 0));
     } catch {
       // Leave the previous count — a failed poll shouldn't zero the badge.
     }

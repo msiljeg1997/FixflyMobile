@@ -95,11 +95,12 @@
     "title": "Unterhaltungen",
     "subtitle": "Nachrichten pro Aufgabe",
     "empty": "Noch keine Nachrichten. Schreiben Sie die erste.",
-    "noThreads": "Sie haben keine aktiven Aufgaben.",
+    "noThreads": "Noch keine Gespräche. Öffnen Sie eine Aufgabe und senden Sie die erste Nachricht.",
     "placeholder": "Nachricht schreiben...",
     "loadError": "Nachrichten konnten nicht geladen werden.",
     "viaWhatsApp": "über WhatsApp",
-    "queued": "Wartet auf Senden"
+    "queued": "Wartet auf Senden",
+    "photo": "Foto"
   },
   "role": {
     "technician": "Techniker",

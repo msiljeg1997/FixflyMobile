@@ -4,29 +4,31 @@ import { useTranslation } from 'react-i18next';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as tasksApi from '../api/tasks';
+import * as chatApi from '../api/chat';
 import { signalRService } from '../realtime/signalr';
-import { TaskListItem } from '../api/types';
+import { ChatThread } from '../api/types';
 import type { ChatStackParamList } from '../navigation/ChatStackNavigator';
+import { formatChatTimestamp } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
-// One conversation per ticket (backend W8). The threads a technician cares
-// about are exactly their active tasks, so this lists those rather than
-// inventing a separate conversation index the backend doesn't have.
+// One conversation per ticket (backend W8), listed from /agent/chat/threads.
+// This used to list the agent's ACTIVE TASKS instead, which was wrong twice
+// over: tasks without a single message showed up as conversations (previewing
+// the ticket description, then opening onto "no messages yet"), while real
+// threads on returned or closed tickets were invisible.
 export function ChatListScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
   const insets = useSafeAreaInsets();
 
-  const [items, setItems] = useState<TaskListItem[]>([]);
+  const [items, setItems] = useState<ChatThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (asRefresh = false) => {
     if (asRefresh) setRefreshing(true);
     try {
-      const res = await tasksApi.getTasks('active');
-      setItems(res.items);
+      setItems(await chatApi.getThreads());
     } catch {
       setItems([]);
     } finally {
@@ -47,36 +49,47 @@ export function ChatListScreen() {
     return off;
   }, [load]);
 
-  const renderItem = ({ item }: { item: TaskListItem }) => (
-    <TouchableOpacity
-      style={styles.row}
-      activeOpacity={0.7}
-      onPress={() =>
-        navigation.navigate('Chat', {
-          ticketId: item.ticketId,
-          title: item.locationName || item.location,
-        })
-      }
-    >
-      <View style={styles.icon}>
-        <Text style={styles.iconText}>💬</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.rowTitle} numberOfLines={1}>
-          {item.locationName || item.location}
-        </Text>
-        <Text style={styles.rowSub} numberOfLines={1}>
-          {item.description}
-        </Text>
-      </View>
-      {item.unreadChatCount > 0 && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.unreadChatCount}</Text>
+  const renderItem = ({ item }: { item: ChatThread }) => {
+    const unread = item.unreadCount > 0;
+    // A bare image has no text to preview — say so rather than showing nothing.
+    const preview = item.lastMessageText ?? (item.lastMessageHasImage ? t('chat.photo') : '');
+    return (
+      <TouchableOpacity
+        style={styles.row}
+        activeOpacity={0.7}
+        onPress={() =>
+          navigation.navigate('Chat', {
+            ticketId: item.ticketId,
+            title: item.locationName || item.location,
+          })
+        }
+      >
+        <View style={styles.icon}>
+          <Text style={styles.iconText}>💬</Text>
         </View>
-      )}
-      <Text style={styles.chevron}>›</Text>
-    </TouchableOpacity>
-  );
+        <View style={{ flex: 1 }}>
+          <View style={styles.rowTop}>
+            <Text style={styles.rowTitle} numberOfLines={1}>
+              {item.locationName || item.location}
+            </Text>
+            <Text style={styles.rowTime}>{formatChatTimestamp(item.lastMessageAt)}</Text>
+          </View>
+          <Text style={styles.rowTicket} numberOfLines={1}>
+            {item.ticketId}
+          </Text>
+          <Text style={[styles.rowSub, unread && styles.rowSubUnread]} numberOfLines={1}>
+            {item.lastMessageSenderName}: {preview}
+          </Text>
+        </View>
+        {unread && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{item.unreadCount}</Text>
+          </View>
+        )}
+        <Text style={styles.chevron}>›</Text>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -132,8 +145,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconText: { fontSize: 18 },
-  rowTitle: { fontSize: 15, fontWeight: '700', color: colors.forest },
-  rowSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
+  rowTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.forest },
+  rowTime: { fontSize: 11, color: colors.muted },
+  rowTicket: { fontSize: 11, color: colors.muted, marginTop: 1 },
+  rowSub: { fontSize: 13, color: colors.muted, marginTop: 3 },
+  rowSubUnread: { color: colors.forest, fontWeight: '600' },
   badge: {
     minWidth: 22,
     height: 22,

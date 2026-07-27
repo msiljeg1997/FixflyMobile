@@ -237,6 +237,25 @@ export interface ChatMessage {
   seen: boolean; // computed against the caller's TicketReadState
 }
 
+/**
+ * A row of the Chat tab — a ticket that actually has messages, summarised by
+ * its newest one. The tab used to list open tasks instead, so every row
+ * previewed the ticket description and opened onto an empty thread.
+ */
+export interface ChatThread {
+  ticketId: string;
+  location: string;
+  locationName: string | null;
+  description: string;
+  status: TicketStatus;
+  lastMessageSenderName: string;
+  lastMessageSenderType: ChatSenderType;
+  lastMessageText: string | null; // null when the newest message is a bare image
+  lastMessageHasImage: boolean;
+  lastMessageAt: string;
+  unreadCount: number;
+}
+
 export interface GetMessagesQuery {
   before?: string; // ISO timestamp cursor, for pull-to-load-older
   limit?: number; // default 50 per guide §13

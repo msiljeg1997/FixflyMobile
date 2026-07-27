@@ -95,11 +95,12 @@
     "title": "Razgovori",
     "subtitle": "Poruke po zadatku",
     "empty": "Još nema poruka. Napišite prvu.",
-    "noThreads": "Nemate aktivnih zadataka.",
+    "noThreads": "Još nema razgovora. Otvorite zadatak i pošaljite prvu poruku.",
     "placeholder": "Napišite poruku...",
     "loadError": "Poruke se nisu mogle učitati.",
     "viaWhatsApp": "putem WhatsAppa",
-    "queued": "Čeka slanje"
+    "queued": "Čeka slanje",
+    "photo": "Fotografija"
   },
   "role": {
     "technician": "Tehničar",

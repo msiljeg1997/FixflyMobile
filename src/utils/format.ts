@@ -7,6 +7,24 @@ export function formatDateTime(iso: string | null | undefined): string | null {
 }
 
 /**
+ * Compact timestamp for a conversation list: time of day for today, date for
+ * anything older. The full "27.7.2026. 13:21" doesn't fit beside a title and
+ * repeats a year nobody is reading off a chat row.
+ */
+export function formatChatTimestamp(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  return sameDay
+    ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString([], { day: 'numeric', month: 'numeric' });
+}
+
+/**
  * Human-readable duration. Raw minutes stop being readable fast — a
  * two-week-old ticket showed as "18700 min", which nobody can parse at a
  * glance. Scales to h and d, keeping one secondary unit for precision.

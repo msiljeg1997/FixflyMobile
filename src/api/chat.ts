@@ -1,9 +1,19 @@
 import { apiClient } from './client';
-import type { ChatMessage } from './types';
+import type { ChatMessage, ChatThread } from './types';
 
 // Per-ticket chat (backend W8 — ChatService, shared thread between the
 // company's managers, the assigned technician and the location's
 // dispatchers). Agent-side endpoints live under /api/agent/tasks/{id}.
+
+/**
+ * Conversations this agent takes part in, newest message first. Only tickets
+ * that have messages — and not limited to open tasks, so a returned or closed
+ * ticket keeps its thread reachable.
+ */
+export async function getThreads(limit = 50): Promise<ChatThread[]> {
+  const { data } = await apiClient.get<ChatThread[]>('/api/agent/chat/threads', { params: { limit } });
+  return data;
+}
 
 export async function getMessages(ticketId: string, before?: string, limit = 50): Promise<ChatMessage[]> {
   const { data } = await apiClient.get<ChatMessage[]>(

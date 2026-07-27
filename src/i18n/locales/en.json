@@ -95,11 +95,12 @@
     "title": "Conversations",
     "subtitle": "Messages per task",
     "empty": "No messages yet. Write the first one.",
-    "noThreads": "You have no active tasks.",
+    "noThreads": "No conversations yet. Open a task and send the first message.",
     "placeholder": "Write a message...",
     "loadError": "Couldn't load messages.",
     "viaWhatsApp": "via WhatsApp",
-    "queued": "Waiting to send"
+    "queued": "Waiting to send",
+    "photo": "Photo"
   },
   "role": {
     "technician": "Technician",
