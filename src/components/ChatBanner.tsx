@@ -23,9 +23,14 @@ export function ChatBanner() {
 
   const open = () => {
     dismissBanner();
-    // Chat is registered in both the Tasks and Chat stacks; going through the
-    // Chat tab keeps the back gesture landing somewhere sensible.
-    navigation.navigate('ChatTab', { screen: 'Chat', params: { ticketId } });
+    // The banner renders as a sibling of Tab.Navigator, so its navigation
+    // context is the ROOT stack (Login/Lock/Main) — not the tabs. The target
+    // has to be addressed all the way down: Main → ChatTab → Chat, otherwise
+    // react-navigation can't resolve 'ChatTab' and drops the action.
+    navigation.navigate('Main', {
+      screen: 'ChatTab',
+      params: { screen: 'Chat', params: { ticketId } },
+    });
   };
 
   return (
