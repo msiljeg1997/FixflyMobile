@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -41,14 +42,27 @@ export function TasksScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
+  // Pagination — the API has always been paged; the app previously showed
+  // only page 1, silently hiding work past the 20th task.
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Search + filters (client-side over what's loaded — the list endpoint
+  // takes no search params, so filtering server-side isn't available)
+  const [search, setSearch] = useState('');
+  const [urgentOnly, setUrgentOnly] = useState(false);
+
   const load = useCallback(
     async (which: TaskTab, asRefresh = false) => {
       if (asRefresh) setRefreshing(true);
       else setLoading(true);
       setError(false);
       try {
-        const res = await tasksApi.getTasks(which);
+        const res = await tasksApi.getTasks(which, 1);
         setItems(res.items);
+        setPage(res.page);
+        setTotalPages(res.totalPages);
       } catch {
         setError(true);
       } finally {
@@ -58,6 +72,27 @@ export function TasksScreen() {
     },
     []
   );
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || loading || refreshing || page >= totalPages) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const res = await tasksApi.getTasks(tab, next);
+      // De-dupe by ticketId: a task can shift between pages if something
+      // changed server-side between requests.
+      setItems((prev) => {
+        const seen = new Set(prev.map((i) => i.ticketId));
+        return [...prev, ...res.items.filter((i) => !seen.has(i.ticketId))];
+      });
+      setPage(res.page);
+      setTotalPages(res.totalPages);
+    } catch {
+      // Keep what's already loaded; pull-to-refresh is the recovery path.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, loading, refreshing, page, totalPages, tab]);
 
   // Reload on focus (returning from detail) and on tab change
   useFocusEffect(
@@ -77,6 +112,19 @@ export function TasksScreen() {
   }, [tab, load]);
 
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
+
+  const query = search.trim().toLowerCase();
+  const visibleItems = items.filter((i) => {
+    if (urgentOnly && !i.isUrgent) return false;
+    if (!query) return true;
+    return (
+      i.description.toLowerCase().includes(query) ||
+      (i.locationName ?? '').toLowerCase().includes(query) ||
+      i.location.toLowerCase().includes(query) ||
+      i.ticketId.toLowerCase().includes(query) ||
+      (i.category?.name ?? '').toLowerCase().includes(query)
+    );
+  });
 
   const renderItem = ({ item }: { item: TaskListItem }) => {
     const statusColor = STATUS_COLORS[item.status];
@@ -131,6 +179,30 @@ export function TasksScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+        <TouchableOpacity
+          style={[styles.tab, styles.filterChip, urgentOnly && styles.tabActive]}
+          onPress={() => setUrgentOnly((v) => !v)}
+        >
+          <Text style={[styles.tabText, urgentOnly && styles.tabTextActive]}>⚠ {t('tasks.urgent')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.searchWrap}>
+        <Text style={styles.searchIcon}>🔎</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder={t('tasks.searchPlaceholder')}
+          placeholderTextColor={colors.muted}
+          value={search}
+          onChangeText={setSearch}
+          autoCapitalize="none"
+          returnKeyType="search"
+        />
+        {search.length > 0 && (
+          <TouchableOpacity onPress={() => setSearch('')} hitSlop={10}>
+            <Text style={styles.searchClear}>✕</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {loading ? (
@@ -146,14 +218,23 @@ export function TasksScreen() {
         </View>
       ) : (
         <FlatList
-          data={items}
+          data={visibleItems}
           keyExtractor={(item) => item.ticketId}
           renderItem={renderItem}
-          contentContainerStyle={items.length === 0 ? styles.center : styles.list}
+          contentContainerStyle={visibleItems.length === 0 ? styles.center : styles.list}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(tab, true)} tintColor={colors.green} />
           }
-          ListEmptyComponent={<Text style={styles.emptyText}>{t('tasks.empty')}</Text>}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loadingMore ? <ActivityIndicator color={colors.muted} style={{ marginVertical: spacing.md }} /> : null
+          }
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              {query || urgentOnly ? t('tasks.noMatches') : t('tasks.empty')}
+            </Text>
+          }
         />
       )}
     </View>
@@ -188,6 +269,23 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: colors.green, borderColor: colors.green },
   tabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
   tabTextActive: { color: colors.white },
+  filterChip: { marginLeft: 'auto' },
+
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+  },
+  searchIcon: { fontSize: 14 },
+  searchInput: { flex: 1, color: colors.forest, fontSize: 15, paddingVertical: spacing.sm + 2 },
+  searchClear: { color: colors.muted, fontSize: 15, fontWeight: '700' },
 
   list: { padding: spacing.md, gap: spacing.sm },
   center: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },

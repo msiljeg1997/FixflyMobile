@@ -22,7 +22,9 @@
     "empty": "No tasks here",
     "loadError": "Couldn't load tasks.",
     "urgent": "URGENT",
-    "room": "Room"
+    "room": "Room",
+    "searchPlaceholder": "Search location, description, ID...",
+    "noMatches": "Nothing matches that search."
   },
   "status": {
     "New": "New",
@@ -88,7 +90,8 @@
     "noThreads": "You have no active tasks.",
     "placeholder": "Write a message...",
     "loadError": "Couldn't load messages.",
-    "viaWhatsApp": "via WhatsApp"
+    "viaWhatsApp": "via WhatsApp",
+    "queued": "Waiting to send"
   },
   "role": {
     "technician": "Technician",

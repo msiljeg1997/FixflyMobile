@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as chatApi from '../api/chat';
 import type { ChatImage } from '../api/chat';
+import { isNetworkError } from '../api/client';
+import { outbox, OutboxItem } from '../offline/outbox';
 import { signalRService } from '../realtime/signalr';
 import { ChatMessage, ChatSenderType } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
@@ -47,6 +49,7 @@ export function ChatScreen() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
+  const [pending, setPending] = useState<OutboxItem[]>([]);
 
   const load = useCallback(async () => {
     setError(false);
@@ -66,6 +69,16 @@ export function ChatScreen() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Mirror the outbox so queued-but-unsent messages stay visible in the
+  // thread (greyed, with a clock) instead of vanishing until they land.
+  useEffect(() => {
+    const sync = () => {
+      outbox.pendingFor(ticketId).then(setPending);
+    };
+    sync();
+    return outbox.subscribe(sync);
+  }, [ticketId]);
 
   // Live incoming messages for THIS ticket (W7 groups / W8 events)
   useEffect(() => {
@@ -89,8 +102,15 @@ export function ChatScreen() {
       const saved = await chatApi.sendMessage(ticketId, clientMessageId, text || undefined, image);
       setMessages((prev) => (prev.some((m) => m.id === saved.id) ? prev : [...prev, saved]));
       setDraft('');
-    } catch {
-      // Keep the draft so the text isn't lost — the user can just hit send again.
+    } catch (e) {
+      if (isNetworkError(e)) {
+        // Offline: queue it and clear the composer — the same
+        // clientMessageId gets retried when connectivity returns, and the
+        // backend de-dupes if it actually landed before the drop.
+        await outbox.enqueue({ id: clientMessageId, ticketId, text: text || undefined, image });
+        setDraft('');
+      }
+      // A real server rejection keeps the draft so nothing is lost.
     } finally {
       setSending(false);
     }
@@ -196,6 +216,23 @@ export function ChatScreen() {
           contentContainerStyle={messages.length === 0 ? styles.center : styles.list}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={<Text style={styles.muted}>{t('chat.empty')}</Text>}
+          ListFooterComponent={
+            pending.length > 0 ? (
+              <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+                {pending.map((p) => (
+                  <View key={p.id} style={[styles.row, styles.rowMine]}>
+                    <View style={[styles.bubble, styles.bubbleMine, styles.bubblePending]}>
+                      {p.image && <Image source={{ uri: p.image.uri }} style={styles.messageImage} resizeMode="cover" />}
+                      {p.text && <Text style={[styles.messageText, styles.messageTextMine]}>{p.text}</Text>}
+                      <View style={styles.metaRow}>
+                        <Text style={styles.pendingLabel}>🕐 {t('chat.queued')}</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : null
+          }
         />
       )}
 
@@ -283,6 +320,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
   },
   bubbleLegacy: { borderStyle: 'dashed' },
+  bubblePending: { opacity: 0.55 },
+  pendingLabel: { fontSize: 10, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
 
   senderName: { fontSize: 11, fontWeight: '700', color: colors.muted, marginBottom: 2 },
   legacyTag: { fontSize: 10, color: colors.warning, fontStyle: 'italic', marginBottom: 2 },

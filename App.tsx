@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { initI18n } from './src/i18n';
+import { outbox } from './src/offline/outbox';
 import { colors } from './src/theme/tokens';
 
 export default function App() {
@@ -13,6 +14,9 @@ export default function App() {
   useEffect(() => {
     initI18n().then(() => setI18nReady(true));
   }, []);
+
+  // Retry anything queued while offline as soon as the device is back online.
+  useEffect(() => outbox.startAutoFlush(), []);
 
   if (!i18nReady) {
     return (

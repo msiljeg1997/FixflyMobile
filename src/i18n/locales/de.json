@@ -22,7 +22,9 @@
     "empty": "Keine Aufgaben",
     "loadError": "Aufgaben konnten nicht geladen werden.",
     "urgent": "DRINGEND",
-    "room": "Zimmer"
+    "room": "Zimmer",
+    "searchPlaceholder": "Standort, Beschreibung, ID suchen...",
+    "noMatches": "Keine Treffer für diese Suche."
   },
   "status": {
     "New": "Neu",
@@ -88,7 +90,8 @@
     "noThreads": "Sie haben keine aktiven Aufgaben.",
     "placeholder": "Nachricht schreiben...",
     "loadError": "Nachrichten konnten nicht geladen werden.",
-    "viaWhatsApp": "über WhatsApp"
+    "viaWhatsApp": "über WhatsApp",
+    "queued": "Wartet auf Senden"
   },
   "role": {
     "technician": "Techniker",

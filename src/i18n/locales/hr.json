@@ -22,7 +22,9 @@
     "empty": "Nema zadataka",
     "loadError": "Zadaci se nisu mogli učitati.",
     "urgent": "HITNO",
-    "room": "Soba"
+    "room": "Soba",
+    "searchPlaceholder": "Pretraži lokaciju, opis, broj...",
+    "noMatches": "Nema rezultata za tu pretragu."
   },
   "status": {
     "New": "Novi",
@@ -88,7 +90,8 @@
     "noThreads": "Nemate aktivnih zadataka.",
     "placeholder": "Napišite poruku...",
     "loadError": "Poruke se nisu mogle učitati.",
-    "viaWhatsApp": "putem WhatsAppa"
+    "viaWhatsApp": "putem WhatsAppa",
+    "queued": "Čeka slanje"
   },
   "role": {
     "technician": "Tehničar",
