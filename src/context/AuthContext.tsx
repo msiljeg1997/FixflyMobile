@@ -1,7 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import * as authApi from '../api/auth';
 import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
+import { appLock } from '../security/appLock';
 import type { AgentLoginRequest, AgentProfile } from '../api/types';
 
 // Realtime is an enhancement, never a gate: a SignalR failure (server hub
@@ -11,11 +13,22 @@ function connectRealtimeSafe(): void {
   signalRService.connect().catch(() => {});
 }
 
+// Re-lock after this long in the background. Short enough that a lost phone
+// isn't wide open, long enough that snapping a photo or taking a call
+// mid-task doesn't demand a PIN on every return.
+const LOCK_AFTER_BACKGROUND_MS = 60_000;
+
 interface AuthContextValue {
   agent: AgentProfile | null;
-  status: 'checking' | 'signedOut' | 'signedIn';
+  /**
+   * 'locked' = valid session, but the device gate (biometric/PIN) must pass.
+   * 'pinSetup' = signed in, no PIN yet — offer to create one.
+   */
+  status: 'checking' | 'signedOut' | 'signedIn' | 'locked' | 'pinSetup';
   login: (credentials: AgentLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
+  unlock: () => void;
+  skipPinSetup: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -23,10 +36,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [agent, setAgent] = useState<AgentProfile | null>(null);
   const [status, setStatus] = useState<AuthContextValue['status']>('checking');
+  const backgroundedAt = useRef<number | null>(null);
+  const statusRef = useRef(status);
+  statusRef.current = status;
 
   const doLogout = useCallback(async () => {
     await authApi.logout();
     await signalRService.disconnect();
+    // Clearing the PIN with the session keeps the gate tied to one agent —
+    // otherwise the next person to sign in on this device would inherit it.
+    await appLock.clear();
     setAgent(null);
     setStatus('signedOut');
   }, []);
@@ -47,8 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const profile = await authApi.fetchCurrentAgent();
         setAgent(profile);
-        setStatus('signedIn');
         connectRealtimeSafe();
+        // A stored session behind a set PIN starts locked, not open.
+        setStatus((await appLock.isPinSet()) ? 'locked' : 'signedIn');
       } catch (error) {
         if (isNetworkError(error)) {
           // Offline at cold start: keep the stored session intact and show
@@ -64,16 +84,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [doLogout]);
 
+  // Re-lock when the app comes back from a long stint in the background.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next === 'background' || next === 'inactive') {
+        backgroundedAt.current = Date.now();
+        return;
+      }
+      if (next === 'active' && backgroundedAt.current && statusRef.current === 'signedIn') {
+        const away = Date.now() - backgroundedAt.current;
+        backgroundedAt.current = null;
+        if (away >= LOCK_AFTER_BACKGROUND_MS) {
+          appLock.isPinSet().then((set) => {
+            if (set) setStatus('locked');
+          });
+        }
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
   const doLogin = useCallback(async (credentials: AgentLoginRequest) => {
     const profile = await authApi.login(credentials);
     setAgent(profile);
-    setStatus('signedIn');
     connectRealtimeSafe();
+    // Offer the quick-unlock gate right after a full login, once per device.
+    setStatus((await appLock.isPinSet()) ? 'signedIn' : 'pinSetup');
   }, []);
 
+  const unlock = useCallback(() => setStatus('signedIn'), []);
+  const skipPinSetup = useCallback(() => setStatus('signedIn'), []);
+
   const value = useMemo<AuthContextValue>(
-    () => ({ agent, status, login: doLogin, logout: doLogout }),
-    [agent, status, doLogin, doLogout]
+    () => ({ agent, status, login: doLogin, logout: doLogout, unlock, skipPinSetup }),
+    [agent, status, doLogin, doLogout, unlock, skipPinSetup]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

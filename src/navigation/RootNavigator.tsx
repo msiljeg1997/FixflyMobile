@@ -4,11 +4,14 @@ import { DarkTheme, NavigationContainer, Theme } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
+import { LockScreen } from '../screens/LockScreen';
 import { MainTabs } from './MainTabs';
 import { colors } from '../theme/tokens';
 
 export type RootStackParamList = {
   Login: undefined;
+  Lock: undefined;
+  PinSetup: undefined;
   Main: undefined; // MainTabs — Tasks/Chat/Profile, always-visible bottom bar
 };
 
@@ -31,7 +34,7 @@ const navigationTheme: Theme = {
 };
 
 export function RootNavigator() {
-  const { status } = useAuth();
+  const { status, logout, unlock, skipPinSetup } = useAuth();
 
   if (status === 'checking') {
     return (
@@ -46,6 +49,14 @@ export function RootNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {status === 'signedIn' ? (
           <Stack.Screen name="Main" component={MainTabs} />
+        ) : status === 'locked' ? (
+          <Stack.Screen name="Lock">
+            {() => <LockScreen mode="unlock" onSuccess={unlock} onUseFullLogin={logout} />}
+          </Stack.Screen>
+        ) : status === 'pinSetup' ? (
+          <Stack.Screen name="PinSetup">
+            {() => <LockScreen mode="setup" onSuccess={skipPinSetup} onSkip={skipPinSetup} />}
+          </Stack.Screen>
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}

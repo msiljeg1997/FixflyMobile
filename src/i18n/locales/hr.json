@@ -69,6 +69,18 @@
     "chat": "Chat",
     "profile": "Profil"
   },
+  "lock": {
+    "unlockTitle": "Otključaj aplikaciju",
+    "unlockBody": "Upišite PIN ili se prijavite licem/otiskom.",
+    "setPinTitle": "Postavite PIN",
+    "setPinBody": "Za brzu prijavu umjesto upisivanja lozinke svaki put.",
+    "confirmPinTitle": "Ponovite PIN",
+    "biometricPrompt": "Prijavite se za nastavak",
+    "wrongPin": "Pogrešan PIN",
+    "pinMismatch": "PIN-ovi se ne podudaraju",
+    "useFullLogin": "Prijava emailom i lozinkom",
+    "skip": "Preskoči za sad"
+  },
   "chat": {
     "title": "Razgovori",
     "subtitle": "Poruke po zadatku",

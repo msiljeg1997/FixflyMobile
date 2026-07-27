@@ -69,6 +69,18 @@
     "chat": "Chat",
     "profile": "Profil"
   },
+  "lock": {
+    "unlockTitle": "App entsperren",
+    "unlockBody": "PIN eingeben oder mit Gesicht/Fingerabdruck anmelden.",
+    "setPinTitle": "PIN festlegen",
+    "setPinBody": "Für schnelle Anmeldung, statt jedes Mal das Passwort einzugeben.",
+    "confirmPinTitle": "PIN wiederholen",
+    "biometricPrompt": "Zum Fortfahren authentifizieren",
+    "wrongPin": "Falscher PIN",
+    "pinMismatch": "PINs stimmen nicht überein",
+    "useFullLogin": "Mit E-Mail und Passwort anmelden",
+    "skip": "Vorerst überspringen"
+  },
   "chat": {
     "title": "Unterhaltungen",
     "subtitle": "Nachrichten pro Aufgabe",

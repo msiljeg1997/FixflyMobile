@@ -69,6 +69,18 @@
     "chat": "Chat",
     "profile": "Profile"
   },
+  "lock": {
+    "unlockTitle": "Unlock the app",
+    "unlockBody": "Enter your PIN or sign in with face/fingerprint.",
+    "setPinTitle": "Set a PIN",
+    "setPinBody": "For quick sign-in instead of typing your password every time.",
+    "confirmPinTitle": "Repeat the PIN",
+    "biometricPrompt": "Authenticate to continue",
+    "wrongPin": "Wrong PIN",
+    "pinMismatch": "PINs don't match",
+    "useFullLogin": "Sign in with email and password",
+    "skip": "Skip for now"
+  },
   "chat": {
     "title": "Conversations",
     "subtitle": "Messages per task",
