@@ -22,16 +22,14 @@
     "tabCompleted": "Završeni",
     "tab_active": "Aktivni",
     "tab_completed": "Završeni",
-    "tab_active_dispatcher": "Moji aktivni",
-    "tab_completed_dispatcher": "Moji završeni",
-    "tab_teamActive_dispatcher": "Tim — aktivni",
-    "tab_teamCompleted_dispatcher": "Tim — završeni",
     "empty": "Nema zadataka",
     "loadError": "Zadaci se nisu mogli učitati.",
     "urgent": "HITNO",
     "room": "Soba",
     "searchPlaceholder": "Pretraži lokaciju, opis, broj...",
-    "noMatches": "Nema rezultata za tu pretragu."
+    "noMatches": "Nema rezultata za tu pretragu.",
+    "scope_mine": "Moji",
+    "scope_team": "Tim"
   },
   "status": {
     "New": "Novi",

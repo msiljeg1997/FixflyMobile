@@ -22,16 +22,14 @@
     "tabCompleted": "Completed",
     "tab_active": "Active",
     "tab_completed": "Completed",
-    "tab_active_dispatcher": "My active",
-    "tab_completed_dispatcher": "My completed",
-    "tab_teamActive_dispatcher": "Team — active",
-    "tab_teamCompleted_dispatcher": "Team — completed",
     "empty": "No tasks here",
     "loadError": "Couldn't load tasks.",
     "urgent": "URGENT",
     "room": "Room",
     "searchPlaceholder": "Search location, description, ID...",
-    "noMatches": "Nothing matches that search."
+    "noMatches": "Nothing matches that search.",
+    "scope_mine": "Mine",
+    "scope_team": "Team"
   },
   "status": {
     "New": "New",

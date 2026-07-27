@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -37,7 +36,10 @@ export function TasksScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
   const insets = useSafeAreaInsets();
 
-  const [tab, setTab] = useState<TaskTab>('active');
+  // Scope and status are two independent axes, not one flat list of tabs —
+  // see the segmented controls below.
+  const [scope, setScope] = useState<'mine' | 'team'>('mine');
+  const [status, setStatus] = useState<'active' | 'completed'>('active');
   const [items, setItems] = useState<TaskListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +55,16 @@ export function TasksScreen() {
   // takes no search params, so filtering server-side isn't available)
   const [search, setSearch] = useState('');
   const [urgentOnly, setUrgentOnly] = useState(false);
+
+  // A dispatcher hands work out, so they need to see it after it leaves their
+  // own queue; a technician only ever has their own two lists.
+  const isDispatcher = agent?.role === AgentRole.Hausmajstor;
+  const isTeam = isDispatcher && scope === 'team';
+  const tab: TaskTab = isTeam
+    ? status === 'active'
+      ? 'teamActive'
+      : 'teamCompleted'
+    : status;
 
   const load = useCallback(
     async (which: TaskTab, asRefresh = false) => {
@@ -114,15 +126,6 @@ export function TasksScreen() {
 
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
-  // A dispatcher hands work out, so they need to see it after it leaves their
-  // own queue; a technician only ever has their own two lists.
-  const isDispatcher = agent?.role === AgentRole.Hausmajstor;
-  const tabs: TaskTab[] = isDispatcher
-    ? ['active', 'completed', 'teamActive', 'teamCompleted']
-    : ['active', 'completed'];
-  const tabLabel = (tb: TaskTab) =>
-    isDispatcher ? t(`tasks.tab_${tb}_dispatcher`) : t(`tasks.tab_${tb}`);
-
   const query = search.trim().toLowerCase();
   const visibleItems = items.filter((i) => {
     if (urgentOnly && !i.isUrgent) return false;
@@ -135,8 +138,6 @@ export function TasksScreen() {
       (i.category?.name ?? '').toLowerCase().includes(query)
     );
   });
-
-  const isTeamTab = tab === 'teamActive' || tab === 'teamCompleted';
 
   const renderItem = ({ item }: { item: TaskListItem }) => {
     const statusColor = STATUS_COLORS[item.status];
@@ -169,7 +170,7 @@ export function TasksScreen() {
           <Text style={styles.cardTime}>{formatDateTime(item.createdAt)}</Text>
         </View>
         {/* Only on the team tabs — on "my" lists the assignee is always me. */}
-        {isTeamTab && item.assignedAgentName && (
+        {isTeam && item.assignedAgentName && (
           <View style={styles.assigneeRow}>
             <Text style={styles.assigneeIcon}>👷</Text>
             <Text style={styles.assigneeName} numberOfLines={1}>{item.assignedAgentName}</Text>
@@ -186,45 +187,77 @@ export function TasksScreen() {
         {agent && <Text style={styles.subtitle}>{agent.name}</Text>}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabs}
-        keyboardShouldPersistTaps="handled"
-      >
-        {tabs.map((tb) => (
-          <TouchableOpacity
-            key={tb}
-            style={[styles.tab, tab === tb && styles.tabActive]}
-            onPress={() => setTab(tb)}
-          >
-            <Text style={[styles.tabText, tab === tb && styles.tabTextActive]}>{tabLabel(tb)}</Text>
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          style={[styles.tab, urgentOnly && styles.tabActive]}
-          onPress={() => setUrgentOnly((v) => !v)}
-        >
-          <Text style={[styles.tabText, urgentOnly && styles.tabTextActive]}>⚠ {t('tasks.urgent')}</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>🔎</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('tasks.searchPlaceholder')}
-          placeholderTextColor={colors.muted}
-          value={search}
-          onChangeText={setSearch}
-          autoCapitalize="none"
-          returnKeyType="search"
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')} hitSlop={10}>
-            <Text style={styles.searchClear}>✕</Text>
-          </TouchableOpacity>
+      <View style={styles.filterRow}>
+        {isDispatcher && (
+          <View style={styles.segment}>
+            {(['mine', 'team'] as const).map((s) => (
+              <TouchableOpacity
+                key={s}
+                style={[
+                  styles.segmentItem,
+                  styles.segmentItemFixed,
+                  scope === s && styles.segmentItemActive,
+                ]}
+                onPress={() => setScope(s)}
+              >
+                <Text style={[styles.segmentText, scope === s && styles.segmentTextActive]}>
+                  {t(`tasks.scope_${s}`)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
+        <View style={[styles.segment, styles.segmentGrow]}>
+          {(['active', 'completed'] as const).map((s) => (
+            <TouchableOpacity
+              key={s}
+              style={[
+                styles.segmentItem,
+                styles.segmentItemGrow,
+                status === s && styles.segmentItemActive,
+              ]}
+              onPress={() => setStatus(s)}
+            >
+              <Text
+                style={[styles.segmentText, status === s && styles.segmentTextActive]}
+                numberOfLines={1}
+              >
+                {t(`tasks.tab_${s}`)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.searchRow}>
+        <View style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>🔎</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('tasks.searchPlaceholder')}
+            placeholderTextColor={colors.muted}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={10}>
+              <Text style={styles.searchClear}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {/* Urgent is a filter, not a view — it belongs with search, not with
+            the tabs it used to sit among. */}
+        <TouchableOpacity
+          style={[styles.urgentToggle, urgentOnly && styles.urgentToggleActive]}
+          onPress={() => setUrgentOnly((v) => !v)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: urgentOnly }}
+          accessibilityLabel={t('tasks.urgent')}
+        >
+          <Text style={[styles.urgentToggleText, urgentOnly && styles.urgentToggleTextActive]}>⚠</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -244,6 +277,8 @@ export function TasksScreen() {
           keyExtractor={(item) => item.ticketId}
           renderItem={renderItem}
           contentContainerStyle={visibleItems.length === 0 ? styles.center : styles.list}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(tab, true)} tintColor={colors.green} />
           }
@@ -273,37 +308,59 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: colors.forest },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
 
-  // Horizontally scrollable: a dispatcher has five chips (four tabs +
-  // urgent filter), which don't fit a phone width.
-  tabs: {
+  // Two fixed segmented controls instead of one horizontally scrolling chip
+  // row. The old row was a horizontal ScrollView, and RN gives those
+  // flexGrow: 1 by default — so it stole the leftover column height and
+  // vertically centred the chips inside it. Every tab switch changed how
+  // much space the list wanted, the leftover was re-split, and the whole
+  // header visibly jumped. Nothing here grows or scrolls, so nothing moves.
+  filterRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
     gap: spacing.sm,
-    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  tab: {
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
+  segment: {
+    flexDirection: 'row',
     backgroundColor: colors.card,
+    borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
+    padding: 3,
   },
-  tabActive: { backgroundColor: colors.green, borderColor: colors.green },
-  tabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
-  tabTextActive: { color: colors.white },
+  segmentGrow: { flex: 1 },
+  segmentItem: {
+    paddingVertical: spacing.xs + 3,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Only inside the flex:1 status segment. `flex: 1` sets flexBasis: 0, which
+  // in the content-sized scope segment would collapse both halves to nothing —
+  // there the items size to their labels, with minWidth keeping them even.
+  segmentItemGrow: { flex: 1 },
+  segmentItemFixed: { minWidth: 52 },
+  segmentItemActive: { backgroundColor: colors.green },
+  segmentText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  segmentTextActive: { color: colors.white },
 
   assigneeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   assigneeIcon: { fontSize: 11 },
   assigneeName: { fontSize: 12, color: colors.muted, fontWeight: '600', flex: 1 },
 
-  searchWrap: {
+  searchRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     gap: spacing.sm,
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
+  },
+  searchWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -313,6 +370,18 @@ const styles = StyleSheet.create({
   searchIcon: { fontSize: 14 },
   searchInput: { flex: 1, color: colors.forest, fontSize: 15, paddingVertical: spacing.sm + 2 },
   searchClear: { color: colors.muted, fontSize: 15, fontWeight: '700' },
+  urgentToggle: {
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+  },
+  urgentToggleActive: { backgroundColor: tint(colors.error), borderColor: colors.error },
+  urgentToggleText: { fontSize: 16, color: colors.muted },
+  urgentToggleTextActive: { color: colors.error },
 
   list: { padding: spacing.md, gap: spacing.sm },
   center: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },

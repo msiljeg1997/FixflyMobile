@@ -22,16 +22,14 @@
     "tabCompleted": "Abgeschlossen",
     "tab_active": "Aktiv",
     "tab_completed": "Abgeschlossen",
-    "tab_active_dispatcher": "Meine aktiven",
-    "tab_completed_dispatcher": "Meine erledigten",
-    "tab_teamActive_dispatcher": "Team — aktiv",
-    "tab_teamCompleted_dispatcher": "Team — erledigt",
     "empty": "Keine Aufgaben",
     "loadError": "Aufgaben konnten nicht geladen werden.",
     "urgent": "DRINGEND",
     "room": "Zimmer",
     "searchPlaceholder": "Standort, Beschreibung, ID suchen...",
-    "noMatches": "Keine Treffer für diese Suche."
+    "noMatches": "Keine Treffer für diese Suche.",
+    "scope_mine": "Meine",
+    "scope_team": "Team"
   },
   "status": {
     "New": "Neu",
