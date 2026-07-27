@@ -40,6 +40,8 @@
     "assignedBy": "Zugewiesen von",
     "locationInfo": "Standort",
     "contact": "Kontakt",
+    "reporter": "Gemeldet von",
+    "openChat": "Chat öffnen",
     "call": "Anrufen",
     "history": "Aktivitätsverlauf",
     "historyEmpty": "Keine Aktivität aufgezeichnet.",
@@ -68,8 +70,13 @@
     "profile": "Profil"
   },
   "chat": {
-    "comingSoonTitle": "Chat kommt bald",
-    "comingSoonBody": "Gespräche pro Aufgabe werden in einem zukünftigen App-Update verfügbar sein."
+    "title": "Unterhaltungen",
+    "subtitle": "Nachrichten pro Aufgabe",
+    "empty": "Noch keine Nachrichten. Schreiben Sie die erste.",
+    "noThreads": "Sie haben keine aktiven Aufgaben.",
+    "placeholder": "Nachricht schreiben...",
+    "loadError": "Nachrichten konnten nicht geladen werden.",
+    "viaWhatsApp": "über WhatsApp"
   },
   "role": {
     "technician": "Techniker",

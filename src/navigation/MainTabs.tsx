@@ -3,7 +3,7 @@ import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 import { TasksStackNavigator } from './TasksStackNavigator';
-import { ChatPlaceholderScreen } from '../screens/ChatPlaceholderScreen';
+import { ChatStackNavigator } from './ChatStackNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { colors, spacing } from '../theme/tokens';
 
@@ -54,7 +54,7 @@ export function MainTabs() {
       />
       <Tab.Screen
         name="ChatTab"
-        component={ChatPlaceholderScreen}
+        component={ChatStackNavigator}
         options={{
           tabBarLabel: t('tabs.chat'),
           tabBarIcon: ({ color }) => <TabIcon glyph="💬" color={color} />,

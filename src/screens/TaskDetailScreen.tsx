@@ -134,6 +134,10 @@ export function TaskDetailScreen() {
     if (task?.locationContactPhone) Linking.openURL(`tel:${task.locationContactPhone}`);
   };
 
+  const callReporter = () => {
+    if (task?.reporterPhone) Linking.openURL(`tel:${task.reporterPhone}`);
+  };
+
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
   const showError = (e: unknown) => {
@@ -308,6 +312,23 @@ export function TaskDetailScreen() {
         </Text>
         {task.category && <Text style={styles.category}>{categoryLabel(task.category)}</Text>}
 
+        <TouchableOpacity
+          style={styles.chatButton}
+          activeOpacity={0.7}
+          onPress={() =>
+            navigation.navigate('Chat', { ticketId: task.ticketId, title: task.locationName || task.location })
+          }
+        >
+          <Text style={styles.chatButtonIcon}>💬</Text>
+          <Text style={styles.chatButtonText}>{t('taskDetail.openChat')}</Text>
+          {task.unreadChatCount > 0 && (
+            <View style={styles.chatBadge}>
+              <Text style={styles.chatBadgeText}>{task.unreadChatCount}</Text>
+            </View>
+          )}
+          <Text style={styles.chatChevron}>›</Text>
+        </TouchableOpacity>
+
         {task.isUrgent && (
           <View style={styles.urgentBanner}>
             <Text style={styles.urgentBannerText}>⚠ {t('tasks.urgent')}</Text>
@@ -362,6 +383,22 @@ export function TaskDetailScreen() {
           <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>
           <Text style={styles.description}>{task.description}</Text>
         </View>
+
+        {task.reporterPhone && (
+          <View style={styles.card}>
+            <InfoRow
+              icon="🙋"
+              label={t('taskDetail.reporter')}
+              value={task.reporterPhone}
+              last
+              action={
+                <TouchableOpacity style={styles.callButton} onPress={callReporter}>
+                  <Text style={styles.callButtonText}>{t('taskDetail.call')}</Text>
+                </TouchableOpacity>
+              }
+            />
+          </View>
+        )}
 
         {task.imageUrl && (
           <View style={styles.card}>
@@ -622,6 +659,32 @@ const styles = StyleSheet.create({
   ticketId: { fontSize: 13, color: colors.muted, marginTop: spacing.sm, marginBottom: 2 },
   location: { fontSize: 22, fontWeight: '700', color: colors.forest },
   category: { fontSize: 14, color: colors.muted, marginTop: 2 },
+
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.md,
+  },
+  chatButtonIcon: { fontSize: 16 },
+  chatButtonText: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.forest },
+  chatBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.green,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  chatBadgeText: { color: colors.white, fontSize: 11, fontWeight: '700' },
+  chatChevron: { fontSize: 20, color: colors.muted },
 
   urgentBanner: {
     backgroundColor: tint(colors.error, '20'),

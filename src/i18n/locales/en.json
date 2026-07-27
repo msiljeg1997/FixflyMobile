@@ -40,6 +40,8 @@
     "assignedBy": "Assigned by",
     "locationInfo": "Location",
     "contact": "Contact",
+    "reporter": "Reported by",
+    "openChat": "Open chat",
     "call": "Call",
     "history": "Activity history",
     "historyEmpty": "No activity recorded.",
@@ -68,8 +70,13 @@
     "profile": "Profile"
   },
   "chat": {
-    "comingSoonTitle": "Chat is coming soon",
-    "comingSoonBody": "Per-task conversations will be available in a future app update."
+    "title": "Conversations",
+    "subtitle": "Messages per task",
+    "empty": "No messages yet. Write the first one.",
+    "noThreads": "You have no active tasks.",
+    "placeholder": "Write a message...",
+    "loadError": "Couldn't load messages.",
+    "viaWhatsApp": "via WhatsApp"
   },
   "role": {
     "technician": "Technician",
