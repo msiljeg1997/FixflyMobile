@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { colors, radius, spacing } from '../theme/tokens';
@@ -25,52 +37,70 @@ export function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.brandMark}>
-        <Text style={styles.brandMarkText}>F</Text>
-      </View>
-      <Text style={styles.title}>{t('login.title')}</Text>
-      <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
-
-      <View style={styles.form}>
-        <TextInput
-          style={styles.input}
-          placeholder={t('login.email')}
-          placeholderTextColor={colors.muted}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder={t('login.password')}
-          placeholderTextColor={colors.muted}
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-
-        {error && <Text style={styles.error}>{error}</Text>}
-
-        <TouchableOpacity
-          style={[styles.button, submitting && styles.buttonDisabled]}
-          onPress={onSubmit}
-          disabled={submitting || !email || !password}
+    // The password field sat low enough that the keyboard covered it on
+    // smaller devices; the scroll view + padding behavior lifts the form
+    // instead, and tapping the backdrop dismisses the keyboard.
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
         >
-          {submitting ? (
-            <ActivityIndicator color={colors.white} />
-          ) : (
-            <Text style={styles.buttonText}>{t('login.submit')}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </View>
+          <View style={styles.brandMark}>
+            <Text style={styles.brandMarkText}>F</Text>
+          </View>
+          <Text style={styles.title}>{t('login.title')}</Text>
+          <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+
+          <View style={styles.form}>
+            <TextInput
+              style={styles.input}
+              placeholder={t('login.email')}
+              placeholderTextColor={colors.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              returnKeyType="next"
+              value={email}
+              onChangeText={setEmail}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder={t('login.password')}
+              placeholderTextColor={colors.muted}
+              secureTextEntry
+              returnKeyType="go"
+              onSubmitEditing={() => {
+                if (email && password && !submitting) onSubmit();
+              }}
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            {error && <Text style={styles.error}>{error}</Text>}
+
+            <TouchableOpacity
+              style={[styles.button, submitting && styles.buttonDisabled]}
+              onPress={onSubmit}
+              disabled={submitting || !email || !password}
+            >
+              {submitting ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text style={styles.buttonText}>{t('login.submit')}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: colors.surface },
+  flex: { flex: 1, backgroundColor: colors.surface },
+  container: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg, backgroundColor: colors.surface },
 
   brandMark: {
     width: 64,

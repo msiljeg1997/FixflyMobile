@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
 import { AgentRole, AgentStats } from '../api/types';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
-import { getInitials } from '../utils/format';
+import { formatDuration, getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
@@ -101,7 +101,7 @@ export function ProfileScreen() {
               <Text style={styles.statLabel}>{t('profile.resolvedToday')}</Text>
             </View>
             <View style={styles.statTile}>
-              <Text style={styles.statValue}>{stats ? `${stats.avgResolutionMinutes} min` : '–'}</Text>
+              <Text style={styles.statValue}>{stats ? formatDuration(stats.avgResolutionMinutes) : '–'}</Text>
               <Text style={styles.statLabel}>{t('profile.avgResolution')}</Text>
             </View>
             <View style={styles.statTile}>

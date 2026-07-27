@@ -6,6 +6,25 @@ export function formatDateTime(iso: string | null | undefined): string | null {
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+/**
+ * Human-readable duration. Raw minutes stop being readable fast — a
+ * two-week-old ticket showed as "18700 min", which nobody can parse at a
+ * glance. Scales to h and d, keeping one secondary unit for precision.
+ */
+export function formatDuration(minutes: number | null | undefined): string {
+  if (minutes === null || minutes === undefined || minutes <= 0) return '–';
+  const m = Math.round(minutes);
+  if (m < 60) return `${m} min`;
+
+  const hours = Math.floor(m / 60);
+  const remMinutes = m % 60;
+  if (hours < 24) return remMinutes > 0 ? `${hours} h ${remMinutes} min` : `${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours > 0 ? `${days} d ${remHours} h` : `${days} d`;
+}
+
 export function getInitials(name: string): string {
   return name
     .split(' ')

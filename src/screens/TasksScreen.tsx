@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { signalRService } from '../realtime/signalr';
 import * as tasksApi from '../api/tasks';
-import { TaskListItem, TaskTab, TicketStatus } from '../api/types';
+import { AgentRole, TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { categoryLabel, formatDateTime } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
@@ -113,6 +114,15 @@ export function TasksScreen() {
 
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
+  // A dispatcher hands work out, so they need to see it after it leaves their
+  // own queue; a technician only ever has their own two lists.
+  const isDispatcher = agent?.role === AgentRole.Hausmajstor;
+  const tabs: TaskTab[] = isDispatcher
+    ? ['active', 'completed', 'teamActive', 'teamCompleted']
+    : ['active', 'completed'];
+  const tabLabel = (tb: TaskTab) =>
+    isDispatcher ? t(`tasks.tab_${tb}_dispatcher`) : t(`tasks.tab_${tb}`);
+
   const query = search.trim().toLowerCase();
   const visibleItems = items.filter((i) => {
     if (urgentOnly && !i.isUrgent) return false;
@@ -125,6 +135,8 @@ export function TasksScreen() {
       (i.category?.name ?? '').toLowerCase().includes(query)
     );
   });
+
+  const isTeamTab = tab === 'teamActive' || tab === 'teamCompleted';
 
   const renderItem = ({ item }: { item: TaskListItem }) => {
     const statusColor = STATUS_COLORS[item.status];
@@ -156,6 +168,13 @@ export function TasksScreen() {
           </View>
           <Text style={styles.cardTime}>{formatDateTime(item.createdAt)}</Text>
         </View>
+        {/* Only on the team tabs — on "my" lists the assignee is always me. */}
+        {isTeamTab && item.assignedAgentName && (
+          <View style={styles.assigneeRow}>
+            <Text style={styles.assigneeIcon}>👷</Text>
+            <Text style={styles.assigneeName} numberOfLines={1}>{item.assignedAgentName}</Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -167,25 +186,28 @@ export function TasksScreen() {
         {agent && <Text style={styles.subtitle}>{agent.name}</Text>}
       </View>
 
-      <View style={styles.tabs}>
-        {(['active', 'completed'] as TaskTab[]).map((tb) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tabs}
+        keyboardShouldPersistTaps="handled"
+      >
+        {tabs.map((tb) => (
           <TouchableOpacity
             key={tb}
             style={[styles.tab, tab === tb && styles.tabActive]}
             onPress={() => setTab(tb)}
           >
-            <Text style={[styles.tabText, tab === tb && styles.tabTextActive]}>
-              {tb === 'active' ? t('tasks.tabActive') : t('tasks.tabCompleted')}
-            </Text>
+            <Text style={[styles.tabText, tab === tb && styles.tabTextActive]}>{tabLabel(tb)}</Text>
           </TouchableOpacity>
         ))}
         <TouchableOpacity
-          style={[styles.tab, styles.filterChip, urgentOnly && styles.tabActive]}
+          style={[styles.tab, urgentOnly && styles.tabActive]}
           onPress={() => setUrgentOnly((v) => !v)}
         >
           <Text style={[styles.tabText, urgentOnly && styles.tabTextActive]}>⚠ {t('tasks.urgent')}</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>🔎</Text>
@@ -251,12 +273,14 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: colors.forest },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
 
+  // Horizontally scrollable: a dispatcher has five chips (four tabs +
+  // urgent filter), which don't fit a phone width.
   tabs: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     gap: spacing.sm,
+    alignItems: 'center',
   },
   tab: {
     paddingVertical: spacing.xs + 2,
@@ -269,7 +293,10 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: colors.green, borderColor: colors.green },
   tabText: { fontSize: 13, fontWeight: '600', color: colors.muted },
   tabTextActive: { color: colors.white },
-  filterChip: { marginLeft: 'auto' },
+
+  assigneeRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
+  assigneeIcon: { fontSize: 11 },
+  assigneeName: { fontSize: 12, color: colors.muted, fontWeight: '600', flex: 1 },
 
   searchWrap: {
     flexDirection: 'row',

@@ -88,7 +88,9 @@ export interface AgentProfile {
 
 // ── §8 — Tasks (W3, new AgentController) ────────────────────────────────────
 
-export type TaskTab = 'active' | 'completed';
+// teamActive/teamCompleted are dispatcher-only: oversight of what they
+// handed to technicians. The backend rejects them for a Technician.
+export type TaskTab = 'active' | 'completed' | 'teamActive' | 'teamCompleted';
 
 export interface TaskListQuery {
   tab: TaskTab;
@@ -117,6 +119,7 @@ export interface TaskListItem {
   acceptedAt: string | null;
   doneAt: string | null;
   unreadChatCount: number; // for the chat badge (Screen 2)
+  assignedAgentName: string | null; // who's handling it — drives the team tabs
 }
 
 // Full detail for Screen 3 (task detail + resolve)
