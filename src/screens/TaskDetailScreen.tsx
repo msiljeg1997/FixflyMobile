@@ -3,13 +3,17 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Linking,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -488,48 +492,62 @@ export function TaskDetailScreen() {
       {/* Reject — focused modal sheet instead of an inline form at the
           bottom of the scroll */}
       <Modal visible={rejecting} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRejecting(false)}>
-        <View style={[styles.sheet, { paddingTop: insets.top + spacing.md }]}>
-          <View style={styles.sheetHeader}>
-            <TouchableOpacity onPress={() => setRejecting(false)} disabled={acting}>
+        <KeyboardAvoidingView
+          style={styles.sheet}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.md }]}>
+            <TouchableOpacity onPress={() => setRejecting(false)} disabled={acting} hitSlop={8}>
               <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.sheetTitle}>{t('taskDetail.reject')}</Text>
-            <View style={styles.sheetHeaderSpacer} />
+            <Text style={styles.sheetTitle} numberOfLines={1}>{t('taskDetail.reject')}</Text>
+            <TouchableOpacity onPress={Keyboard.dismiss} hitSlop={8}>
+              <Text style={styles.sheetDone}>{t('common.done')}</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.sheetBody}>
-            <Text style={styles.sectionLabel}>{t('taskDetail.rejectReason')}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={t('taskDetail.rejectPlaceholder')}
-              placeholderTextColor={colors.muted}
-              value={rejectReason}
-              onChangeText={setRejectReason}
-              multiline
-              autoFocus
-            />
-          </View>
+          {/* Tapping the empty area dismisses the keyboard — a multiline field
+              has no return key to do it, which left the pad stuck open. */}
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <View style={styles.sheetBody}>
+              <Text style={styles.sectionLabel}>{t('taskDetail.rejectReason')}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('taskDetail.rejectPlaceholder')}
+                placeholderTextColor={colors.muted}
+                value={rejectReason}
+                onChangeText={setRejectReason}
+                multiline
+                autoFocus
+              />
+            </View>
+          </TouchableWithoutFeedback>
 
           <View style={[styles.sheetFooter, { paddingBottom: insets.bottom + spacing.md }]}>
             <TouchableOpacity style={styles.dangerButton} onPress={onReject} disabled={acting}>
               {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.dangerButtonText}>{t('taskDetail.rejectConfirm')}</Text>}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Resolve — same sheet treatment, scrollable body for the photo grid */}
       <Modal visible={resolving} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setResolving(false)}>
-        <View style={[styles.sheet, { paddingTop: insets.top + spacing.md }]}>
-          <View style={styles.sheetHeader}>
-            <TouchableOpacity onPress={() => setResolving(false)} disabled={acting}>
+        <KeyboardAvoidingView
+          style={styles.sheet}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.md }]}>
+            <TouchableOpacity onPress={() => setResolving(false)} disabled={acting} hitSlop={8}>
               <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.sheetTitle}>{t('taskDetail.resolve')}</Text>
-            <View style={styles.sheetHeaderSpacer} />
+            <Text style={styles.sheetTitle} numberOfLines={1}>{t('taskDetail.resolve')}</Text>
+            <TouchableOpacity onPress={Keyboard.dismiss} hitSlop={8}>
+              <Text style={styles.sheetDone}>{t('common.done')}</Text>
+            </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.sheetBody}>
+          <ScrollView style={styles.sheetBody} keyboardShouldPersistTaps="handled">
             <Text style={styles.sectionLabel}>{t('taskDetail.resolveComment')}</Text>
             <TextInput
               style={styles.input}
@@ -569,19 +587,20 @@ export function TaskDetailScreen() {
               {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryButtonText}>{t('taskDetail.resolveConfirm')}</Text>}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Forward — dispatcher picks a technician; tapping a row forwards
           immediately (a picker, not a form that needs a separate confirm) */}
       <Modal visible={forwarding} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setForwarding(false)}>
-        <View style={[styles.sheet, { paddingTop: insets.top + spacing.md }]}>
-          <View style={styles.sheetHeader}>
-            <TouchableOpacity onPress={() => setForwarding(false)} disabled={acting}>
+        <View style={styles.sheet}>
+          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.md }]}>
+            <TouchableOpacity onPress={() => setForwarding(false)} disabled={acting} hitSlop={8}>
               <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
             </TouchableOpacity>
-            <Text style={styles.sheetTitle}>{t('taskDetail.forward')}</Text>
-            <View style={styles.sheetHeaderSpacer} />
+            <Text style={styles.sheetTitle} numberOfLines={1}>{t('taskDetail.forward')}</Text>
+            {/* Balances the cancel link so the title stays optically centred */}
+            <View style={{ width: 52 }} />
           </View>
 
           <ScrollView style={styles.sheetBody}>
@@ -839,13 +858,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  sheetCancel: { color: colors.muted, fontSize: 15, fontWeight: '600', width: 60 },
-  sheetHeaderSpacer: { width: 60 },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: colors.forest },
-  sheetBody: { flex: 1, paddingHorizontal: spacing.lg },
+  // No fixed width — "Odustani"/"Abbrechen" wrapped to two lines at 60px.
+  sheetCancel: { color: colors.muted, fontSize: 15, fontWeight: '600' },
+  sheetDone: { color: colors.green, fontSize: 15, fontWeight: '700' },
+  sheetTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: colors.forest, textAlign: 'center' },
+  sheetBody: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
   sheetFooter: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,

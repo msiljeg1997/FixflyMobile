@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { TasksStackNavigator } from './TasksStackNavigator';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { ChatBanner } from '../components/ChatBanner';
+import { useUnread } from '../context/UnreadContext';
 import { colors, spacing } from '../theme/tokens';
 
 export type MainTabParamList = {
@@ -24,8 +26,10 @@ function TabIcon({ glyph, color }: { glyph: string; color: string }) {
 // mounted even when a technician is deep in a task's detail screen.
 export function MainTabs() {
   const { t } = useTranslation();
+  const { total } = useUnread();
 
   return (
+    <>
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
@@ -58,6 +62,8 @@ export function MainTabs() {
         options={{
           tabBarLabel: t('tabs.chat'),
           tabBarIcon: ({ color }) => <TabIcon glyph="💬" color={color} />,
+          tabBarBadge: total > 0 ? (total > 99 ? '99+' : total) : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.green, color: colors.white, fontSize: 10 },
         }}
       />
       <Tab.Screen
@@ -69,5 +75,7 @@ export function MainTabs() {
         }}
       />
     </Tab.Navigator>
+    <ChatBanner />
+    </>
   );
 }

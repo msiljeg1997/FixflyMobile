@@ -21,6 +21,7 @@ import type { ChatImage } from '../api/chat';
 import { isNetworkError } from '../api/client';
 import { outbox, OutboxItem } from '../offline/outbox';
 import { signalRService } from '../realtime/signalr';
+import { useUnread } from '../context/UnreadContext';
 import { ChatMessage, ChatSenderType } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { ImageViewerModal } from '../components/ImageViewerModal';
@@ -42,6 +43,7 @@ export function ChatScreen() {
   const { ticketId, title } = route.params;
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<ChatMessage>>(null);
+  const { refresh: refreshUnread, setActiveThread } = useUnread();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,17 +60,23 @@ export function ChatScreen() {
       setMessages(data);
       // Opening the thread counts as reading it — drives the other side's
       // "Seen" and clears this ticket's unread badge.
-      chatApi.markRead(ticketId).catch(() => {});
+      chatApi.markRead(ticketId).then(() => refreshUnread()).catch(() => {});
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [ticketId]);
+  }, [ticketId, refreshUnread]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Suppress the in-app banner for the thread currently on screen.
+  useEffect(() => {
+    setActiveThread(ticketId);
+    return () => setActiveThread(null);
+  }, [ticketId, setActiveThread]);
 
   // Mirror the outbox so queued-but-unsent messages stay visible in the
   // thread (greyed, with a clock) instead of vanishing until they land.
@@ -85,7 +93,7 @@ export function ChatScreen() {
     const off = signalRService.onChatMessageReceived((evt) => {
       if (evt.ticketId !== ticketId) return;
       setMessages((prev) => (prev.some((m) => m.id === evt.message.id) ? prev : [...prev, evt.message]));
-      chatApi.markRead(ticketId).catch(() => {});
+      chatApi.markRead(ticketId).then(() => refreshUnread()).catch(() => {});
     });
     return off;
   }, [ticketId]);
