@@ -16,9 +16,11 @@ interface Props {
   onUseFullLogin?: () => void;
   /** Setup only — let the user skip and keep full-password login. */
   onSkip?: () => void;
+  /** Unlock only — email-verified PIN recovery, keeping the session. */
+  onForgotPin?: () => void;
 }
 
-export function LockScreen({ mode, onSuccess, onUseFullLogin, onSkip }: Props) {
+export function LockScreen({ mode, onSuccess, onUseFullLogin, onSkip, onForgotPin }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -151,6 +153,13 @@ export function LockScreen({ mode, onSuccess, onUseFullLogin, onSkip }: Props) {
       {busy && <ActivityIndicator color={colors.green} style={{ marginTop: spacing.md }} />}
 
       <View style={styles.footer}>
+        {/* Listed above "log in with a password" on purpose: recovering the
+            PIN keeps the session, while the full-login route discards it. */}
+        {mode === 'unlock' && onForgotPin && (
+          <TouchableOpacity onPress={onForgotPin} hitSlop={8}>
+            <Text style={styles.link}>{t('lock.forgotPin')}</Text>
+          </TouchableOpacity>
+        )}
         {mode === 'unlock' && onUseFullLogin && (
           <TouchableOpacity onPress={onUseFullLogin} hitSlop={8}>
             <Text style={styles.link}>{t('lock.useFullLogin')}</Text>

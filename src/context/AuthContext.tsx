@@ -28,7 +28,26 @@ interface AuthContextValue {
   login: (credentials: AgentLoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   unlock: () => void;
+  /** PIN created — appLock.setPin already recorded the choice. */
+  completePinSetup: () => void;
+  /** Setup declined — records "off" so login stops asking. */
   skipPinSetup: () => void;
+  /** Drops the local PIN and jumps to setup — after an email-verified reset. */
+  resetPin: () => Promise<void>;
+  /** Opens PIN setup from settings: enrolling a new lock, or replacing a PIN. */
+  startPinSetup: (intent: 'enroll' | 'change') => void;
+  /**
+   * Why the setup screen is open. Backing out of a *change* must leave the
+   * existing PIN alone; backing out of an *enroll* means "no lock, stop
+   * asking".
+   */
+  pinSetupIntent: 'enroll' | 'change';
+  /**
+   * Adopts tokens that were stored outside the login call — the password
+   * reset signs the agent in as part of the reset, and this picks that
+   * session up without a second trip through the login screen.
+   */
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -36,6 +55,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [agent, setAgent] = useState<AgentProfile | null>(null);
   const [status, setStatus] = useState<AuthContextValue['status']>('checking');
+  const [pinSetupIntent, setPinSetupIntent] = useState<'enroll' | 'change'>('enroll');
   const backgroundedAt = useRef<number | null>(null);
   const statusRef = useRef(status);
   statusRef.current = status;
@@ -67,8 +87,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = await authApi.fetchCurrentAgent();
         setAgent(profile);
         connectRealtimeSafe();
-        // A stored session behind a set PIN starts locked, not open.
-        setStatus((await appLock.isPinSet()) ? 'locked' : 'signedIn');
+        // A stored session behind an ENABLED lock starts locked, not open.
+        setStatus((await appLock.isLockEnabled()) ? 'locked' : 'signedIn');
       } catch (error) {
         if (isNetworkError(error)) {
           // Offline at cold start: keep the stored session intact and show
@@ -95,8 +115,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const away = Date.now() - backgroundedAt.current;
         backgroundedAt.current = null;
         if (away >= LOCK_AFTER_BACKGROUND_MS) {
-          appLock.isPinSet().then((set) => {
-            if (set) setStatus('locked');
+          appLock.isLockEnabled().then((enabled) => {
+            if (enabled) setStatus('locked');
           });
         }
       }
@@ -108,16 +128,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const profile = await authApi.login(credentials);
     setAgent(profile);
     connectRealtimeSafe();
-    // Offer the quick-unlock gate right after a full login, once per device.
-    setStatus((await appLock.isPinSet()) ? 'signedIn' : 'pinSetup');
+    // Offer the quick-unlock gate once, and only to a device that has never
+    // answered. Someone who turned the lock off stays signed straight in —
+    // re-asking on every login is how a declined option becomes nagging.
+    setStatus((await appLock.hasChosen()) ? 'signedIn' : 'pinSetup');
   }, []);
 
   const unlock = useCallback(() => setStatus('signedIn'), []);
-  const skipPinSetup = useCallback(() => setStatus('signedIn'), []);
+
+  // Distinct from skipPinSetup on purpose: that one records "lock off", which
+  // applied to a successful setup would switch off the PIN just created.
+  const completePinSetup = useCallback(() => setStatus('signedIn'), []);
+
+  const startPinSetup = useCallback((intent: 'enroll' | 'change') => {
+    setPinSetupIntent(intent);
+    setStatus('pinSetup');
+  }, []);
+
+  // "Not now" is a decision, so it gets recorded — see appLock.declineLock.
+  // Except when changing an existing PIN: backing out of that means "leave it
+  // as it was", not "switch the lock off".
+  const skipPinSetup = useCallback(async () => {
+    if (pinSetupIntent === 'enroll') await appLock.declineLock();
+    setStatus('signedIn');
+  }, [pinSetupIntent]);
+
+  /**
+   * Runs after an email-verified PIN reset. The session behind the lock is
+   * still valid, so the app goes straight to choosing a new PIN instead of
+   * throwing the agent back to a full login they don't need.
+   */
+  const resetPin = useCallback(async () => {
+    await appLock.disableLock();
+    setPinSetupIntent('enroll');
+    setStatus('pinSetup');
+  }, []);
+
+  const refreshSession = useCallback(async () => {
+    const profile = await authApi.fetchCurrentAgent();
+    setAgent(profile);
+    connectRealtimeSafe();
+    setStatus((await appLock.hasChosen()) ? 'signedIn' : 'pinSetup');
+  }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ agent, status, login: doLogin, logout: doLogout, unlock, skipPinSetup }),
-    [agent, status, doLogin, doLogout, unlock, skipPinSetup]
+    () => ({
+      agent, status, login: doLogin, logout: doLogout,
+      unlock, completePinSetup, skipPinSetup, resetPin, refreshSession,
+      startPinSetup, pinSetupIntent,
+    }),
+    [agent, status, doLogin, doLogout, unlock, completePinSetup, skipPinSetup,
+     resetPin, refreshSession, startPinSetup, pinSetupIntent]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

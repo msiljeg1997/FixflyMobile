@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
+import { appLock } from '../security/appLock';
 import { AgentRole, AgentStats } from '../api/types';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 import { formatDuration, getInitials } from '../utils/format';
@@ -16,7 +17,7 @@ const LANGUAGE_NAMES: Record<SupportedLanguage, string> = { hr: 'Hrvatski', en: 
 
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
-  const { agent, logout } = useAuth();
+  const { agent, logout, startPinSetup } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [stats, setStats] = useState<AgentStats | null>(null);
@@ -36,6 +37,38 @@ export function ProfileScreen() {
     setPushEnabled(value);
     AsyncStorage.setItem(PUSH_PREF_KEY, String(value));
   };
+
+  // App lock (PIN / biometrics). Off is a legitimate choice: the session then
+  // simply stays open until the agent logs out.
+  const [lockEnabled, setLockEnabled] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Re-read on focus — the setup screen lives above this one, so the
+      // switch has to reflect whatever happened while we were away.
+      appLock.isLockEnabled().then(setLockEnabled);
+    }, [])
+  );
+
+  const toggleLock = (value: boolean) => {
+    if (value) {
+      startPinSetup('enroll');
+      return; // the switch follows the outcome via the focus effect above
+    }
+    Alert.alert(t('profile.appLockOffTitle'), t('profile.appLockOffBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('profile.appLockOffConfirm'),
+        style: 'destructive',
+        onPress: async () => {
+          await appLock.disableLock();
+          setLockEnabled(false);
+        },
+      },
+    ]);
+  };
+
+  const changePin = () => startPinSetup('change');
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -134,6 +167,34 @@ export function ProfileScreen() {
           />
         </View>
 
+        <View style={styles.settingRow}>
+          <View style={[styles.settingIconChip, { backgroundColor: tint(colors.statusAccepted, '26') }]}>
+            <Text style={styles.settingIcon}>🔒</Text>
+          </View>
+          <View style={styles.settingLabelWrap}>
+            <Text style={styles.settingLabel}>{t('profile.appLock')}</Text>
+            <Text style={styles.settingSubLabel}>{t('profile.appLockHint')}</Text>
+          </View>
+          <Switch
+            value={lockEnabled}
+            onValueChange={toggleLock}
+            trackColor={{ true: colors.green, false: colors.border }}
+            thumbColor={colors.white}
+            ios_backgroundColor={colors.border}
+          />
+        </View>
+
+        {/* Only worth showing when there is a PIN to change. */}
+        {lockEnabled && (
+          <TouchableOpacity style={styles.settingRow} onPress={changePin} activeOpacity={0.6}>
+            <View style={[styles.settingIconChip, { backgroundColor: tint(colors.muted, '26') }]}>
+              <Text style={styles.settingIcon}>🔑</Text>
+            </View>
+            <Text style={styles.settingLabel}>{t('profile.changePin')}</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity style={styles.settingRow} onPress={pickLanguage} activeOpacity={0.6}>
           <View style={[styles.settingIconChip, { backgroundColor: tint(colors.statusNew, '26') }]}>
             <Text style={styles.settingIcon}>🌐</Text>
@@ -219,6 +280,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingIcon: { fontSize: 16 },
+  settingLabelWrap: { flex: 1 },
+  settingSubLabel: { fontSize: 12, color: colors.muted, marginTop: 2 },
   settingLabel: { flex: 1, fontSize: 15, color: colors.text, fontWeight: '600' },
   settingValue: { fontSize: 14, color: colors.muted },
   chevron: { fontSize: 18, color: colors.muted, marginLeft: spacing.xs },

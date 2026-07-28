@@ -14,7 +14,8 @@
     "email": "Email",
     "password": "Lozinka",
     "submit": "Prijava",
-    "error": "Pogrešan email ili lozinka"
+    "error": "Pogrešan email ili lozinka",
+    "forgotPassword": "Zaboravljena lozinka?"
   },
   "tasks": {
     "title": "Moji zadaci",
@@ -89,7 +90,8 @@
     "wrongPin": "Pogrešan PIN",
     "pinMismatch": "PIN-ovi se ne podudaraju",
     "useFullLogin": "Prijava emailom i lozinkom",
-    "skip": "Preskoči za sad"
+    "skip": "Preskoči za sad",
+    "forgotPin": "Zaboravili ste PIN?"
   },
   "chat": {
     "title": "Razgovori",
@@ -120,6 +122,35 @@
     "pushNotifications": "Push notifikacije",
     "language": "Jezik",
     "logoutConfirmTitle": "Odjava",
-    "logoutConfirmBody": "Jeste li sigurni da se želite odjaviti?"
+    "logoutConfirmBody": "Jeste li sigurni da se želite odjaviti?",
+    "appLock": "Zaključavanje aplikacije",
+    "appLockHint": "Traži PIN ili biometriju pri otvaranju",
+    "changePin": "Promijeni PIN",
+    "appLockOffTitle": "Isključiti zaključavanje?",
+    "appLockOffBody": "PIN će biti obrisan. Aplikacija ostaje prijavljena dok se ručno ne odjavite — tko god otvori telefon vidjet će vaše zadatke.",
+    "appLockOffConfirm": "Isključi"
+  },
+  "forgotPassword": {
+    "title": "Zaboravljena lozinka",
+    "emailPrompt": "Upišite email adresu s kojom se prijavljujete. Poslat ćemo vam kod za postavljanje nove lozinke.",
+    "sendCode": "Pošalji kod",
+    "codePrompt": "Ako je {{email}} registriran, kod je poslan na tu adresu. Vrijedi 15 minuta.",
+    "newPassword": "Nova lozinka",
+    "passwordRule": "Najmanje 8 znakova, barem jedno slovo i jedna brojka.",
+    "submit": "Postavi novu lozinku",
+    "resend": "Pošalji kod ponovno",
+    "backToLogin": "Natrag na prijavu",
+    "requestError": "Slanje koda nije uspjelo. Provjerite vezu.",
+    "resetError": "Promjena lozinke nije uspjela."
+  },
+  "forgotPin": {
+    "title": "Zaboravljen PIN",
+    "sending": "Šaljemo kod na vašu email adresu...",
+    "sentTo": "Kod smo poslali na {{email}}. Vrijedi 15 minuta.",
+    "sent": "Kod je poslan na vašu email adresu. Vrijedi 15 minuta.",
+    "submit": "Potvrdi kod",
+    "resend": "Pošalji kod ponovno",
+    "sendError": "Slanje koda nije uspjelo. Provjerite vezu.",
+    "codeError": "Kod nije ispravan ili je istekao."
   }
 }

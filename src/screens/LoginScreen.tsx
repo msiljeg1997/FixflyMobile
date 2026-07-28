@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { colors, radius, spacing } from '../theme/tokens';
 
-export function LoginScreen() {
+export function LoginScreen({ onForgotPassword }: { onForgotPassword: () => void }) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -91,6 +91,10 @@ export function LoginScreen() {
                 <Text style={styles.buttonText}>{t('login.submit')}</Text>
               )}
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={onForgotPassword} disabled={submitting} hitSlop={8}>
+              <Text style={styles.link}>{t('login.forgotPassword')}</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
@@ -138,4 +142,11 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
+  link: {
+    color: colors.green,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingVertical: spacing.md,
+  },
 });

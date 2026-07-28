@@ -14,7 +14,8 @@
     "email": "Email",
     "password": "Password",
     "submit": "Log in",
-    "error": "Invalid email or password"
+    "error": "Invalid email or password",
+    "forgotPassword": "Forgot your password?"
   },
   "tasks": {
     "title": "My tasks",
@@ -89,7 +90,8 @@
     "wrongPin": "Wrong PIN",
     "pinMismatch": "PINs don't match",
     "useFullLogin": "Sign in with email and password",
-    "skip": "Skip for now"
+    "skip": "Skip for now",
+    "forgotPin": "Forgot your PIN?"
   },
   "chat": {
     "title": "Conversations",
@@ -120,6 +122,35 @@
     "pushNotifications": "Push notifications",
     "language": "Language",
     "logoutConfirmTitle": "Log out",
-    "logoutConfirmBody": "Are you sure you want to log out?"
+    "logoutConfirmBody": "Are you sure you want to log out?",
+    "appLock": "App lock",
+    "appLockHint": "Ask for a PIN or biometrics on open",
+    "changePin": "Change PIN",
+    "appLockOffTitle": "Turn off app lock?",
+    "appLockOffBody": "Your PIN will be deleted. The app stays signed in until you log out manually — anyone who opens the phone will see your tasks.",
+    "appLockOffConfirm": "Turn off"
+  },
+  "forgotPassword": {
+    "title": "Forgot password",
+    "emailPrompt": "Enter the email address you sign in with. We will send you a code to set a new password.",
+    "sendCode": "Send code",
+    "codePrompt": "If {{email}} is registered, a code has been sent to it. It is valid for 15 minutes.",
+    "newPassword": "New password",
+    "passwordRule": "At least 8 characters, including a letter and a digit.",
+    "submit": "Set new password",
+    "resend": "Send the code again",
+    "backToLogin": "Back to sign in",
+    "requestError": "Could not send the code. Check your connection.",
+    "resetError": "Could not change the password."
+  },
+  "forgotPin": {
+    "title": "Forgot PIN",
+    "sending": "Sending a code to your email address...",
+    "sentTo": "We sent a code to {{email}}. It is valid for 15 minutes.",
+    "sent": "A code has been sent to your email address. It is valid for 15 minutes.",
+    "submit": "Confirm code",
+    "resend": "Send the code again",
+    "sendError": "Could not send the code. Check your connection.",
+    "codeError": "That code is not valid or has expired."
   }
 }

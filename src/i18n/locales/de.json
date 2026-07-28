@@ -14,7 +14,8 @@
     "email": "E-Mail",
     "password": "Passwort",
     "submit": "Anmelden",
-    "error": "Ungültige E-Mail oder Passwort"
+    "error": "Ungültige E-Mail oder Passwort",
+    "forgotPassword": "Passwort vergessen?"
   },
   "tasks": {
     "title": "Meine Aufgaben",
@@ -89,7 +90,8 @@
     "wrongPin": "Falscher PIN",
     "pinMismatch": "PINs stimmen nicht überein",
     "useFullLogin": "Mit E-Mail und Passwort anmelden",
-    "skip": "Vorerst überspringen"
+    "skip": "Vorerst überspringen",
+    "forgotPin": "PIN vergessen?"
   },
   "chat": {
     "title": "Unterhaltungen",
@@ -120,6 +122,35 @@
     "pushNotifications": "Push-Benachrichtigungen",
     "language": "Sprache",
     "logoutConfirmTitle": "Abmelden",
-    "logoutConfirmBody": "Möchten Sie sich wirklich abmelden?"
+    "logoutConfirmBody": "Möchten Sie sich wirklich abmelden?",
+    "appLock": "App-Sperre",
+    "appLockHint": "Beim Öffnen PIN oder Biometrie verlangen",
+    "changePin": "PIN ändern",
+    "appLockOffTitle": "App-Sperre ausschalten?",
+    "appLockOffBody": "Ihre PIN wird gelöscht. Die App bleibt angemeldet, bis Sie sich manuell abmelden — wer das Telefon öffnet, sieht Ihre Aufgaben.",
+    "appLockOffConfirm": "Ausschalten"
+  },
+  "forgotPassword": {
+    "title": "Passwort vergessen",
+    "emailPrompt": "Geben Sie die E-Mail-Adresse ein, mit der Sie sich anmelden. Wir senden Ihnen einen Code für ein neues Passwort.",
+    "sendCode": "Code senden",
+    "codePrompt": "Falls {{email}} registriert ist, wurde ein Code an diese Adresse gesendet. Er gilt 15 Minuten.",
+    "newPassword": "Neues Passwort",
+    "passwordRule": "Mindestens 8 Zeichen, davon ein Buchstabe und eine Ziffer.",
+    "submit": "Neues Passwort setzen",
+    "resend": "Code erneut senden",
+    "backToLogin": "Zurück zur Anmeldung",
+    "requestError": "Code konnte nicht gesendet werden. Prüfen Sie die Verbindung.",
+    "resetError": "Passwort konnte nicht geändert werden."
+  },
+  "forgotPin": {
+    "title": "PIN vergessen",
+    "sending": "Code wird an Ihre E-Mail-Adresse gesendet...",
+    "sentTo": "Wir haben einen Code an {{email}} gesendet. Er gilt 15 Minuten.",
+    "sent": "Ein Code wurde an Ihre E-Mail-Adresse gesendet. Er gilt 15 Minuten.",
+    "submit": "Code bestätigen",
+    "resend": "Code erneut senden",
+    "sendError": "Code konnte nicht gesendet werden. Prüfen Sie die Verbindung.",
+    "codeError": "Der Code ist ungültig oder abgelaufen."
   }
 }

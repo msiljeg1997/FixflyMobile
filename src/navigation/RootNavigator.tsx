@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { DarkTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { LockScreen } from '../screens/LockScreen';
+import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
+import { ForgotPinScreen } from '../screens/ForgotPinScreen';
 import { MainTabs } from './MainTabs';
 import { colors } from '../theme/tokens';
 
 export type RootStackParamList = {
   Login: undefined;
+  ForgotPassword: undefined;
   Lock: undefined;
+  ForgotPin: undefined;
   PinSetup: undefined;
   Main: undefined; // MainTabs — Tasks/Chat/Profile, always-visible bottom bar
 };
@@ -34,7 +38,13 @@ const navigationTheme: Theme = {
 };
 
 export function RootNavigator() {
-  const { status, logout, unlock, skipPinSetup } = useAuth();
+  const { status, logout, unlock, completePinSetup, skipPinSetup, resetPin } = useAuth();
+
+  // Recovery detours are local flags rather than stack routes: `status` decides
+  // which screen the stack renders, and pushing a route on top of that would
+  // fight it — a status change mid-recovery would leave a stranded screen.
+  const [recoveringPassword, setRecoveringPassword] = useState(false);
+  const [recoveringPin, setRecoveringPin] = useState(false);
 
   if (status === 'checking') {
     return (
@@ -50,15 +60,48 @@ export function RootNavigator() {
         {status === 'signedIn' ? (
           <Stack.Screen name="Main" component={MainTabs} />
         ) : status === 'locked' ? (
-          <Stack.Screen name="Lock">
-            {() => <LockScreen mode="unlock" onSuccess={unlock} onUseFullLogin={logout} />}
-          </Stack.Screen>
+          recoveringPin ? (
+            <Stack.Screen name="ForgotPin">
+              {() => (
+                <ForgotPinScreen
+                  onVerified={async () => {
+                    setRecoveringPin(false);
+                    // Session survives — straight to choosing a new PIN.
+                    await resetPin();
+                  }}
+                  onCancel={() => setRecoveringPin(false)}
+                />
+              )}
+            </Stack.Screen>
+          ) : (
+            <Stack.Screen name="Lock">
+              {() => (
+                <LockScreen
+                  mode="unlock"
+                  onSuccess={unlock}
+                  onUseFullLogin={logout}
+                  onForgotPin={() => setRecoveringPin(true)}
+                />
+              )}
+            </Stack.Screen>
+          )
         ) : status === 'pinSetup' ? (
           <Stack.Screen name="PinSetup">
-            {() => <LockScreen mode="setup" onSuccess={skipPinSetup} onSkip={skipPinSetup} />}
+            {() => <LockScreen mode="setup" onSuccess={completePinSetup} onSkip={skipPinSetup} />}
+          </Stack.Screen>
+        ) : recoveringPassword ? (
+          <Stack.Screen name="ForgotPassword">
+            {() => (
+              <ForgotPasswordScreen
+                onDone={() => setRecoveringPassword(false)}
+                onCancel={() => setRecoveringPassword(false)}
+              />
+            )}
           </Stack.Screen>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Login">
+            {() => <LoginScreen onForgotPassword={() => setRecoveringPassword(true)} />}
+          </Stack.Screen>
         )}
       </Stack.Navigator>
     </NavigationContainer>

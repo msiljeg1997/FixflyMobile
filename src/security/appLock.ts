@@ -14,6 +14,10 @@ import * as Crypto from 'expo-crypto';
 const PIN_HASH_KEY = 'fixfly_pin_hash';
 const PIN_SALT_KEY = 'fixfly_pin_salt';
 const BIOMETRIC_PREF_KEY = 'fixfly_biometric_enabled';
+// Records that the agent made a choice about the lock, which "is a PIN set?"
+// cannot express: without it, declining the setup prompt was forgotten at the
+// next login and the app asked again, forever.
+const LOCK_CHOICE_KEY = 'fixfly_lock_choice'; // 'on' | 'off' | absent = never asked
 
 async function hashPin(pin: string, salt: string): Promise<string> {
   return Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, `${salt}:${pin}`);
@@ -30,6 +34,43 @@ export const appLock = {
       .join('');
     await SecureStore.setItemAsync(PIN_SALT_KEY, salt);
     await SecureStore.setItemAsync(PIN_HASH_KEY, await hashPin(pin, salt));
+    await SecureStore.setItemAsync(LOCK_CHOICE_KEY, 'on');
+  },
+
+  /**
+   * Has the agent decided about the lock yet? Only an undecided device gets
+   * the setup prompt after login — "no thanks" is an answer and must stick.
+   */
+  async hasChosen(): Promise<boolean> {
+    return (await SecureStore.getItemAsync(LOCK_CHOICE_KEY)) !== null;
+  },
+
+  /** True only when a PIN is set AND the lock is switched on. */
+  async isLockEnabled(): Promise<boolean> {
+    const [choice, pinSet] = await Promise.all([
+      SecureStore.getItemAsync(LOCK_CHOICE_KEY),
+      SecureStore.getItemAsync(PIN_HASH_KEY),
+    ]);
+    return choice === 'on' && pinSet !== null;
+  },
+
+  /**
+   * Turning the lock off drops the PIN outright rather than parking it —
+   * a hash sitting in the keychain for a lock nobody uses is stored secret
+   * with no purpose, and turning the lock back on asks for a new PIN anyway.
+   */
+  async disableLock(): Promise<void> {
+    await Promise.all([
+      SecureStore.deleteItemAsync(PIN_HASH_KEY),
+      SecureStore.deleteItemAsync(PIN_SALT_KEY),
+      SecureStore.deleteItemAsync(BIOMETRIC_PREF_KEY),
+    ]);
+    await SecureStore.setItemAsync(LOCK_CHOICE_KEY, 'off');
+  },
+
+  /** Records "asked, declined" so login stops offering it. */
+  async declineLock(): Promise<void> {
+    await SecureStore.setItemAsync(LOCK_CHOICE_KEY, 'off');
   },
 
   async verifyPin(pin: string): Promise<boolean> {
@@ -41,11 +82,14 @@ export const appLock = {
     return (await hashPin(pin, salt)) === hash;
   },
 
+  /** Full reset on logout — including the choice, since the next person to
+   *  sign in on this device gets to make their own. */
   async clear(): Promise<void> {
     await Promise.all([
       SecureStore.deleteItemAsync(PIN_HASH_KEY),
       SecureStore.deleteItemAsync(PIN_SALT_KEY),
       SecureStore.deleteItemAsync(BIOMETRIC_PREF_KEY),
+      SecureStore.deleteItemAsync(LOCK_CHOICE_KEY),
     ]);
   },
 
