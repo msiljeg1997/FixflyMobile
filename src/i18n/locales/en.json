@@ -15,7 +15,9 @@
     "password": "Password",
     "submit": "Log in",
     "error": "Invalid email or password",
-    "forgotPassword": "Forgot your password?"
+    "forgotPassword": "Forgot your password?",
+    "networkError": "Cannot reach the server. Check your connection, or whether the server is running.",
+    "tooManyAttempts": "Too many sign-in attempts. Wait a minute and try again."
   },
   "tasks": {
     "title": "My tasks",

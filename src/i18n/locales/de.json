@@ -15,7 +15,9 @@
     "password": "Passwort",
     "submit": "Anmelden",
     "error": "Ungültige E-Mail oder Passwort",
-    "forgotPassword": "Passwort vergessen?"
+    "forgotPassword": "Passwort vergessen?",
+    "networkError": "Server nicht erreichbar. Prüfen Sie die Verbindung oder ob der Server läuft.",
+    "tooManyAttempts": "Zu viele Anmeldeversuche. Warten Sie eine Minute und versuchen Sie es erneut."
   },
   "tasks": {
     "title": "Meine Aufgaben",

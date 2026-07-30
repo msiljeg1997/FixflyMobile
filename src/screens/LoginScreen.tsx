@@ -12,7 +12,9 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { isNetworkError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { colors, radius, spacing } from '../theme/tokens';
 
@@ -29,8 +31,19 @@ export function LoginScreen({ onForgotPassword }: { onForgotPassword: () => void
     setSubmitting(true);
     try {
       await login({ email: email.trim(), password });
-    } catch {
-      setError(t('login.error'));
+    } catch (err: unknown) {
+      // "Wrong password" used to be the answer to every failure, including a
+      // phone that could not reach the server at all — which sent people
+      // hunting for a credential problem that did not exist.
+      if (isNetworkError(err)) {
+        setError(t('login.networkError'));
+      } else if (axios.isAxiosError(err) && err.response?.status === 429) {
+        // Login is rate limited; without this, being throttled also read as
+        // bad credentials and invited more retries, which made it worse.
+        setError(t('login.tooManyAttempts'));
+      } else {
+        setError(t('login.error'));
+      }
     } finally {
       setSubmitting(false);
     }

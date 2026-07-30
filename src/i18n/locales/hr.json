@@ -15,7 +15,9 @@
     "password": "Lozinka",
     "submit": "Prijava",
     "error": "Pogrešan email ili lozinka",
-    "forgotPassword": "Zaboravljena lozinka?"
+    "forgotPassword": "Zaboravljena lozinka?",
+    "networkError": "Nema veze sa serverom. Provjerite internet ili je li poslužitelj pokrenut.",
+    "tooManyAttempts": "Previše pokušaja prijave. Pričekajte minutu i pokušajte ponovno."
   },
   "tasks": {
     "title": "Moji zadaci",
