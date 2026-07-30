@@ -191,6 +191,11 @@ export interface TechnicianOption {
   photoUrl: string | null;
   technicianSpecializations: string | null;
   availability: AgentAvailability;
+  /**
+   * Covers a trade the ticket's fault category asks for. Server-ordered so
+   * these come first; true for everyone when the category names no trade.
+   */
+  matchesCategory: boolean;
 }
 
 // ── §10 — Push device token (W5) ─────────────────────────────────────────────

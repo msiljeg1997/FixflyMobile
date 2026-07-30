@@ -75,7 +75,10 @@
     "resolvePhotos": "Fotografije dokaza",
     "resolveConfirm": "Potvrdi rješenje",
     "errorTitle": "Akcija nije uspjela",
-    "actionError": "Nešto je pošlo po zlu. Pokušajte ponovo."
+    "actionError": "Nešto je pošlo po zlu. Pokušajte ponovo.",
+    "recommendedForCategory": "Preporučeni za ovu kategoriju",
+    "otherTechnicians": "Ostali tehničari",
+    "noTechniciansForLocation": "Nema tehničara s pristupom aplikaciji na ovoj lokaciji."
   },
   "tabs": {
     "tasks": "Zadaci",

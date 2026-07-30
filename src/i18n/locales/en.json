@@ -75,7 +75,10 @@
     "resolvePhotos": "Proof photos",
     "resolveConfirm": "Confirm resolution",
     "errorTitle": "Action failed",
-    "actionError": "Something went wrong. Please try again."
+    "actionError": "Something went wrong. Please try again.",
+    "recommendedForCategory": "Recommended for this category",
+    "otherTechnicians": "Other technicians",
+    "noTechniciansForLocation": "No technicians with app access are assigned to this location."
   },
   "tabs": {
     "tasks": "Tasks",

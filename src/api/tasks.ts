@@ -69,8 +69,14 @@ export async function putAvailability(body: PutAvailabilityRequest): Promise<Age
   return data;
 }
 
-export async function getTechnicians(): Promise<TechnicianOption[]> {
-  const { data } = await apiClient.get<TechnicianOption[]>('/api/agent/technicians');
+/**
+ * Pass the ticket so the server can scope the list to its location and mark
+ * who its fault category recommends. Without it the list is every technician.
+ */
+export async function getTechnicians(ticketId?: string): Promise<TechnicianOption[]> {
+  const { data } = await apiClient.get<TechnicianOption[]>('/api/agent/technicians', {
+    params: ticketId ? { ticketId } : undefined,
+  });
   return data;
 }
 

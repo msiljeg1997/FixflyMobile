@@ -75,7 +75,10 @@
     "resolvePhotos": "Nachweisfotos",
     "resolveConfirm": "Lösung bestätigen",
     "errorTitle": "Aktion fehlgeschlagen",
-    "actionError": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    "actionError": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+    "recommendedForCategory": "Empfohlen für diese Kategorie",
+    "otherTechnicians": "Weitere Techniker",
+    "noTechniciansForLocation": "Für diesen Standort sind keine Techniker mit App-Zugang eingeteilt."
   },
   "tabs": {
     "tasks": "Aufgaben",

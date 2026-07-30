@@ -212,7 +212,9 @@ export function TaskDetailScreen() {
     setForwarding(true);
     setTechniciansLoading(true);
     try {
-      setTechnicians(await tasksApi.getTechnicians());
+      // Scoped to this ticket: its location filters the list, its fault
+      // category decides who is recommended.
+      setTechnicians(await tasksApi.getTechnicians(ticketId));
     } catch {
       setTechnicians([]);
     } finally {
@@ -627,10 +629,20 @@ export function TaskDetailScreen() {
             {techniciansLoading ? (
               <ActivityIndicator color={colors.green} style={{ marginTop: spacing.lg }} />
             ) : technicians.length === 0 ? (
-              <Text style={styles.muted}>{t('taskDetail.noTechnicians')}</Text>
+              // The list is scoped to this ticket's location, so empty means
+              // "nobody covers this location" — say that rather than a bare
+              // "no technicians", which reads as a broken screen.
+              <Text style={styles.muted}>{t('taskDetail.noTechniciansForLocation')}</Text>
             ) : (
-              technicians.map((tech) => {
+              technicians.map((tech, index) => {
                 const available = tech.availability === AgentAvailability.Available;
+                // The server orders recommended-first, so the boundary is
+                // wherever matchesCategory stops being true. Headings only
+                // appear when there is actually a split to explain.
+                const prev = index > 0 ? technicians[index - 1] : null;
+                const showRecommendedHeading =
+                  index === 0 && tech.matchesCategory && technicians.some((x) => !x.matchesCategory);
+                const showOthersHeading = !tech.matchesCategory && (prev === null || prev.matchesCategory);
                 const availabilityLabel =
                   tech.availability === AgentAvailability.Available
                     ? t('technician.available')
@@ -638,9 +650,15 @@ export function TaskDetailScreen() {
                       ? t('technician.onBreak')
                       : t('technician.dayOff');
                 return (
+                  <React.Fragment key={tech.id}>
+                    {showRecommendedHeading && (
+                      <Text style={styles.techGroupHeading}>{t('taskDetail.recommendedForCategory')}</Text>
+                    )}
+                    {showOthersHeading && (
+                      <Text style={styles.techGroupHeading}>{t('taskDetail.otherTechnicians')}</Text>
+                    )}
                   <TouchableOpacity
-                    key={tech.id}
-                    style={[styles.techRow, !available && styles.techRowDisabled]}
+                    style={[styles.techRow, !available && styles.techRowDisabled, !tech.matchesCategory && styles.techRowOffSpec]}
                     onPress={() => onForward(tech.id)}
                     disabled={!available || acting}
                     activeOpacity={0.6}
@@ -663,6 +681,7 @@ export function TaskDetailScreen() {
                       </Text>
                     </View>
                   </TouchableOpacity>
+                  </React.Fragment>
                 );
               })
             )}
@@ -860,6 +879,18 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   techRowDisabled: { opacity: 0.45 },
+  // Off-specialisation but still pickable: dimmed enough to read as a second
+  // choice, not so dim it looks unavailable — that meaning is already taken.
+  techRowOffSpec: { opacity: 0.72 },
+  techGroupHeading: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.muted,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
   techAvatar: {
     width: 40,
     height: 40,
