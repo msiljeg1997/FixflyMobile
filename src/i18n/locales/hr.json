@@ -7,7 +7,8 @@
     "back": "Natrag",
     "done": "Gotovo",
     "logout": "Odjava",
-    "error": "Greška"
+    "error": "Greška",
+    "saving": "Spremanje..."
   },
   "login": {
     "title": "Fixfly Pro",
@@ -234,5 +235,17 @@
     "searchTechnician": "Pretraži po imenu...",
     "searchLocation": "Pretraži naziv ili šifru...",
     "noMatches": "Nema podudaranja."
+  },
+  "managerProfile": {
+    "roleCompany": "Voditelj firme",
+    "roleLocation": "Voditelj objekta",
+    "nameSection": "Moje ime",
+    "nameHint": "Ime kojim se potpisujete u chatu. Bez njega tehničari vide vašu email adresu.",
+    "nameSaved": "Ime je spremljeno.",
+    "save": "Spremi",
+    "days": "dana",
+    "horizonSection": "Horizont prijava",
+    "horizonHint": "Koliko dana unatrag prijave ostaju u \"Za rješavanje\". Starije idu u \"Za čišćenje\".",
+    "horizonSaved": "Horizont je spremljen."
   }
 }

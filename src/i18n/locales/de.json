@@ -7,7 +7,8 @@
     "back": "Zurück",
     "done": "Fertig",
     "logout": "Abmelden",
-    "error": "Fehler"
+    "error": "Fehler",
+    "saving": "Speichern..."
   },
   "login": {
     "title": "Fixfly Pro",
@@ -234,5 +235,17 @@
     "searchTechnician": "Nach Namen suchen...",
     "searchLocation": "Name oder Code suchen...",
     "noMatches": "Keine Treffer."
+  },
+  "managerProfile": {
+    "roleCompany": "Firmenleiter",
+    "roleLocation": "Standortleiter",
+    "nameSection": "Mein Name",
+    "nameHint": "Der Name, mit dem Sie Chat-Nachrichten unterschreiben. Ohne ihn sehen Techniker Ihre E-Mail-Adresse.",
+    "nameSaved": "Name gespeichert.",
+    "save": "Speichern",
+    "days": "Tage",
+    "horizonSection": "Meldungs-Horizont",
+    "horizonHint": "Wie viele Tage zurück Meldungen unter „Zu erledigen\" bleiben. Ältere wandern zu „Aufzuräumen\".",
+    "horizonSaved": "Horizont gespeichert."
   }
 }

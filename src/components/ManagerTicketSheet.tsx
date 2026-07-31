@@ -47,11 +47,15 @@ export function ManagerTicketSheet({
   visible,
   onClose,
   onChanged,
+  onOpenChat,
 }: {
   ticketId: string | null;
   visible: boolean;
   onClose: () => void;
   onChanged: () => void;
+  /** Handed up because the chat lives in another tab — the sheet must be
+   *  dismissed before navigating, or iOS is left presenting over nothing. */
+  onOpenChat: (ticketId: string, title: string) => void;
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -250,6 +254,15 @@ export function ManagerTicketSheet({
               </TouchableOpacity>
               <TouchableOpacity style={styles.dangerButton} onPress={confirmClose} disabled={busy}>
                 <Text style={styles.dangerText}>{t('inbox.action.close')}</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.footerRow}>
+              <TouchableOpacity
+                style={styles.chatButton}
+                onPress={() => onOpenChat(ticketId!, ticket!.locationName || ticket!.location)}
+                disabled={busy}
+              >
+                <Text style={styles.chatButtonText}>💬 {t('taskDetail.openChat')}</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -610,6 +623,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dangerText: { color: colors.error, fontSize: 14, fontWeight: '700' },
+  chatButton: {
+    flex: 1,
+    height: 46,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatButtonText: { color: colors.forest, fontSize: 14, fontWeight: '600' },
 
   assignHint: { fontSize: 13, color: colors.muted, marginBottom: spacing.md, lineHeight: 19 },
   groupHeading: {

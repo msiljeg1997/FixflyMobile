@@ -7,7 +7,8 @@
     "back": "Back",
     "done": "Done",
     "logout": "Log out",
-    "error": "Error"
+    "error": "Error",
+    "saving": "Saving..."
   },
   "login": {
     "title": "Fixfly Pro",
@@ -234,5 +235,17 @@
     "searchTechnician": "Search by name...",
     "searchLocation": "Search name or code...",
     "noMatches": "No matches."
+  },
+  "managerProfile": {
+    "roleCompany": "Company manager",
+    "roleLocation": "Location manager",
+    "nameSection": "My name",
+    "nameHint": "The name you sign chat messages with. Without it technicians see your email address.",
+    "nameSaved": "Name saved.",
+    "save": "Save",
+    "days": "days",
+    "horizonSection": "Ticket horizon",
+    "horizonHint": "How many days back tickets stay under \"To handle\". Older ones move to \"To clear\".",
+    "horizonSaved": "Horizon saved."
   }
 }

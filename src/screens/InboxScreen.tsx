@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import * as inboxApi from '../api/inbox';
@@ -52,6 +52,7 @@ export function InboxScreen() {
   const { t } = useTranslation();
   const { manager } = useAuth();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
 
   const [tab, setTab] = useState<Tab>('todo');
   const [data, setData] = useState<AdminInbox | null>(null);
@@ -334,6 +335,12 @@ export function InboxScreen() {
         onChanged={() => {
           load(true);
           if (tab === 'cleanup') loadBacklog();
+        }}
+        onOpenChat={(ticketId, title) => {
+          // Dismiss first: navigating out from under a presented modal leaves
+          // iOS showing it over a screen that is no longer there.
+          setOpenTicket(null);
+          navigation.navigate('ChatTab', { screen: 'Chat', params: { ticketId, title } });
         }}
       />
     </View>

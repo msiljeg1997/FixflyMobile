@@ -6,6 +6,7 @@ import { TasksStackNavigator } from './TasksStackNavigator';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { InboxScreen } from '../screens/InboxScreen';
+import { ManagerProfileScreen } from '../screens/ManagerProfileScreen';
 import { ChatBanner } from '../components/ChatBanner';
 import { useUnread } from '../context/UnreadContext';
 import { useAuth } from '../context/AuthContext';
@@ -87,7 +88,7 @@ export function MainTabs() {
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileScreen}
+        component={isManager ? ManagerProfileScreen : ProfileScreen}
         options={{
           tabBarLabel: t('tabs.profile'),
           tabBarIcon: ({ color }) => <TabIcon glyph="👤" color={color} />,
