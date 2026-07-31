@@ -79,7 +79,8 @@
     "actionError": "Nešto je pošlo po zlu. Pokušajte ponovo.",
     "recommendedForCategory": "Preporučeni za ovu kategoriju",
     "otherTechnicians": "Ostali tehničari",
-    "noTechniciansForLocation": "Nema tehničara s pristupom aplikaciji na ovoj lokaciji."
+    "noTechniciansForLocation": "Nema tehničara s pristupom aplikaciji na ovoj lokaciji.",
+    "system": "Sustav"
   },
   "tabs": {
     "tasks": "Zadaci",
@@ -211,7 +212,8 @@
       "returnReason": "Razlog vraćanja",
       "guestPhoto": "Fotografija prijavitelja",
       "resolution": "Rješenje",
-      "timeline": "Tijek"
+      "timeline": "Tijek",
+      "locationContact": "Kontakt lokacije"
     },
     "time": {
       "created": "Prijavljeno",

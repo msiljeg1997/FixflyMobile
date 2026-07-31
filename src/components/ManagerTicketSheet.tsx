@@ -112,7 +112,7 @@ export function ManagerTicketSheet({
             <Text style={styles.close}>✕</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {ticket?.location || ''}
+            {ticket?.locationName || ticket?.location || ''}
           </Text>
         </View>
 
@@ -137,6 +137,15 @@ export function ManagerTicketSheet({
 
             {ticket.category && <Field label={t('inbox.field.category')} value={ticket.category.name} />}
             {ticket.roomNumber && <Field label={t('tasks.room')} value={ticket.roomNumber} />}
+            {!!ticket.locationAddress && (
+              <Field label={t('taskDetail.locationInfo')} value={ticket.locationAddress} />
+            )}
+            {!!(ticket.locationContactName || ticket.locationContactPhone) && (
+              <Field
+                label={t('taskDetail.contact')}
+                value={[ticket.locationContactName, ticket.locationContactPhone].filter(Boolean).join(' · ')}
+              />
+            )}
             {ticket.reporterPhone && <Field label={t('inbox.field.reporter')} value={ticket.reporterPhone} />}
             {ticket.assignedAgent && (
               <Field
@@ -182,6 +191,34 @@ export function ManagerTicketSheet({
             <TimeRow label={t('inbox.time.forwarded')} value={ticket.forwardedAt} />
             <TimeRow label={t('inbox.time.accepted')} value={ticket.acceptedAt} />
             <TimeRow label={t('inbox.time.done')} value={ticket.doneAt} />
+
+            {/* The same activity trail the technician and dispatcher see. It
+                carries the forwarding comments and rejection notes, which is
+                where the story of a stuck ticket actually lives — the status
+                timestamps above only say when, never why. Boxed and scrollable
+                so a long history doesn't push the actions off the screen. */}
+            {ticket.history.length > 0 && (
+              <>
+                <Text style={styles.sectionLabel}>{t('taskDetail.history')}</Text>
+                <ScrollView style={styles.historyBox} nestedScrollEnabled>
+                  {ticket.history.map((h, i) => (
+                    <View key={h.id} style={[styles.historyRow, i > 0 && styles.historyRowDivider]}>
+                      <View style={[styles.historyDot, { backgroundColor: STATUS_COLORS[h.newStatus] }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.historyStatus}>
+                          {t(`status.${TicketStatus[h.newStatus]}`)}
+                          {h.targetAgentName ? ` → ${h.targetAgentName}` : ''}
+                        </Text>
+                        <Text style={styles.historyMeta}>
+                          {h.changedByName || t('taskDetail.system')} · {formatDateTime(h.changedAt)}
+                        </Text>
+                        {!!h.notes && <Text style={styles.historyNote}>{h.notes}</Text>}
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              </>
+            )}
           </ScrollView>
         )}
 
@@ -463,6 +500,23 @@ const styles = StyleSheet.create({
 
   photo: { width: '100%', height: 200, borderRadius: radius.sm, backgroundColor: colors.card },
   proofPhoto: { width: 110, height: 110, borderRadius: radius.sm, marginRight: spacing.sm, backgroundColor: colors.card },
+
+  // Capped height: a ticket bounced half a dozen times would otherwise push
+  // the action buttons somewhere nobody scrolls to.
+  historyBox: {
+    maxHeight: 260,
+    backgroundColor: colors.card,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+  },
+  historyRow: { flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
+  historyRowDivider: { borderTopWidth: 1, borderTopColor: colors.border },
+  historyDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+  historyStatus: { fontSize: 13, fontWeight: '700', color: colors.forest },
+  historyMeta: { fontSize: 11, color: colors.muted, marginTop: 1 },
+  historyNote: { fontSize: 13, color: colors.text, marginTop: 4, lineHeight: 18, fontStyle: 'italic' },
 
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
   timeLabel: { fontSize: 13, color: colors.muted },

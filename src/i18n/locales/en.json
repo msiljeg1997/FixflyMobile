@@ -79,7 +79,8 @@
     "actionError": "Something went wrong. Please try again.",
     "recommendedForCategory": "Recommended for this category",
     "otherTechnicians": "Other technicians",
-    "noTechniciansForLocation": "No technicians with app access are assigned to this location."
+    "noTechniciansForLocation": "No technicians with app access are assigned to this location.",
+    "system": "System"
   },
   "tabs": {
     "tasks": "Tasks",
@@ -211,7 +212,8 @@
       "returnReason": "Why it came back",
       "guestPhoto": "Reporter’s photo",
       "resolution": "Resolution",
-      "timeline": "Timeline"
+      "timeline": "Timeline",
+      "locationContact": "Location contact"
     },
     "time": {
       "created": "Reported",

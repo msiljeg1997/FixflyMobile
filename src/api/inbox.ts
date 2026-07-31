@@ -23,7 +23,7 @@ export async function getBacklog(limit = 200): Promise<BacklogResponse> {
 
 export async function getTicket(ticketId: string): Promise<AdminTicketDetail> {
   const { data } = await apiClient.get<AdminTicketDetail>(
-    `/api/admin/tickets/${encodeURIComponent(ticketId)}`
+    `/api/admin/tickets/${encodeURIComponent(ticketId)}/full`
   );
   return data;
 }

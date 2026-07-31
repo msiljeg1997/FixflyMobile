@@ -405,11 +405,14 @@ export interface BacklogResponse {
 
 /** Full ticket as the dashboard sees it — GET /api/admin/tickets/{ticketId}. */
 export interface AdminTicketDetail {
-  id: number;
   ticketId: string;
   createdAt: string;
   location: string;
-  role: string;
+  /** Joined server-side — a manager should not read a bare location code. */
+  locationName: string | null;
+  locationAddress: string | null;
+  locationContactName: string | null;
+  locationContactPhone: string | null;
   description: string;
   reporterPhone: string | null;
   imageUrl: string | null;
@@ -428,4 +431,6 @@ export interface AdminTicketDetail {
   acceptedAt: string | null;
   doneAt: string | null;
   resolutionPhotos: ResolutionPhoto[];
+  /** Same activity trail the technician and dispatcher see on the ticket. */
+  history: TaskHistoryEvent[];
 }

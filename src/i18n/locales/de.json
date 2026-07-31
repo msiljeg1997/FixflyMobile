@@ -79,7 +79,8 @@
     "actionError": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
     "recommendedForCategory": "Empfohlen für diese Kategorie",
     "otherTechnicians": "Weitere Techniker",
-    "noTechniciansForLocation": "Für diesen Standort sind keine Techniker mit App-Zugang eingeteilt."
+    "noTechniciansForLocation": "Für diesen Standort sind keine Techniker mit App-Zugang eingeteilt.",
+    "system": "System"
   },
   "tabs": {
     "tasks": "Aufgaben",
@@ -211,7 +212,8 @@
       "returnReason": "Grund der Rückgabe",
       "guestPhoto": "Foto des Melders",
       "resolution": "Lösung",
-      "timeline": "Verlauf"
+      "timeline": "Verlauf",
+      "locationContact": "Standort-Kontakt"
     },
     "time": {
       "created": "Gemeldet",
