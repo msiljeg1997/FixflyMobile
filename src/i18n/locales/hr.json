@@ -237,7 +237,7 @@
     "noMatches": "Nema podudaranja."
   },
   "managerProfile": {
-    "roleCompany": "Voditelj firme",
+    "roleCompany": "Admin",
     "roleLocation": "Voditelj objekta",
     "nameSection": "Moje ime",
     "nameHint": "Ime kojim se potpisujete u chatu. Bez njega tehničari vide vašu email adresu.",

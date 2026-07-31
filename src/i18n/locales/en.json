@@ -237,7 +237,7 @@
     "noMatches": "No matches."
   },
   "managerProfile": {
-    "roleCompany": "Company manager",
+    "roleCompany": "Admin",
     "roleLocation": "Location manager",
     "nameSection": "My name",
     "nameHint": "The name you sign chat messages with. Without it technicians see your email address.",

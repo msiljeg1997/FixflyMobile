@@ -237,7 +237,7 @@
     "noMatches": "Keine Treffer."
   },
   "managerProfile": {
-    "roleCompany": "Firmenleiter",
+    "roleCompany": "Admin",
     "roleLocation": "Standortleiter",
     "nameSection": "Mein Name",
     "nameHint": "Der Name, mit dem Sie Chat-Nachrichten unterschreiben. Ohne ihn sehen Techniker Ihre E-Mail-Adresse.",
