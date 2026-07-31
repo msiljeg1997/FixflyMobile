@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Linking,
   Modal,
   ScrollView,
   StyleSheet,
@@ -140,17 +141,30 @@ export function ManagerTicketSheet({
             {!!ticket.locationAddress && (
               <Field label={t('taskDetail.locationInfo')} value={ticket.locationAddress} />
             )}
+            {/* Every phone number here is one a manager rings while standing
+                somewhere — so each is a tap, not a number to memorise. */}
             {!!(ticket.locationContactName || ticket.locationContactPhone) && (
               <Field
                 label={t('taskDetail.contact')}
                 value={[ticket.locationContactName, ticket.locationContactPhone].filter(Boolean).join(' · ')}
+                phone={ticket.locationContactPhone}
+                callLabel={t('taskDetail.call')}
               />
             )}
-            {ticket.reporterPhone && <Field label={t('inbox.field.reporter')} value={ticket.reporterPhone} />}
+            {ticket.reporterPhone && (
+              <Field
+                label={t('inbox.field.reporter')}
+                value={ticket.reporterPhone}
+                phone={ticket.reporterPhone}
+                callLabel={t('taskDetail.call')}
+              />
+            )}
             {ticket.assignedAgent && (
               <Field
                 label={t('inbox.field.assigned')}
                 value={`${ticket.assignedAgent.name} · ${ticket.assignedAgent.phoneNumber}`}
+                phone={ticket.assignedAgent.phoneNumber}
+                callLabel={t('taskDetail.call')}
               />
             )}
 
@@ -267,11 +281,28 @@ export function ManagerTicketSheet({
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({
+  label,
+  value,
+  phone,
+  callLabel,
+}: {
+  label: string;
+  value: string;
+  phone?: string | null;
+  callLabel?: string;
+}) {
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <Text style={styles.fieldValue}>{value}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.fieldLabel}>{label}</Text>
+        <Text style={styles.fieldValue}>{value}</Text>
+      </View>
+      {!!phone && (
+        <TouchableOpacity style={styles.callButton} onPress={() => Linking.openURL(`tel:${phone}`)}>
+          <Text style={styles.callButtonText}>{callLabel ?? '📞'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -462,7 +493,16 @@ const styles = StyleSheet.create({
   ticketId: { fontSize: 12, color: colors.muted, marginBottom: spacing.xs },
   description: { fontSize: 16, color: colors.forest, lineHeight: 23, marginBottom: spacing.md },
 
-  field: { marginBottom: spacing.sm },
+  field: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  // Same pill the technician screen uses, so a call looks like a call
+  // everywhere in the app.
+  callButton: {
+    backgroundColor: colors.green,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+  },
+  callButtonText: { color: colors.white, fontSize: 12, fontWeight: '700' },
   fieldLabel: { fontSize: 11, color: colors.muted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   fieldValue: { fontSize: 14, color: colors.text, marginTop: 2 },
 
