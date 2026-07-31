@@ -6,7 +6,8 @@
     "save": "Speichern",
     "back": "Zurück",
     "done": "Fertig",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "error": "Fehler"
   },
   "login": {
     "title": "Fixfly Pro",
@@ -83,7 +84,8 @@
   "tabs": {
     "tasks": "Aufgaben",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "inbox": "Eingang"
   },
   "lock": {
     "unlockTitle": "App entsperren",
@@ -157,5 +159,43 @@
     "resend": "Code erneut senden",
     "sendError": "Code konnte nicht gesendet werden. Prüfen Sie die Verbindung.",
     "codeError": "Der Code ist ungültig oder abgelaufen."
+  },
+  "inbox": {
+    "title": "Eingang",
+    "loadError": "Laden fehlgeschlagen.",
+    "allClear": "Alles erledigt",
+    "allClearBody": "Nichts wartet auf Ihre Entscheidung.",
+    "waiting": "wartet {{duration}}",
+    "andMore": "und {{count}} weitere",
+    "backlogTitle": "Aufzuräumen",
+    "backlogBody": "{{count}} Meldungen älter als {{days}} Tage — nicht im Eingang",
+    "backlogHint": "Diese liegen zu lange, um heutige Arbeit zu sein. Auswählen und gemeinsam schließen.",
+    "ageDays": "{{count}} Tage alt",
+    "closeSelected": "Ausgewählte schließen ({{count}})",
+    "bulkCloseTitle": "Ausgewählte schließen?",
+    "bulkCloseBody": "{{count}} Meldungen werden geschlossen. In der App nicht widerrufbar.",
+    "noAssignees": "Für diesen Standort ist niemand mit App-Zugang eingeteilt.",
+    "assignForCategory": "Kategorie: {{category}}. ★ kennzeichnet Empfohlene.",
+    "actionError": "Aktion fehlgeschlagen.",
+    "reason": {
+      "unowned": "Niemand zuständig",
+      "urgentUnaccepted": "Dringend, nicht angenommen",
+      "staleInPool": "Zu lange im Pool",
+      "acceptanceExpiring": "Annahmefrist läuft ab",
+      "awaitingClosure": "Erledigt, Abschluss offen"
+    },
+    "hint": {
+      "unowned": "Abgelehnt oder Frist abgelaufen — niemand hält das, und von allein bewegt es sich nicht.",
+      "urgentUnaccepted": "Als dringend markiert und noch nicht übernommen.",
+      "staleInPool": "Länger im Pool als das Annahmefenster erlaubt.",
+      "acceptanceExpiring": "Nimmt der Techniker nicht rechtzeitig an, geht es automatisch zurück.",
+      "awaitingClosure": "Mit Nachweis erledigt. Prüfen und schließen."
+    },
+    "action": {
+      "assign": "Zuweisen",
+      "close": "Schließen",
+      "setUrgent": "Als dringend markieren",
+      "unsetUrgent": "Dringend entfernen"
+    }
   }
 }

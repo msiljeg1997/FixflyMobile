@@ -6,7 +6,8 @@
     "save": "Spremi",
     "back": "Natrag",
     "done": "Gotovo",
-    "logout": "Odjava"
+    "logout": "Odjava",
+    "error": "Greška"
   },
   "login": {
     "title": "Fixfly Pro",
@@ -83,7 +84,8 @@
   "tabs": {
     "tasks": "Zadaci",
     "chat": "Chat",
-    "profile": "Profil"
+    "profile": "Profil",
+    "inbox": "Inbox"
   },
   "lock": {
     "unlockTitle": "Otključaj aplikaciju",
@@ -157,5 +159,43 @@
     "resend": "Pošalji kod ponovno",
     "sendError": "Slanje koda nije uspjelo. Provjerite vezu.",
     "codeError": "Kod nije ispravan ili je istekao."
+  },
+  "inbox": {
+    "title": "Inbox",
+    "loadError": "Podaci se nisu mogli učitati.",
+    "allClear": "Sve je pod kontrolom",
+    "allClearBody": "Nema prijava koje čekaju vašu odluku.",
+    "waiting": "čeka {{duration}}",
+    "andMore": "i još {{count}}",
+    "backlogTitle": "Za čišćenje",
+    "backlogBody": "{{count}} prijava starijih od {{days}} dana — nisu u inboxu",
+    "backlogHint": "Ove stoje predugo da bi bile današnji posao. Označite ih i zatvorite odjednom.",
+    "ageDays": "star {{count}} dana",
+    "closeSelected": "Zatvori označeno ({{count}})",
+    "bulkCloseTitle": "Zatvoriti odabrane?",
+    "bulkCloseBody": "Zatvorit će se {{count}} prijava. Ovo se ne može poništiti iz aplikacije.",
+    "noAssignees": "Nitko s pristupom aplikaciji nije dodijeljen ovoj lokaciji.",
+    "assignForCategory": "Kategorija: {{category}}. ★ označava preporučene.",
+    "actionError": "Radnja nije uspjela.",
+    "reason": {
+      "unowned": "Nitko ne drži",
+      "urgentUnaccepted": "Hitno, neprihvaćeno",
+      "staleInPool": "Predugo u bazenu",
+      "acceptanceExpiring": "Ističe rok prihvata",
+      "awaitingClosure": "Riješeno, čeka zatvaranje"
+    },
+    "hint": {
+      "unowned": "Tehničar je odbio ili je istekao rok — prijava nema vlasnika i neće se pomaknuti sama.",
+      "urgentUnaccepted": "Označeno kao hitno, a nitko još nije preuzeo.",
+      "staleInPool": "Stoji u bazenu dulje nego što je predviđeno za preuzimanje.",
+      "acceptanceExpiring": "Ako tehničar ne prihvati na vrijeme, prijava se automatski vraća.",
+      "awaitingClosure": "Tehničar je riješio i priložio dokaz. Pregledajte i zatvorite."
+    },
+    "action": {
+      "assign": "Dodijeli",
+      "close": "Zatvori",
+      "setUrgent": "Označi hitno",
+      "unsetUrgent": "Makni oznaku hitno"
+    }
   }
 }

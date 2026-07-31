@@ -39,11 +39,13 @@ async function refreshAccessToken(): Promise<string | null> {
 
   try {
     const body: AgentRefreshRequest = { refreshToken };
-    const { data } = await axios.post<AgentAuthResult>(
-      `${env.apiUrl}/api/agent/auth/refresh`,
-      body
-    );
-    await tokenStorage.setTokens(data.accessToken, data.refreshToken);
+    // Agent and manager tokens refresh through different controllers, and the
+    // agent one filters on AgentId — a manager token sent there is simply
+    // rejected, ending the session at the first expiry.
+    const principal = await tokenStorage.getPrincipal();
+    const path = principal === 'manager' ? '/api/auth/refresh' : '/api/agent/auth/refresh';
+    const { data } = await axios.post<AgentAuthResult>(`${env.apiUrl}${path}`, body);
+    await tokenStorage.setTokens(data.accessToken, data.refreshToken, principal);
     return data.accessToken;
   } catch (error) {
     // Clear only when the server actually rejected the token — a network

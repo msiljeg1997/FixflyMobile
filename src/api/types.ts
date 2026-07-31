@@ -310,3 +310,95 @@ export interface ApiErrorResponse {
   validationErrors?: Record<string, string[]>;
   traceId?: string;
 }
+
+// ── Manager app (company / location admin) ──────────────────────────────────
+
+/** Which kind of account is signed in; decides the app's whole navigation. */
+export enum MobilePrincipal {
+  Agent = 0,
+  Manager = 1,
+}
+
+export interface ManagerProfile {
+  id: number;
+  name: string;
+  email: string;
+  role: string; // "CompanyAdmin" | "LocationAdmin"
+  companyId: number | null;
+  companyName: string;
+  /** Set for a LocationAdmin — their whole world is this one venue. */
+  locationId: number | null;
+  locationName: string | null;
+}
+
+/** Exactly one of agent/manager is populated, per `principal`. */
+export interface MobileAuthResult {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  principal: MobilePrincipal;
+  agent: AgentProfile | null;
+  manager: ManagerProfile | null;
+}
+
+/**
+ * Why a ticket is in the manager's inbox. Ordered by how badly it needs a
+ * human — a ticket nobody owns outranks one that is merely urgent, because
+ * urgency at least has someone acting on it.
+ */
+export enum InboxReason {
+  Unowned = 0,
+  UrgentUnaccepted = 1,
+  StaleInPool = 2,
+  AcceptanceExpiring = 3,
+  AwaitingClosure = 4,
+}
+
+export interface InboxItem {
+  ticketId: string;
+  location: string;
+  locationName: string | null;
+  description: string;
+  status: TicketStatus;
+  isUrgent: boolean;
+  categoryName: string | null;
+  assignedAgentName: string | null;
+  createdAt: string;
+  reason: InboxReason;
+  /** How long it has been stuck in this state — the number that conveys urgency. */
+  waitingMinutes: number;
+  resolutionPhotoCount: number;
+}
+
+export interface InboxBucket {
+  reason: InboxReason;
+  count: number;
+  items: InboxItem[];
+}
+
+export interface AdminInbox {
+  totalCount: number;
+  unreadChatThreads: number;
+  buckets: InboxBucket[];
+  /** Stalled past the horizon — cleanup, deliberately kept out of the count. */
+  backlogCount: number;
+  backlogHorizonDays: number;
+}
+
+export interface BacklogItem {
+  ticketId: string;
+  location: string;
+  locationName: string | null;
+  description: string;
+  status: TicketStatus;
+  isUrgent: boolean;
+  categoryName: string | null;
+  createdAt: string;
+  ageDays: number;
+}
+
+export interface BacklogResponse {
+  horizonDays: number;
+  totalCount: number;
+  items: BacklogItem[];
+}

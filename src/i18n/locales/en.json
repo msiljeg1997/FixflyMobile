@@ -6,7 +6,8 @@
     "save": "Save",
     "back": "Back",
     "done": "Done",
-    "logout": "Log out"
+    "logout": "Log out",
+    "error": "Error"
   },
   "login": {
     "title": "Fixfly Pro",
@@ -83,7 +84,8 @@
   "tabs": {
     "tasks": "Tasks",
     "chat": "Chat",
-    "profile": "Profile"
+    "profile": "Profile",
+    "inbox": "Inbox"
   },
   "lock": {
     "unlockTitle": "Unlock the app",
@@ -157,5 +159,43 @@
     "resend": "Send the code again",
     "sendError": "Could not send the code. Check your connection.",
     "codeError": "That code is not valid or has expired."
+  },
+  "inbox": {
+    "title": "Inbox",
+    "loadError": "Could not load.",
+    "allClear": "All clear",
+    "allClearBody": "Nothing is waiting on your decision.",
+    "waiting": "waiting {{duration}}",
+    "andMore": "and {{count}} more",
+    "backlogTitle": "To clear",
+    "backlogBody": "{{count}} tickets older than {{days}} days — kept out of the inbox",
+    "backlogHint": "These have sat too long to be today’s work. Select and close them together.",
+    "ageDays": "{{count}} days old",
+    "closeSelected": "Close selected ({{count}})",
+    "bulkCloseTitle": "Close selected?",
+    "bulkCloseBody": "{{count}} tickets will be closed. This cannot be undone from the app.",
+    "noAssignees": "Nobody with app access is assigned to this location.",
+    "assignForCategory": "Category: {{category}}. ★ marks the recommended.",
+    "actionError": "That did not work.",
+    "reason": {
+      "unowned": "Nobody owns it",
+      "urgentUnaccepted": "Urgent, unaccepted",
+      "staleInPool": "Sitting in the pool",
+      "acceptanceExpiring": "Acceptance expiring",
+      "awaitingClosure": "Resolved, awaiting closure"
+    },
+    "hint": {
+      "unowned": "Rejected or timed out — nobody is holding this and it will not move on its own.",
+      "urgentUnaccepted": "Flagged urgent and still not picked up.",
+      "staleInPool": "In the pool longer than the acceptance window allows.",
+      "acceptanceExpiring": "If the technician does not accept in time, it bounces back automatically.",
+      "awaitingClosure": "Resolved with proof attached. Review and close."
+    },
+    "action": {
+      "assign": "Assign",
+      "close": "Close",
+      "setUrgent": "Mark urgent",
+      "unsetUrgent": "Remove urgent"
+    }
   }
 }

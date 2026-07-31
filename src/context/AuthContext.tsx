@@ -4,7 +4,8 @@ import * as authApi from '../api/auth';
 import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
 import { appLock } from '../security/appLock';
-import type { AgentLoginRequest, AgentProfile } from '../api/types';
+import { MobilePrincipal } from '../api/types';
+import type { AgentLoginRequest, AgentProfile, ManagerProfile } from '../api/types';
 
 // Realtime is an enhancement, never a gate: a SignalR failure (server hub
 // method missing, hub down, flaky network) must not fail login/startup —
@@ -19,7 +20,12 @@ function connectRealtimeSafe(): void {
 const LOCK_AFTER_BACKGROUND_MS = 60_000;
 
 interface AuthContextValue {
+  /** Set when a technician or dispatcher is signed in; null for a manager. */
   agent: AgentProfile | null;
+  /** Set when a company/location manager is signed in; null for an agent. */
+  manager: ManagerProfile | null;
+  /** Which app the person gets. Drives navigation, not just labels. */
+  principal: MobilePrincipal;
   /**
    * 'locked' = valid session, but the device gate (biometric/PIN) must pass.
    * 'pinSetup' = signed in, no PIN yet — offer to create one.
@@ -54,6 +60,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [agent, setAgent] = useState<AgentProfile | null>(null);
+  const [manager, setManager] = useState<ManagerProfile | null>(null);
+  const [principal, setPrincipal] = useState<MobilePrincipal>(MobilePrincipal.Agent);
   const [status, setStatus] = useState<AuthContextValue['status']>('checking');
   const [pinSetupIntent, setPinSetupIntent] = useState<'enroll' | 'change'>('enroll');
   const backgroundedAt = useRef<number | null>(null);
@@ -67,6 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // otherwise the next person to sign in on this device would inherit it.
     await appLock.clear();
     setAgent(null);
+    setManager(null);
+    setPrincipal(MobilePrincipal.Agent);
     setStatus('signedOut');
   }, []);
 
@@ -84,9 +94,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        const profile = await authApi.fetchCurrentAgent();
-        setAgent(profile);
-        connectRealtimeSafe();
+        const restored = await authApi.fetchCurrentPrincipal();
+        setAgent(restored.agent);
+        setManager(restored.manager);
+        setPrincipal(restored.principal);
+        // Realtime groups are agent-scoped; a manager has no hub group yet.
+        if (restored.principal === MobilePrincipal.Agent) connectRealtimeSafe();
         // A stored session behind an ENABLED lock starts locked, not open.
         setStatus((await appLock.isLockEnabled()) ? 'locked' : 'signedIn');
       } catch (error) {
@@ -125,9 +138,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const doLogin = useCallback(async (credentials: AgentLoginRequest) => {
-    const profile = await authApi.login(credentials);
-    setAgent(profile);
-    connectRealtimeSafe();
+    const result = await authApi.login(credentials);
+    setAgent(result.agent);
+    setManager(result.manager);
+    setPrincipal(result.principal);
+    if (result.principal === MobilePrincipal.Agent) connectRealtimeSafe();
     // Offer the quick-unlock gate once, and only to a device that has never
     // answered. Someone who turned the lock off stays signed straight in —
     // re-asking on every login is how a declined option becomes nagging.
@@ -165,19 +180,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async () => {
-    const profile = await authApi.fetchCurrentAgent();
-    setAgent(profile);
-    connectRealtimeSafe();
+    const restored = await authApi.fetchCurrentPrincipal();
+    setAgent(restored.agent);
+    setManager(restored.manager);
+    setPrincipal(restored.principal);
+    if (restored.principal === MobilePrincipal.Agent) connectRealtimeSafe();
     setStatus((await appLock.hasChosen()) ? 'signedIn' : 'pinSetup');
   }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      agent, status, login: doLogin, logout: doLogout,
+      agent, manager, principal, status, login: doLogin, logout: doLogout,
       unlock, completePinSetup, skipPinSetup, resetPin, refreshSession,
       startPinSetup, pinSetupIntent,
     }),
-    [agent, status, doLogin, doLogout, unlock, completePinSetup, skipPinSetup,
+    [agent, manager, principal, status, doLogin, doLogout, unlock, completePinSetup, skipPinSetup,
      resetPin, refreshSession, startPinSetup, pinSetupIntent]
   );
 

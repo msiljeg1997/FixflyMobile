@@ -5,12 +5,16 @@ import { useTranslation } from 'react-i18next';
 import { TasksStackNavigator } from './TasksStackNavigator';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { InboxScreen } from '../screens/InboxScreen';
 import { ChatBanner } from '../components/ChatBanner';
 import { useUnread } from '../context/UnreadContext';
+import { useAuth } from '../context/AuthContext';
+import { MobilePrincipal } from '../api/types';
 import { colors, spacing } from '../theme/tokens';
 
 export type MainTabParamList = {
   TasksTab: undefined;
+  InboxTab: undefined;
   ChatTab: undefined;
   ProfileTab: undefined;
 };
@@ -27,6 +31,10 @@ function TabIcon({ glyph, color }: { glyph: string; color: string }) {
 export function MainTabs() {
   const { t } = useTranslation();
   const { total } = useUnread();
+  const { principal } = useAuth();
+  // A manager triages; an agent works a queue. Same shell, different first
+  // tab — they are not variations of one screen.
+  const isManager = principal === MobilePrincipal.Manager;
 
   return (
     <>
@@ -48,14 +56,25 @@ export function MainTabs() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
-      <Tab.Screen
-        name="TasksTab"
-        component={TasksStackNavigator}
-        options={{
-          tabBarLabel: t('tabs.tasks'),
-          tabBarIcon: ({ color }) => <TabIcon glyph="🗂️" color={color} />,
-        }}
-      />
+      {isManager ? (
+        <Tab.Screen
+          name="InboxTab"
+          component={InboxScreen}
+          options={{
+            tabBarLabel: t('tabs.inbox'),
+            tabBarIcon: ({ color }) => <TabIcon glyph="📥" color={color} />,
+          }}
+        />
+      ) : (
+        <Tab.Screen
+          name="TasksTab"
+          component={TasksStackNavigator}
+          options={{
+            tabBarLabel: t('tabs.tasks'),
+            tabBarIcon: ({ color }) => <TabIcon glyph="🗂️" color={color} />,
+          }}
+        />
+      )}
       <Tab.Screen
         name="ChatTab"
         component={ChatStackNavigator}
