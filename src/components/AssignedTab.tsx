@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -200,18 +198,23 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
         </ScrollView>
       )}
 
-      {/* An overlay, not a Modal — this already renders inside one, and nesting
-          them is what left iOS with an orphaned window after assigning. */}
+      {/* Fills the tab rather than sitting on the bottom edge, and the search
+          box is the first thing under the title. A bottom-anchored sheet puts
+          the input right where the keyboard appears — KeyboardAvoidingView is
+          unreliable inside an absolutely positioned overlay, and this sidesteps
+          the question: the keyboard covers the tail of a scrollable list, which
+          is exactly what a keyboard is supposed to do. */}
       {picker !== null && (
         <View style={styles.pickerOverlay}>
-          <TouchableOpacity style={styles.pickerBackdrop} onPress={closePicker} activeOpacity={1} />
-          {/* The panel is anchored to the bottom, so without this the keyboard
-              would cover the very list being searched. */}
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View style={styles.pickerPanel}>
-              <Text style={styles.pickerTitle}>
-                {picker === 'agent' ? t('assigned.filterTechnician') : t('assigned.filterLocation')}
-              </Text>
+              <View style={styles.pickerHeader}>
+                <Text style={styles.pickerTitle}>
+                  {picker === 'agent' ? t('assigned.filterTechnician') : t('assigned.filterLocation')}
+                </Text>
+                <TouchableOpacity onPress={closePicker} hitSlop={12}>
+                  <Text style={styles.pickerClose}>✕</Text>
+                </TouchableOpacity>
+              </View>
 
               <View style={styles.searchWrap}>
                 <Text style={styles.searchIcon}>🔎</Text>
@@ -234,7 +237,7 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
                 )}
               </View>
 
-              <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
+              <ScrollView style={styles.pickerList} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
                 {/* The "all" reset stays out of the search results — it is not a
                     row you look for by name, and hiding it would strand anyone
                     who typed before clearing the filter. */}
@@ -287,7 +290,6 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
                 )}
               </ScrollView>
             </View>
-          </KeyboardAvoidingView>
         </View>
       )}
     </View>
@@ -369,24 +371,19 @@ const styles = StyleSheet.create({
   pageInfo: { fontSize: 13, color: colors.text, fontWeight: '600', minWidth: 90, textAlign: 'center' },
   total: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: spacing.sm },
 
-  pickerOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'flex-end', zIndex: 20 },
-  pickerBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: '#0D1117CC' },
-  pickerPanel: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-  },
-  pickerTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.forest,
+  pickerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, zIndex: 20 },
+  pickerPanel: { flex: 1, backgroundColor: colors.surface, paddingTop: spacing.md },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.md,
   },
+  pickerTitle: { flex: 1, fontSize: 16, fontWeight: '700', color: colors.forest },
+  pickerClose: { fontSize: 20, color: colors.muted },
+  // Grows into whatever the keyboard leaves, instead of a fixed height that
+  // would be half-hidden behind it.
+  pickerList: { flex: 1 },
   pickerRow: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border },
   pickerRowText: { fontSize: 15, color: colors.text },
   pickerRowSub: { fontSize: 11, color: colors.muted, marginTop: 2 },
