@@ -364,8 +364,15 @@ function AssignSheet({
     }
   };
 
+  if (!visible) return null;
+
+  // An overlay inside the ticket modal, NOT a Modal of its own. Nesting one
+  // Modal in another and dismissing both in the same commit — which assigning
+  // does, since it closes the picker and the ticket together — leaves iOS with
+  // an orphaned presented window: a black screen that survives navigation and
+  // clears only on an app restart.
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <View style={styles.overlay}>
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
@@ -441,12 +448,15 @@ function AssignSheet({
           <View style={styles.busyOverlay}><ActivityIndicator color={colors.green} size="large" /></View>
         )}
       </View>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
+  // Covers the ticket sheet completely, so it reads as its own screen without
+  // being a second Modal — see the comment on AssignSheet's return.
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, zIndex: 10 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   muted: { color: colors.muted, fontSize: 14, textAlign: 'center' },
   busyOverlay: {
