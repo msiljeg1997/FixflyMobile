@@ -221,5 +221,15 @@
       "accepted": "Prihvaćeno",
       "done": "Riješeno"
     }
+  },
+  "assigned": {
+    "tab": "Dodijeljeni",
+    "allTechnicians": "Svi tehničari",
+    "allLocations": "Sve lokacije",
+    "filterTechnician": "Filtriraj po tehničaru",
+    "filterLocation": "Filtriraj po lokaciji",
+    "empty": "Nema dodijeljenih prijava za ovaj odabir.",
+    "pageOf": "Str. {{page}} / {{total}}",
+    "total": "ukupno {{count}}"
   }
 }

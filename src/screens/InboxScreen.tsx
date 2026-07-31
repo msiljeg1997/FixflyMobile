@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import * as inboxApi from '../api/inbox';
 import { AdminInbox, BacklogItem, InboxItem, InboxReason } from '../api/types';
 import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
+import { AssignedTab } from '../components/AssignedTab';
 import { formatDuration } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -37,7 +38,7 @@ const REASON_KEY: Record<InboxReason, string> = {
   [InboxReason.AwaitingClosure]: 'awaitingClosure',
 };
 
-type Tab = 'todo' | 'cleanup';
+type Tab = 'todo' | 'assigned' | 'cleanup';
 
 /**
  * A manager's tickets: what needs a decision, and what needs clearing out.
@@ -197,22 +198,32 @@ export function InboxScreen() {
             style={[styles.segmentItem, tab === 'todo' && styles.segmentItemActive]}
             onPress={() => setTab('todo')}
           >
-            <Text style={[styles.segmentText, tab === 'todo' && styles.segmentTextActive]}>
+            <Text style={[styles.segmentText, tab === 'todo' && styles.segmentTextActive]} numberOfLines={1}>
               {t('inbox.tabTodo')} {data ? `(${data.totalCount})` : ''}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentItem, tab === 'assigned' && styles.segmentItemActive]}
+            onPress={() => setTab('assigned')}
+          >
+            <Text style={[styles.segmentText, tab === 'assigned' && styles.segmentTextActive]}>
+              {t('assigned.tab')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.segmentItem, tab === 'cleanup' && styles.segmentItemActive]}
             onPress={openCleanup}
           >
-            <Text style={[styles.segmentText, tab === 'cleanup' && styles.segmentTextActive]}>
+            <Text style={[styles.segmentText, tab === 'cleanup' && styles.segmentTextActive]} numberOfLines={1}>
               {t('inbox.tabCleanup')} {data ? `(${data.backlogCount})` : ''}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {tab === 'todo' ? (
+      {tab === 'assigned' ? (
+        <AssignedTab onOpenTicket={setOpenTicket} />
+      ) : tab === 'todo' ? (
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
           refreshControl={
@@ -362,7 +373,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   segmentItemActive: { backgroundColor: colors.green },
-  segmentText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  // Three labels in one row: a size down, and no wrapping.
+  segmentText: { fontSize: 12, fontWeight: '600', color: colors.muted },
   segmentTextActive: { color: colors.white },
 
   clearBox: { alignItems: 'center', paddingVertical: spacing.xl },

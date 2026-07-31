@@ -221,5 +221,15 @@
       "accepted": "Accepted",
       "done": "Resolved"
     }
+  },
+  "assigned": {
+    "tab": "Assigned",
+    "allTechnicians": "All technicians",
+    "allLocations": "All locations",
+    "filterTechnician": "Filter by technician",
+    "filterLocation": "Filter by location",
+    "empty": "No assigned tickets match this selection.",
+    "pageOf": "Page {{page}} / {{total}}",
+    "total": "{{count}} total"
   }
 }

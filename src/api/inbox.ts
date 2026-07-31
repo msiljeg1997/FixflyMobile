@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { TicketStatus } from './types';
 import type { AdminInbox, AdminTicketDetail, BacklogResponse } from './types';
 
 // Manager surface (company / location admin). Everything here runs against
@@ -76,5 +77,65 @@ export async function getForwardOptions(ticketId: string): Promise<ForwardOption
   const { data } = await apiClient.get<ForwardOptionsResponse>(
     `/api/admin/tickets/${encodeURIComponent(ticketId)}/forward-options`
   );
+  return data;
+}
+
+// ── Assigned tickets (the inbox's complement: work that IS owned) ───────────
+
+export interface AssignedTicket {
+  ticketId: string;
+  location: string;
+  description: string;
+  status: TicketStatus;
+  isUrgent: boolean;
+  createdAt: string;
+  forwardedAt: string | null;
+  acceptedAt: string | null;
+  assignedAgent: { id: number; name: string } | null;
+  category: { id: number; name: string } | null;
+}
+
+export interface AssignedPage {
+  items: AssignedTicket[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/**
+ * Forwarded or accepted — someone owns these and is working them. Filters and
+ * paging are the server's, so the phone never holds the whole list.
+ */
+export async function getAssigned(opts: {
+  page?: number;
+  pageSize?: number;
+  agentId?: number | null;
+  location?: string | null;
+}): Promise<AssignedPage> {
+  const { data } = await apiClient.get<AssignedPage>('/api/admin/tickets', {
+    params: {
+      inProgress: true,
+      page: opts.page ?? 1,
+      pageSize: opts.pageSize ?? 10,
+      // assignedTo, not agentId: the latter matches anyone who ever
+      // touched the ticket, which is a different question entirely.
+      ...(opts.agentId ? { assignedTo: opts.agentId } : {}),
+      ...(opts.location ? { location: opts.location } : {}),
+    },
+  });
+  return data;
+}
+
+export interface FilterAgent { id: number; name: string; role: number; isActive: boolean }
+export interface FilterLocation { id: number; code: string; name: string }
+
+export async function getAgentsForFilter(): Promise<FilterAgent[]> {
+  const { data } = await apiClient.get<FilterAgent[]>('/api/admin/agents');
+  return data;
+}
+
+export async function getLocationsForFilter(): Promise<FilterLocation[]> {
+  const { data } = await apiClient.get<FilterLocation[]>('/api/admin/locations');
   return data;
 }
