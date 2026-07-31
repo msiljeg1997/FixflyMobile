@@ -30,7 +30,7 @@ const LANGUAGE_NAMES: Record<SupportedLanguage, string> = { hr: 'Hrvatski', en: 
  */
 export function ManagerProfileScreen() {
   const { t, i18n } = useTranslation();
-  const { manager, logout, startPinSetup } = useAuth();
+  const { manager, logout, startPinSetup, isVenueManager } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [displayName, setDisplayName] = useState('');
@@ -41,11 +41,14 @@ export function ManagerProfileScreen() {
 
   useEffect(() => {
     setDisplayName(manager?.name ?? '');
+    // The horizon is a company-wide setting; a venue manager neither sets it
+    // nor may read it, and asking would only earn a 403 on every open.
+    if (isVenueManager) return;
     apiClient
       .get<{ inboxHorizonDays: number }>('/api/admin/settings/timer')
       .then((r) => setHorizon(String(r.data.inboxHorizonDays ?? 7)))
       .catch(() => {});
-  }, [manager?.name]);
+  }, [manager?.name, isVenueManager]);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,7 +61,10 @@ export function ManagerProfileScreen() {
     if (!name) return;
     setSavingName(true);
     try {
-      await apiClient.put('/api/admin/settings/profile', { name });
+      await apiClient.put(
+        isVenueManager ? '/api/location/me' : '/api/admin/settings/profile',
+        { name }
+      );
       Alert.alert(t('managerProfile.nameSaved'));
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.response?.data?.message || t('inbox.actionError'));
@@ -171,7 +177,7 @@ export function ManagerProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionLabel}>{t('managerProfile.horizonSection')}</Text>
+        {!isVenueManager && <><Text style={styles.sectionLabel}>{t('managerProfile.horizonSection')}</Text>
         <View style={styles.card}>
           <Text style={styles.hint}>{t('managerProfile.horizonHint')}</Text>
           <View style={styles.horizonRow}>
@@ -193,7 +199,7 @@ export function ManagerProfileScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </View></>}
 
         <Text style={styles.sectionLabel}>{t('profile.settings')}</Text>
         <View style={styles.settingsCard}>

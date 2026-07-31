@@ -67,8 +67,11 @@ class SignalRService {
    * method must not tear down an otherwise healthy connection.
    */
   private async joinGroups(): Promise<void> {
-    const principal = await tokenStorage.getPrincipal();
-    const method = principal === 'manager' ? 'JoinAdminGroup' : 'JoinMyGroups';
+    // Both manager kinds take the company group — that is where chat and ticket
+    // events go, and it is what the web dashboard already does for a venue
+    // manager. Their screens re-fetch from a scoped endpoint on every event, so
+    // the group only decides *when* they refresh, not what they can read.
+    const method = (await tokenStorage.isManager()) ? 'JoinAdminGroup' : 'JoinMyGroups';
     await this.connection?.invoke(method).catch(() => {});
   }
 

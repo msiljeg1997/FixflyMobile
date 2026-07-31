@@ -1,10 +1,17 @@
 import { apiClient } from './client';
+import { tokenStorage } from './storage';
 import { TicketStatus } from './types';
 import type { AdminInbox, AdminTicketDetail, BacklogResponse } from './types';
 
-// Manager surface (company / location admin). Everything here runs against
-// /api/admin/* with a User token — the same endpoints the dashboard uses, so
+// Manager surface. A company admin runs against /api/admin/*, a venue manager
+// against the narrower /api/location/* — same endpoints the dashboard uses, so
 // there is one implementation of each rule rather than a mobile fork of it.
+//
+// Only what a venue manager is allowed to do goes through `base()`. The
+// mutations below stay hardcoded to /api/admin on purpose: that role has no
+// such endpoint, and a call that quietly resolved to one would be a bug hunting
+// for a place to happen.
+const base = () => tokenStorage.managerBase();
 
 /**
  * Tickets that will not move without a person, grouped by why. Deliberately
@@ -12,7 +19,7 @@ import type { AdminInbox, AdminTicketDetail, BacklogResponse } from './types';
  * everything is a list nobody reads.
  */
 export async function getInbox(perBucket = 5): Promise<AdminInbox> {
-  const { data } = await apiClient.get<AdminInbox>('/api/admin/inbox', { params: { perBucket } });
+  const { data } = await apiClient.get<AdminInbox>(`${await base()}/inbox`, { params: { perBucket } });
   return data;
 }
 
@@ -24,7 +31,7 @@ export async function getBacklog(limit = 200): Promise<BacklogResponse> {
 
 export async function getTicket(ticketId: string): Promise<AdminTicketDetail> {
   const { data } = await apiClient.get<AdminTicketDetail>(
-    `/api/admin/tickets/${encodeURIComponent(ticketId)}/full`
+    `${await base()}/tickets/${encodeURIComponent(ticketId)}/full`
   );
   return data;
 }
@@ -147,7 +154,7 @@ export async function getLocationsForFilter(): Promise<FilterLocation[]> {
  * number, and that ticket could be in any state.
  */
 export async function searchTickets(query: string, limit = 25): Promise<AssignedPage> {
-  const { data } = await apiClient.get<AssignedPage>('/api/admin/tickets', {
+  const { data } = await apiClient.get<AssignedPage>(`${await base()}/tickets`, {
     params: { search: query, page: 1, pageSize: limit },
   });
   return data;

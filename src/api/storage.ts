@@ -10,9 +10,13 @@ const REFRESH_TOKEN_KEY = 'fixfly_agent_refresh_token';
 // profile through DIFFERENT endpoints, and the agent ones reject a manager
 // token outright. Without this a manager's session would silently die at the
 // first token expiry.
-const PRINCIPAL_KEY = 'fixfly_principal'; // 'agent' | 'manager'
+//
+// 'venue' is a manager too — same token type, same refresh path — but a
+// narrower door: LocationAdmin is refused by /api/admin/* outright, so the
+// stored value has to distinguish them or every screen would 403.
+const PRINCIPAL_KEY = 'fixfly_principal'; // 'agent' | 'manager' | 'venue'
 
-export type StoredPrincipal = 'agent' | 'manager';
+export type StoredPrincipal = 'agent' | 'manager' | 'venue';
 
 export const tokenStorage = {
   async getAccessToken(): Promise<string | null> {
@@ -23,7 +27,19 @@ export const tokenStorage = {
   },
   /** Defaults to 'agent' for sessions stored before this key existed. */
   async getPrincipal(): Promise<StoredPrincipal> {
-    return (await SecureStore.getItemAsync(PRINCIPAL_KEY)) === 'manager' ? 'manager' : 'agent';
+    const stored = await SecureStore.getItemAsync(PRINCIPAL_KEY);
+    return stored === 'manager' || stored === 'venue' ? stored : 'agent';
+  },
+  /** True for both manager kinds — they share auth, not endpoints. */
+  async isManager(): Promise<boolean> {
+    return (await tokenStorage.getPrincipal()) !== 'agent';
+  },
+  /**
+   * Which controller serves this session's ticket and chat calls. One place
+   * decides it, so no screen has to remember which manager it is talking to.
+   */
+  async managerBase(): Promise<string> {
+    return (await tokenStorage.getPrincipal()) === 'venue' ? '/api/location' : '/api/admin';
   },
   async setTokens(accessToken: string, refreshToken: string, principal: StoredPrincipal = 'agent'): Promise<void> {
     await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);

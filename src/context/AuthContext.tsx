@@ -30,6 +30,12 @@ interface AuthContextValue {
   /** Which app the person gets. Drives navigation, not just labels. */
   principal: MobilePrincipal;
   /**
+   * A manager of one venue rather than the company. They may read and talk,
+   * not assign or close — so this hides controls rather than merely renaming
+   * them, and the endpoints behind those controls would refuse them anyway.
+   */
+  isVenueManager: boolean;
+  /**
    * 'locked' = valid session, but the device gate (biometric/PIN) must pass.
    * 'pinSetup' = signed in, no PIN yet — offer to create one.
    */
@@ -192,7 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      agent, manager, principal, status, login: doLogin, logout: doLogout,
+      agent, manager, principal, isVenueManager: manager?.role === 'LocationAdmin',
+      status, login: doLogin, logout: doLogout,
       unlock, completePinSetup, skipPinSetup, resetPin, refreshSession,
       startPinSetup, pinSetupIntent,
     }),

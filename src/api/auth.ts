@@ -12,8 +12,18 @@ import type { AgentAuthResult, AgentLoginRequest, AgentProfile, ManagerProfile, 
  */
 export async function login(credentials: AgentLoginRequest): Promise<MobileAuthResult> {
   const { data } = await apiClient.post<MobileAuthResult>('/api/mobile/auth/login', credentials);
-  await tokenStorage.setTokens(data.accessToken, data.refreshToken, data.principal === 1 ? 'manager' : 'agent');
+  await tokenStorage.setTokens(data.accessToken, data.refreshToken, principalOf(data));
   return data;
+}
+
+/**
+ * A venue manager is a manager whose world is one location. The server says so
+ * in the role, and it has to be recorded now: after this call the app only has
+ * a token, and /api/admin/* answers a LocationAdmin with 403, not with a hint.
+ */
+function principalOf(result: MobileAuthResult) {
+  if (result.principal !== 1) return 'agent' as const;
+  return result.manager?.role === 'LocationAdmin' ? ('venue' as const) : ('manager' as const);
 }
 
 export async function logout(): Promise<void> {
@@ -23,8 +33,7 @@ export async function logout(): Promise<void> {
     // the access token still present in storage for the request interceptor.
     // Best-effort with a short wait; never block logout on network.
     try {
-      const principal = await tokenStorage.getPrincipal();
-      const revokePath = principal === 'manager' ? '/api/auth/revoke' : '/api/agent/auth/revoke';
+      const revokePath = (await tokenStorage.isManager()) ? '/api/auth/revoke' : '/api/agent/auth/revoke';
       await Promise.race([
         apiClient.post(revokePath, { refreshToken }),
         new Promise((resolve) => setTimeout(resolve, 3000)),
@@ -52,9 +61,8 @@ export async function fetchCurrentAgent(): Promise<AgentProfile> {
  * would 401, taking a perfectly good session down with it.
  */
 export async function fetchCurrentPrincipal(): Promise<MobileAuthResult> {
-  const principal = await tokenStorage.getPrincipal();
-  if (principal === 'manager') {
-    const { data } = await apiClient.get<ManagerProfile>('/api/admin/me');
+  if (await tokenStorage.isManager()) {
+    const { data } = await apiClient.get<ManagerProfile>(`${await tokenStorage.managerBase()}/me`);
     return { accessToken: '', refreshToken: '', expiresAt: '', principal: 1, agent: null, manager: data };
   }
   const agent = await fetchCurrentAgent();

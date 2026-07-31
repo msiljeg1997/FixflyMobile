@@ -10,9 +10,10 @@ import type { ChatMessage, ChatThread } from './types';
  * either way, only the door differs.
  */
 async function ticketBase(ticketId: string): Promise<string> {
-  const principal = await tokenStorage.getPrincipal();
   const id = encodeURIComponent(ticketId);
-  return principal === 'manager' ? `/api/admin/tickets/${id}` : `/api/agent/tasks/${id}`;
+  return (await tokenStorage.isManager())
+    ? `${await tokenStorage.managerBase()}/tickets/${id}`
+    : `/api/agent/tasks/${id}`;
 }
 
 // Per-ticket chat (backend W8 — ChatService, shared thread between the
@@ -25,8 +26,9 @@ async function ticketBase(ticketId: string): Promise<string> {
  * ticket keeps its thread reachable.
  */
 export async function getThreads(limit = 50): Promise<ChatThread[]> {
-  const principal = await tokenStorage.getPrincipal();
-  const path = principal === 'manager' ? '/api/admin/chat/threads' : '/api/agent/chat/threads';
+  const path = (await tokenStorage.isManager())
+    ? `${await tokenStorage.managerBase()}/chat/threads`
+    : '/api/agent/chat/threads';
   const { data } = await apiClient.get<ChatThread[]>(path, { params: { limit } });
   return data;
 }

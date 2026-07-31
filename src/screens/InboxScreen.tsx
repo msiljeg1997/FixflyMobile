@@ -52,7 +52,7 @@ type Tab = 'todo' | 'assigned' | 'cleanup';
  */
 export function InboxScreen() {
   const { t } = useTranslation();
-  const { manager } = useAuth();
+  const { manager, isVenueManager } = useAuth();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
 
@@ -248,8 +248,13 @@ export function InboxScreen() {
         {/* Cleanup is a tab, not a row at the bottom of the list: with a long
             queue that row is several screens down, exactly when there is most
             to clear. Hidden while searching — results span every state, so a
-            tab selection would be a filter nobody asked for. */}
-        {!isSearching && <View style={styles.segment}>
+            tab selection would be a filter nobody asked for.
+
+            A venue manager sees no tabs at all: "Dodijeljeni" filters by
+            location, which for them is a single value, and "Za čišćenje"
+            exists to close in bulk, which they may not do. One list is the
+            honest shape of their screen. */}
+        {!isSearching && !isVenueManager && <View style={styles.segment}>
           <TouchableOpacity
             style={[styles.segmentItem, tab === 'todo' && styles.segmentItemActive]}
             onPress={() => setTab('todo')}
