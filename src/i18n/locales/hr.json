@@ -92,7 +92,9 @@
     "queueFailedBody": "Server ga je odbio — zadatak je možda u međuvremenu prebačen ili zatvoren. Pokušajte ponovno ili odbacite spremljeno.",
     "queueDiscard": "Odbaci",
     "queueDiscardTitle": "Odbaciti spremljeno rješenje?",
-    "queueDiscardBody": "Komentar i fotografije bit će trajno izbrisani s uređaja."
+    "queueDiscardBody": "Komentar i fotografije bit će trajno izbrisani s uređaja.",
+    "openTasks": "{{count}} otvorenih",
+    "navigate": "Navigiraj"
   },
   "tabs": {
     "tasks": "Zadaci",
@@ -236,7 +238,10 @@
     "toastAssigned": "Dodijeljeno: {{name}}",
     "toastClosed": "Prijava zatvorena.",
     "toastUrgentOn": "Označeno kao hitno.",
-    "toastUrgentOff": "Oznaka hitno maknuta."
+    "toastUrgentOff": "Oznaka hitno maknuta.",
+    "searchPlaceholder": "Traži broj prijave ili opis...",
+    "searchEmpty": "Nema prijave koja odgovara.",
+    "searchCount": "{{count}} rezultata"
   },
   "assigned": {
     "tab": "Dodijeljeni",

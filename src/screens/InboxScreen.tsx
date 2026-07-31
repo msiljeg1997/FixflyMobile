@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -67,6 +68,12 @@ export function InboxScreen() {
   // nothing says the assignment landed.
   const [toast, setToast] = useState<string | null>(null);
 
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<inboxApi.AssignedTicket[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const searchQuery = search.trim();
+  const isSearching = searchQuery.length >= 2;
+
   const [backlog, setBacklog] = useState<BacklogItem[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -108,6 +115,21 @@ export function InboxScreen() {
     });
     return off;
   }, [load, loadBacklog, tab]);
+
+  // Debounced: a manager types a ticket number character by character, and
+  // firing a query per keystroke would send a dozen requests for one lookup.
+  useEffect(() => {
+    if (!isSearching) { setResults(null); return; }
+    setSearching(true);
+    const timer = setTimeout(() => {
+      inboxApi
+        .searchTickets(searchQuery)
+        .then((r) => setResults(r.items))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery, isSearching]);
 
   useEffect(() => {
     if (!toast) return;
@@ -204,10 +226,30 @@ export function InboxScreen() {
         <Text style={styles.title}>{t('inbox.title')}</Text>
         <Text style={styles.subtitle}>{manager?.locationName || manager?.companyName || ''}</Text>
 
+        <View style={styles.searchWrap}>
+          <Text style={styles.searchIcon}>🔎</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('inbox.searchPlaceholder')}
+            placeholderTextColor={colors.muted}
+            value={search}
+            onChangeText={setSearch}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={10}>
+              <Text style={styles.searchClear}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* Cleanup is a tab, not a row at the bottom of the list: with a long
             queue that row is several screens down, exactly when there is most
-            to clear. */}
-        <View style={styles.segment}>
+            to clear. Hidden while searching — results span every state, so a
+            tab selection would be a filter nobody asked for. */}
+        {!isSearching && <View style={styles.segment}>
           <TouchableOpacity
             style={[styles.segmentItem, tab === 'todo' && styles.segmentItemActive]}
             onPress={() => setTab('todo')}
@@ -232,10 +274,39 @@ export function InboxScreen() {
               {t('inbox.tabCleanup')} {data ? `(${data.backlogCount})` : ''}
             </Text>
           </TouchableOpacity>
-        </View>
+        </View>}
       </View>
 
-      {loading ? (
+      {isSearching ? (
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+          {searching ? (
+            <ActivityIndicator color={colors.green} style={{ marginTop: spacing.xl }} />
+          ) : !results || results.length === 0 ? (
+            <Text style={styles.muted}>{t('inbox.searchEmpty')}</Text>
+          ) : (
+            <>
+              <Text style={styles.bucketHint}>{t('inbox.searchCount', { count: results.length })}</Text>
+              {results.map((r) => (
+                <TouchableOpacity
+                  key={r.ticketId}
+                  style={[styles.card, { borderLeftColor: colors.muted }]}
+                  activeOpacity={0.75}
+                  onPress={() => setOpenTicket(r.ticketId)}
+                >
+                  <View style={styles.cardTop}>
+                    <Text style={styles.cardLocation} numberOfLines={1}>{r.location}</Text>
+                    {r.isUrgent && <Text style={styles.urgentBadge}>{t('tasks.urgent')}</Text>}
+                  </View>
+                  <Text style={styles.cardDescription} numberOfLines={2}>{r.description}</Text>
+                  <Text style={styles.cardCategory}>
+                    {r.ticketId} · {t(`status.${['New','ForwardedToTechnician','Accepted','Returned','Done','Closed'][r.status]}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
+        </ScrollView>
+      ) : loading ? (
         // Below the segment, not instead of it — the tabs stay reachable while
         // the first load runs.
         <View style={styles.center}><ActivityIndicator color={colors.green} size="large" /></View>
@@ -413,6 +484,20 @@ const styles = StyleSheet.create({
   },
   toastText: { color: colors.surface, fontSize: 14, fontWeight: '600', textAlign: 'center' },
 
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+  },
+  searchIcon: { fontSize: 14 },
+  searchInput: { flex: 1, color: colors.forest, fontSize: 15, paddingVertical: spacing.sm + 2 },
+  searchClear: { color: colors.muted, fontSize: 15, fontWeight: '700' },
   segment: {
     flexDirection: 'row',
     backgroundColor: colors.card,

@@ -92,7 +92,9 @@
     "queueFailedBody": "The server refused it — the task may have been reassigned or closed meanwhile. Retry, or discard what was saved.",
     "queueDiscard": "Discard",
     "queueDiscardTitle": "Discard the saved resolution?",
-    "queueDiscardBody": "The comment and photos will be permanently deleted from this device."
+    "queueDiscardBody": "The comment and photos will be permanently deleted from this device.",
+    "openTasks": "{{count}} open",
+    "navigate": "Directions"
   },
   "tabs": {
     "tasks": "Tasks",
@@ -236,7 +238,10 @@
     "toastAssigned": "Assigned to {{name}}",
     "toastClosed": "Ticket closed.",
     "toastUrgentOn": "Marked urgent.",
-    "toastUrgentOff": "Urgent removed."
+    "toastUrgentOff": "Urgent removed.",
+    "searchPlaceholder": "Search ticket number or description...",
+    "searchEmpty": "No ticket matches.",
+    "searchCount": "{{count}} results"
   },
   "assigned": {
     "tab": "Assigned",

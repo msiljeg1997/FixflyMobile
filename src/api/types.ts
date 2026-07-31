@@ -196,6 +196,8 @@ export interface TechnicianOption {
    * these come first; true for everyone when the category names no trade.
    */
   matchesCategory: boolean;
+  /** Forwarded or accepted right now — what this person already carries. */
+  openTasks: number;
 }
 
 // ── §10 — Push device token (W5) ─────────────────────────────────────────────

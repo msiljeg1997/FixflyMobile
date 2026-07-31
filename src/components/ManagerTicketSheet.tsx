@@ -450,6 +450,7 @@ function AssignSheet({
                           {o.technicianSpecializations.split('|').join(', ')}
                         </Text>
                       )}
+                      <Text style={styles.techLoad}>{t('taskDetail.openTasks', { count: o.openTasks })}</Text>
                     </View>
                     <View style={styles.availability}>
                       <View style={[styles.statusDot, { backgroundColor: AVAILABILITY_COLOR[o.availability as AgentAvailability] }]} />
@@ -676,6 +677,7 @@ const styles = StyleSheet.create({
   techAvatarText: { color: colors.green, fontWeight: '700', fontSize: 14 },
   techName: { fontSize: 15, fontWeight: '700', color: colors.forest },
   techSpec: { fontSize: 12, color: colors.muted, marginTop: 2, lineHeight: 16 },
+  techLoad: { fontSize: 11, color: colors.muted, marginTop: 2, fontWeight: '600' },
   availability: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   availabilityText: { fontSize: 11, fontWeight: '700' },
 });

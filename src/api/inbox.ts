@@ -62,6 +62,7 @@ export interface ForwardOption {
   technicianSpecializations: string | null;
   availability: number;
   matchesCategory: boolean;
+  openTasks: number;
 }
 
 export interface ForwardOptionsResponse {
@@ -137,5 +138,17 @@ export async function getAgentsForFilter(): Promise<FilterAgent[]> {
 
 export async function getLocationsForFilter(): Promise<FilterLocation[]> {
   const { data } = await apiClient.get<FilterLocation[]>('/api/admin/locations');
+  return data;
+}
+
+/**
+ * Across every ticket in the company, not just one tab — a manager searching
+ * is usually holding a phone with a guest on the other end reading out a
+ * number, and that ticket could be in any state.
+ */
+export async function searchTickets(query: string, limit = 25): Promise<AssignedPage> {
+  const { data } = await apiClient.get<AssignedPage>('/api/admin/tickets', {
+    params: { search: query, page: 1, pageSize: limit },
+  });
   return data;
 }

@@ -92,7 +92,9 @@
     "queueFailedBody": "Der Server hat sie abgelehnt — die Aufgabe wurde möglicherweise neu zugewiesen oder geschlossen. Erneut versuchen oder Gespeichertes verwerfen.",
     "queueDiscard": "Verwerfen",
     "queueDiscardTitle": "Gespeicherte Lösung verwerfen?",
-    "queueDiscardBody": "Kommentar und Fotos werden dauerhaft vom Gerät gelöscht."
+    "queueDiscardBody": "Kommentar und Fotos werden dauerhaft vom Gerät gelöscht.",
+    "openTasks": "{{count}} offen",
+    "navigate": "Route"
   },
   "tabs": {
     "tasks": "Aufgaben",
@@ -236,7 +238,10 @@
     "toastAssigned": "Zugewiesen an {{name}}",
     "toastClosed": "Meldung geschlossen.",
     "toastUrgentOn": "Als dringend markiert.",
-    "toastUrgentOff": "Dringend entfernt."
+    "toastUrgentOff": "Dringend entfernt.",
+    "searchPlaceholder": "Meldungsnummer oder Beschreibung...",
+    "searchEmpty": "Keine passende Meldung.",
+    "searchCount": "{{count}} Ergebnisse"
   },
   "assigned": {
     "tab": "Zugewiesen",

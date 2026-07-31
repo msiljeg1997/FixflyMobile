@@ -152,6 +152,24 @@ export function TaskDetailScreen() {
     if (task?.reporterPhone) Linking.openURL(`tel:${task.reporterPhone}`);
   };
 
+  /**
+   * Coordinates when the guest's report carried them, otherwise the site
+   * address. A technician holding a phone with an address on it is one tap
+   * from directions and was previously retyping it into another app.
+   */
+  const openInMaps = () => {
+    if (!task) return;
+    const query =
+      task.latitude != null && task.longitude != null
+        ? `${task.latitude},${task.longitude}`
+        : task.locationAddress;
+    if (!query) return;
+    const encoded = encodeURIComponent(query);
+    // Apple Maps on iOS, the geo: scheme elsewhere — both fall back to
+    // whatever the device has set as its map app.
+    Linking.openURL(Platform.OS === 'ios' ? `maps:0,0?q=${encoded}` : `geo:0,0?q=${encoded}`);
+  };
+
   const statusLabel = (s: TicketStatus) => t(`status.${TicketStatus[s]}`);
 
   const showError = (e: unknown) => {
@@ -412,7 +430,18 @@ export function TaskDetailScreen() {
 
         {hasLocationInfo && (
           <View style={styles.card}>
-            {task.locationAddress && <InfoRow icon="📍" label={t('taskDetail.locationInfo')} value={task.locationAddress} />}
+            {task.locationAddress && (
+              <InfoRow
+                icon="📍"
+                label={t('taskDetail.locationInfo')}
+                value={task.locationAddress}
+                action={
+                  <TouchableOpacity style={styles.callButton} onPress={openInMaps}>
+                    <Text style={styles.callButtonText}>{t('taskDetail.navigate')}</Text>
+                  </TouchableOpacity>
+                }
+              />
+            )}
             {(task.locationContactName || task.locationContactPhone) && (
               <InfoRow
                 icon="☎️"
@@ -728,6 +757,9 @@ export function TaskDetailScreen() {
                           {tech.technicianSpecializations.split('|').join(', ')}
                         </Text>
                       )}
+                      {/* Trade alone is not enough to choose — without this the
+                          next job tends to land on whoever is already buried. */}
+                      <Text style={styles.techLoad}>{t('taskDetail.openTasks', { count: tech.openTasks })}</Text>
                     </View>
                     <View style={styles.availability}>
                       <View style={[styles.statusDot, { backgroundColor: AVAILABILITY_COLOR[tech.availability] }]} />
@@ -974,6 +1006,7 @@ const styles = StyleSheet.create({
   },
   techAvatarText: { fontSize: 14, fontWeight: '700', color: colors.forest },
   techName: { fontSize: 15, fontWeight: '600', color: colors.forest },
+  techLoad: { fontSize: 11, color: colors.muted, marginTop: 2, fontWeight: '600' },
   techSpec: { fontSize: 12, color: colors.muted, marginTop: 2 },
   availability: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   availabilityText: { fontSize: 11, fontWeight: '700' },
