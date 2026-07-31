@@ -34,7 +34,9 @@
     "searchPlaceholder": "Standort, Beschreibung, ID suchen...",
     "noMatches": "Keine Treffer für diese Suche.",
     "scope_mine": "Meine",
-    "scope_team": "Team"
+    "scope_team": "Team",
+    "syncPending": "⏳ Wartet auf Versand",
+    "syncFailed": "⚠ Senden fehlgeschlagen — Aufgabe öffnen"
   },
   "status": {
     "New": "Neu",
@@ -81,7 +83,16 @@
     "recommendedForCategory": "Empfohlen für diese Kategorie",
     "otherTechnicians": "Weitere Techniker",
     "noTechniciansForLocation": "Für diesen Standort sind keine Techniker mit App-Zugang eingeteilt.",
-    "system": "System"
+    "system": "System",
+    "resolveQueuedTitle": "Gespeichert, wartet auf Netz",
+    "resolveQueuedBody": "Keine Verbindung. Lösung und Fotos sind gespeichert und werden gesendet, sobald Sie wieder online sind — nichts muss wiederholt werden.",
+    "queuePendingTitle": "⏳ Lösung wartet auf Versand",
+    "queuePendingBody": "Auf diesem Gerät gespeichert. Wird automatisch gesendet, sobald Sie wieder online sind.",
+    "queueFailedTitle": "⚠ Lösung wurde nicht gesendet",
+    "queueFailedBody": "Der Server hat sie abgelehnt — die Aufgabe wurde möglicherweise neu zugewiesen oder geschlossen. Erneut versuchen oder Gespeichertes verwerfen.",
+    "queueDiscard": "Verwerfen",
+    "queueDiscardTitle": "Gespeicherte Lösung verwerfen?",
+    "queueDiscardBody": "Kommentar und Fotos werden dauerhaft vom Gerät gelöscht."
   },
   "tabs": {
     "tasks": "Aufgaben",
@@ -221,7 +232,11 @@
       "forwarded": "Weitergeleitet",
       "accepted": "Angenommen",
       "done": "Erledigt"
-    }
+    },
+    "toastAssigned": "Zugewiesen an {{name}}",
+    "toastClosed": "Meldung geschlossen.",
+    "toastUrgentOn": "Als dringend markiert.",
+    "toastUrgentOff": "Dringend entfernt."
   },
   "assigned": {
     "tab": "Zugewiesen",

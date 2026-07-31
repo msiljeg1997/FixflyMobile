@@ -34,7 +34,9 @@
     "searchPlaceholder": "Pretraži lokaciju, opis, broj...",
     "noMatches": "Nema rezultata za tu pretragu.",
     "scope_mine": "Moji",
-    "scope_team": "Tim"
+    "scope_team": "Tim",
+    "syncPending": "⏳ Čeka slanje",
+    "syncFailed": "⚠ Slanje nije uspjelo — otvorite zadatak"
   },
   "status": {
     "New": "Novi",
@@ -81,7 +83,16 @@
     "recommendedForCategory": "Preporučeni za ovu kategoriju",
     "otherTechnicians": "Ostali tehničari",
     "noTechniciansForLocation": "Nema tehničara s pristupom aplikaciji na ovoj lokaciji.",
-    "system": "Sustav"
+    "system": "Sustav",
+    "resolveQueuedTitle": "Spremljeno, čeka mrežu",
+    "resolveQueuedBody": "Nema veze sa serverom. Rješenje i fotografije su sačuvani i poslat će se čim se vratite u signal — ne morate ništa ponavljati.",
+    "queuePendingTitle": "⏳ Rješenje čeka slanje",
+    "queuePendingBody": "Sačuvano na uređaju. Poslat će se automatski čim se vratite u signal.",
+    "queueFailedTitle": "⚠ Rješenje nije poslano",
+    "queueFailedBody": "Server ga je odbio — zadatak je možda u međuvremenu prebačen ili zatvoren. Pokušajte ponovno ili odbacite spremljeno.",
+    "queueDiscard": "Odbaci",
+    "queueDiscardTitle": "Odbaciti spremljeno rješenje?",
+    "queueDiscardBody": "Komentar i fotografije bit će trajno izbrisani s uređaja."
   },
   "tabs": {
     "tasks": "Zadaci",
@@ -221,7 +232,11 @@
       "forwarded": "Proslijeđeno",
       "accepted": "Prihvaćeno",
       "done": "Riješeno"
-    }
+    },
+    "toastAssigned": "Dodijeljeno: {{name}}",
+    "toastClosed": "Prijava zatvorena.",
+    "toastUrgentOn": "Označeno kao hitno.",
+    "toastUrgentOff": "Oznaka hitno maknuta."
   },
   "assigned": {
     "tab": "Dodijeljeni",

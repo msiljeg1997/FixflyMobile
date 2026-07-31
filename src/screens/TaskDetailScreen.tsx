@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +20,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
+import { isNetworkError } from '../api/client';
+import { outbox } from '../offline/outbox';
 import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
 import { AgentAvailability, AgentRole, TaskDetail, TaskHistoryEvent, TechnicianOption, TicketStatus } from '../api/types';
@@ -83,6 +85,16 @@ export function TaskDetailScreen() {
   const [error, setError] = useState(false);
   const [acting, setActing] = useState(false);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
+
+  // A resolve sitting in the outbox for THIS ticket. Surfaced here because a
+  // queue that fails quietly is worse than no queue: the technician believes
+  // the job is filed and only finds out days later that it never arrived.
+  const [queued, setQueued] = useState<{ failedReason?: string } | null>(null);
+  useEffect(() => {
+    const sync = () => { outbox.resolveFor(ticketId).then((i) => setQueued(i ?? null)); };
+    sync();
+    return outbox.subscribe(sync);
+  }, [ticketId]);
 
   // Read-only activity timeline
   const [history, setHistory] = useState<TaskHistoryEvent[]>([]);
@@ -202,7 +214,18 @@ export function TaskDetailScreen() {
       setComment('');
       setPhotos([]);
     } catch (e) {
-      showError(e);
+      // Only a dead connection is queued. A refusal from the server — wrong
+      // status, no longer assigned to this technician — is a real answer and
+      // gets shown; queueing it would just fail again later, quietly.
+      if (isNetworkError(e)) {
+        await outbox.enqueueResolve(ticketId, comment.trim(), photos);
+        setResolving(false);
+        setComment('');
+        setPhotos([]);
+        Alert.alert(t('taskDetail.resolveQueuedTitle'), t('taskDetail.resolveQueuedBody'));
+      } else {
+        showError(e);
+      }
     } finally {
       setActing(false);
     }
@@ -299,6 +322,38 @@ export function TaskDetailScreen() {
           { paddingTop: insets.top + spacing.sm, paddingBottom: hasFooter ? spacing.lg : insets.bottom + spacing.xl },
         ]}
       >
+        {!!queued && (
+          <View style={[styles.queueBanner, queued.failedReason && styles.queueBannerFailed]}>
+            <Text style={styles.queueTitle}>
+              {queued.failedReason ? t('taskDetail.queueFailedTitle') : t('taskDetail.queuePendingTitle')}
+            </Text>
+            <Text style={styles.queueBody}>
+              {queued.failedReason ? t('taskDetail.queueFailedBody') : t('taskDetail.queuePendingBody')}
+            </Text>
+            {!!queued.failedReason && (
+              <View style={styles.queueActions}>
+                <TouchableOpacity style={styles.queueRetry} onPress={() => outbox.retryResolve(ticketId)}>
+                  <Text style={styles.queueRetryText}>{t('common.retry')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() =>
+                    Alert.alert(t('taskDetail.queueDiscardTitle'), t('taskDetail.queueDiscardBody'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('taskDetail.queueDiscard'),
+                        style: 'destructive',
+                        onPress: () => outbox.discardResolve(ticketId),
+                      },
+                    ])
+                  }
+                >
+                  <Text style={styles.queueDiscardText}>{t('taskDetail.queueDiscard')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={styles.back}>‹ {t('common.back')}</Text>
@@ -769,6 +824,24 @@ const styles = StyleSheet.create({
   infoIcon: { fontSize: 16, width: 22, textAlign: 'center' },
   infoLabel: { fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
   infoValue: { fontSize: 14, color: colors.text, fontWeight: '600', marginTop: 2 },
+  queueBanner: {
+    backgroundColor: tint(colors.warning),
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  queueBannerFailed: { backgroundColor: tint(colors.error) },
+  queueTitle: { fontSize: 14, fontWeight: '700', color: colors.forest },
+  queueBody: { fontSize: 13, color: colors.text, marginTop: 4, lineHeight: 18 },
+  queueActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, marginTop: spacing.sm },
+  queueRetry: {
+    backgroundColor: colors.green,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+  },
+  queueRetryText: { color: colors.white, fontSize: 12, fontWeight: '700' },
+  queueDiscardText: { color: colors.error, fontSize: 12, fontWeight: '700' },
   callButton: { backgroundColor: colors.green, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2 },
   callButtonText: { color: colors.white, fontSize: 12, fontWeight: '700' },
 

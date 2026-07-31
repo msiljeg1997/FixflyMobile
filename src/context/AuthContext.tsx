@@ -10,6 +10,9 @@ import type { AgentLoginRequest, AgentProfile, ManagerProfile } from '../api/typ
 // Realtime is an enhancement, never a gate: a SignalR failure (server hub
 // method missing, hub down, flaky network) must not fail login/startup —
 // pull-to-refresh is the guide's designated fallback (§12).
+//
+// Connected for managers too: the service picks the right hub group from the
+// stored principal, so a manager gets their company's ticket and chat events.
 function connectRealtimeSafe(): void {
   signalRService.connect().catch(() => {});
 }
@@ -98,8 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAgent(restored.agent);
         setManager(restored.manager);
         setPrincipal(restored.principal);
-        // Realtime groups are agent-scoped; a manager has no hub group yet.
-        if (restored.principal === MobilePrincipal.Agent) connectRealtimeSafe();
+        connectRealtimeSafe();
         // A stored session behind an ENABLED lock starts locked, not open.
         setStatus((await appLock.isLockEnabled()) ? 'locked' : 'signedIn');
       } catch (error) {
@@ -142,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAgent(result.agent);
     setManager(result.manager);
     setPrincipal(result.principal);
-    if (result.principal === MobilePrincipal.Agent) connectRealtimeSafe();
+    connectRealtimeSafe();
     // Offer the quick-unlock gate once, and only to a device that has never
     // answered. Someone who turned the lock off stays signed straight in —
     // re-asking on every login is how a declined option becomes nagging.
@@ -184,7 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAgent(restored.agent);
     setManager(restored.manager);
     setPrincipal(restored.principal);
-    if (restored.principal === MobilePrincipal.Agent) connectRealtimeSafe();
+    connectRealtimeSafe();
     setStatus((await appLock.hasChosen()) ? 'signedIn' : 'pinSetup');
   }, []);
 

@@ -23,6 +23,7 @@ class SignalRService {
   private taskStatusChangedListeners = new Set<Listener<TaskStatusChangedEvent>>();
   private chatReceivedListeners = new Set<Listener<ChatMessageReceivedEvent>>();
   private chatReadListeners = new Set<Listener<ChatMessageReadEvent>>();
+  private companyChangedListeners = new Set<() => void>();
 
   async connect(): Promise<void> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) return;
@@ -44,17 +45,31 @@ class SignalRService {
     this.registerHandlers();
 
     this.connection.onreconnected(() => {
-      this.connection?.invoke('JoinMyGroups').catch(() => {});
+      this.joinGroups().catch(() => {});
     });
 
     try {
       await this.connection.start();
-      // New hub method — backend W7. Non-fatal until it ships: a missing
-      // method must not tear down an otherwise healthy connection.
-      await this.connection.invoke('JoinMyGroups').catch(() => {});
+      await this.joinGroups();
     } finally {
       this.connecting = null;
     }
+  }
+
+  /**
+   * Agents belong to a personal Agent_{id} group; managers belong to their
+   * company's. JoinMyGroups puts a manager in User_{id}, which NOTHING ever
+   * broadcasts to — every manager-facing event goes to Company_{id}, which is
+   * what JoinAdminGroup joins. Calling the wrong one leaves a connected socket
+   * that never receives anything, which looks exactly like working code.
+   *
+   * Failures are swallowed: realtime is an enhancement, and a missing hub
+   * method must not tear down an otherwise healthy connection.
+   */
+  private async joinGroups(): Promise<void> {
+    const principal = await tokenStorage.getPrincipal();
+    const method = principal === 'manager' ? 'JoinAdminGroup' : 'JoinMyGroups';
+    await this.connection?.invoke(method).catch(() => {});
   }
 
   private registerHandlers(): void {
@@ -72,6 +87,21 @@ class SignalRService {
     this.connection.on('ChatMessageRead', (data: ChatMessageReadEvent) => {
       this.chatReadListeners.forEach((fn) => fn(data));
     });
+
+    // Company-group events. A manager's inbox is a view over all of these, so
+    // rather than model each one it just reloads — the payloads differ and the
+    // screen would have to refetch anyway.
+    for (const event of ['TicketCreated', 'TicketStatusChanged', 'TicketAssigned', 'TicketEscalated']) {
+      this.connection.on(event, () => {
+        this.companyChangedListeners.forEach((fn) => fn());
+      });
+    }
+  }
+
+  /** Any ticket change anywhere in the company — drives the manager inbox. */
+  onCompanyTicketsChanged(fn: () => void): () => void {
+    this.companyChangedListeners.add(fn);
+    return () => this.companyChangedListeners.delete(fn);
   }
 
   async disconnect(): Promise<void> {

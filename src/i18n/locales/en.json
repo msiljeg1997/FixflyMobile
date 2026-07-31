@@ -34,7 +34,9 @@
     "searchPlaceholder": "Search location, description, ID...",
     "noMatches": "Nothing matches that search.",
     "scope_mine": "Mine",
-    "scope_team": "Team"
+    "scope_team": "Team",
+    "syncPending": "⏳ Waiting to send",
+    "syncFailed": "⚠ Could not send — open the task"
   },
   "status": {
     "New": "New",
@@ -81,7 +83,16 @@
     "recommendedForCategory": "Recommended for this category",
     "otherTechnicians": "Other technicians",
     "noTechniciansForLocation": "No technicians with app access are assigned to this location.",
-    "system": "System"
+    "system": "System",
+    "resolveQueuedTitle": "Saved, waiting for signal",
+    "resolveQueuedBody": "No connection. Your resolution and photos are stored and will be sent as soon as you are back online — nothing needs redoing.",
+    "queuePendingTitle": "⏳ Resolution waiting to send",
+    "queuePendingBody": "Saved on this device. It will be sent automatically once you are back online.",
+    "queueFailedTitle": "⚠ Resolution was not sent",
+    "queueFailedBody": "The server refused it — the task may have been reassigned or closed meanwhile. Retry, or discard what was saved.",
+    "queueDiscard": "Discard",
+    "queueDiscardTitle": "Discard the saved resolution?",
+    "queueDiscardBody": "The comment and photos will be permanently deleted from this device."
   },
   "tabs": {
     "tasks": "Tasks",
@@ -221,7 +232,11 @@
       "forwarded": "Forwarded",
       "accepted": "Accepted",
       "done": "Resolved"
-    }
+    },
+    "toastAssigned": "Assigned to {{name}}",
+    "toastClosed": "Ticket closed.",
+    "toastUrgentOn": "Marked urgent.",
+    "toastUrgentOff": "Urgent removed."
   },
   "assigned": {
     "tab": "Assigned",

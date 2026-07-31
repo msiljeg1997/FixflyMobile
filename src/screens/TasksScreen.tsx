@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { signalRService } from '../realtime/signalr';
+import { outbox } from '../offline/outbox';
 import * as tasksApi from '../api/tasks';
 import { AgentRole, TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
@@ -55,6 +56,22 @@ export function TasksScreen() {
   // takes no search params, so filtering server-side isn't available)
   const [search, setSearch] = useState('');
   const [urgentOnly, setUrgentOnly] = useState(false);
+
+  // Tickets whose resolve is sitting in the outbox. Shown on the row so a
+  // technician can see the job is recorded but not yet delivered — the whole
+  // point of queueing is lost if it looks identical to nothing happening.
+  const [pendingResolve, setPendingResolve] = useState<Record<string, string | undefined>>({});
+  useEffect(() => {
+    const sync = () => {
+      outbox.pendingResolves().then((items) => {
+        const map: Record<string, string | undefined> = {};
+        for (const i of items) map[i.ticketId] = i.failedReason;
+        setPendingResolve(map);
+      });
+    };
+    sync();
+    return outbox.subscribe(sync);
+  }, []);
 
   // A dispatcher hands work out, so they need to see it after it leaves their
   // own queue; a technician only ever has their own two lists.
@@ -162,6 +179,11 @@ export function TasksScreen() {
         <Text style={styles.cardDescription} numberOfLines={2}>
           {item.description}
         </Text>
+        {item.ticketId in pendingResolve && (
+          <Text style={pendingResolve[item.ticketId] ? styles.syncFailed : styles.syncPending}>
+            {pendingResolve[item.ticketId] ? t('tasks.syncFailed') : t('tasks.syncPending')}
+          </Text>
+        )}
         <View style={styles.cardBottom}>
           <View style={[styles.statusPill, { backgroundColor: tint(statusColor) }]}>
             <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
@@ -418,6 +440,8 @@ const styles = StyleSheet.create({
   },
   cardCategory: { fontSize: 12, color: colors.muted, fontWeight: '600' },
   cardDescription: { fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 2 },
+  syncPending: { fontSize: 11, color: colors.warning, fontWeight: '700', marginTop: 2 },
+  syncFailed: { fontSize: 11, color: colors.error, fontWeight: '700', marginTop: 2 },
   cardBottom: {
     flexDirection: 'row',
     alignItems: 'center',

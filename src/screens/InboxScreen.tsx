@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,6 +14,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import * as inboxApi from '../api/inbox';
+import { signalRService } from '../realtime/signalr';
 import { AdminInbox, BacklogItem, InboxItem, InboxReason } from '../api/types';
 import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
 import { AssignedTab } from '../components/AssignedTab';
@@ -62,6 +63,9 @@ export function InboxScreen() {
   const [busy, setBusy] = useState(false);
 
   const [openTicket, setOpenTicket] = useState<string | null>(null);
+  // Short confirmation after an action. Without it the sheet just closes and
+  // nothing says the assignment landed.
+  const [toast, setToast] = useState<string | null>(null);
 
   const [backlog, setBacklog] = useState<BacklogItem[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -93,6 +97,23 @@ export function InboxScreen() {
       load();
     }, [load])
   );
+
+  // Any ticket change in the company reloads the inbox — the manager's screen
+  // is a view over all of them, so modelling each event separately would only
+  // end in the same refetch.
+  useEffect(() => {
+    const off = signalRService.onCompanyTicketsChanged(() => {
+      load(true);
+      if (tab === 'cleanup') loadBacklog();
+    });
+    return off;
+  }, [load, loadBacklog, tab]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const openCleanup = () => {
     setTab('cleanup');
@@ -175,14 +196,6 @@ export function InboxScreen() {
     );
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={colors.green} size="large" />
-      </View>
-    );
-  }
-
   const isClear = !!data && data.totalCount === 0;
 
   return (
@@ -222,7 +235,11 @@ export function InboxScreen() {
         </View>
       </View>
 
-      {tab === 'assigned' ? (
+      {loading ? (
+        // Below the segment, not instead of it — the tabs stay reachable while
+        // the first load runs.
+        <View style={styles.center}><ActivityIndicator color={colors.green} size="large" /></View>
+      ) : tab === 'assigned' ? (
         <AssignedTab onOpenTicket={setOpenTicket} />
       ) : tab === 'todo' ? (
         <ScrollView
@@ -231,7 +248,14 @@ export function InboxScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.green} />
           }
         >
-          {error && <Text style={styles.errorText}>{t('inbox.loadError')}</Text>}
+          {error && (
+            <View style={styles.errorBox}>
+              <Text style={styles.errorText}>{t('inbox.loadError')}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
+                <Text style={styles.retryText}>{t('common.retry')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {isClear && (
             // Reaching zero is the goal, so it is stated — a blank screen would
@@ -328,13 +352,20 @@ export function InboxScreen() {
         </View>
       )}
 
+      {!!toast && (
+        <View style={[styles.toast, { bottom: insets.bottom + spacing.lg }]}>
+          <Text style={styles.toastText}>{toast}</Text>
+        </View>
+      )}
+
       <ManagerTicketSheet
         ticketId={openTicket}
         visible={openTicket !== null}
         onClose={() => setOpenTicket(null)}
-        onChanged={() => {
+        onChanged={(message) => {
           load(true);
           if (tab === 'cleanup') loadBacklog();
+          if (message) setToast(message);
         }}
         onOpenChat={(ticketId, title) => {
           // Dismiss first: navigating out from under a presented modal leaves
@@ -362,7 +393,25 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, backgroundColor: colors.surface },
   title: { fontSize: 24, fontWeight: '700', color: colors.forest },
   subtitle: { fontSize: 13, color: colors.muted, marginTop: 2, marginBottom: spacing.md },
+  errorBox: { alignItems: 'center', paddingVertical: spacing.lg },
   errorText: { color: colors.error, fontSize: 14, marginBottom: spacing.md },
+  retryButton: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.sm,
+    backgroundColor: colors.green,
+  },
+  retryText: { color: colors.white, fontWeight: '700' },
+  toast: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    backgroundColor: colors.forest,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+  },
+  toastText: { color: colors.surface, fontSize: 14, fontWeight: '600', textAlign: 'center' },
 
   segment: {
     flexDirection: 'row',

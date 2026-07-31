@@ -52,7 +52,8 @@ export function ManagerTicketSheet({
   ticketId: string | null;
   visible: boolean;
   onClose: () => void;
-  onChanged: () => void;
+  /** Optional message the caller shows as a confirmation. */
+  onChanged: (message?: string) => void;
   /** Handed up because the chat lives in another tab — the sheet must be
    *  dismissed before navigating, or iOS is left presenting over nothing. */
   onOpenChat: (ticketId: string, title: string) => void;
@@ -81,11 +82,11 @@ export function ManagerTicketSheet({
     if (visible) load();
   }, [visible, load]);
 
-  const run = async (action: () => Promise<unknown>, close = false) => {
+  const run = async (action: () => Promise<unknown>, close = false, message?: string) => {
     setBusy(true);
     try {
       await action();
-      onChanged();
+      onChanged(message);
       if (close) onClose();
       else await load();
     } catch (err: any) {
@@ -101,7 +102,7 @@ export function ManagerTicketSheet({
       {
         text: t('inbox.action.close'),
         style: 'destructive',
-        onPress: () => run(() => inboxApi.closeTicket(ticketId!), true),
+        onPress: () => run(() => inboxApi.closeTicket(ticketId!), true, t('inbox.toastClosed')),
       },
     ]);
   };
@@ -245,7 +246,13 @@ export function ManagerTicketSheet({
             <View style={styles.footerRow}>
               <TouchableOpacity
                 style={[styles.secondaryButton, ticket!.isUrgent && styles.secondaryButtonActive]}
-                onPress={() => run(() => inboxApi.setUrgent(ticketId!, !ticket!.isUrgent))}
+                onPress={() =>
+                  run(
+                    () => inboxApi.setUrgent(ticketId!, !ticket!.isUrgent),
+                    false,
+                    ticket!.isUrgent ? t('inbox.toastUrgentOff') : t('inbox.toastUrgentOn')
+                  )
+                }
                 disabled={busy}
               >
                 <Text style={[styles.secondaryText, ticket!.isUrgent && styles.secondaryTextActive]}>
@@ -283,9 +290,9 @@ export function ManagerTicketSheet({
           ticketId={ticketId}
           visible={assignOpen}
           onClose={() => setAssignOpen(false)}
-          onAssigned={() => {
+          onAssigned={(agentName) => {
             setAssignOpen(false);
-            onChanged();
+            onChanged(t('inbox.toastAssigned', { name: agentName }));
             onClose();
           }}
         />
@@ -345,7 +352,7 @@ function AssignSheet({
   ticketId: string | null;
   visible: boolean;
   onClose: () => void;
-  onAssigned: () => void;
+  onAssigned: (agentName: string) => void;
 }) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -365,11 +372,11 @@ function AssignSheet({
       .catch(() => setOptions([]));
   }, [visible, ticketId]);
 
-  const assign = async (agentId: number) => {
+  const assign = async (agentId: number, agentName: string) => {
     setBusy(true);
     try {
       await inboxApi.forwardTicket(ticketId!, agentId);
-      onAssigned();
+      onAssigned(agentName);
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.response?.data?.message || t('inbox.actionError'));
     } finally {
@@ -429,7 +436,7 @@ function AssignSheet({
                       !available && styles.techRowDisabled,
                       !o.matchesCategory && styles.techRowOffSpec,
                     ]}
-                    onPress={() => assign(o.id)}
+                    onPress={() => assign(o.id, o.name)}
                     disabled={!available || busy}
                     activeOpacity={0.7}
                   >
