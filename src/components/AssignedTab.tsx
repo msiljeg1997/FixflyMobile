@@ -1,10 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -46,6 +49,23 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
   const [agents, setAgents] = useState<FilterAgent[]>([]);
   const [locations, setLocations] = useState<FilterLocation[]>([]);
   const [picker, setPicker] = useState<'agent' | 'location' | null>(null);
+  const [query, setQuery] = useState('');
+
+  // The query belongs to one opening of the picker; leaving it behind means
+  // the next open silently shows a filtered list with an empty search box.
+  const closePicker = () => { setPicker(null); setQuery(''); };
+
+  const needle = query.trim().toLowerCase();
+  const visibleAgents = agents
+    // Dispatchers hold tickets too — filtering them out would hide most of
+    // what is actually assigned.
+    .filter((a) => a.isActive)
+    .filter((a) => !needle || a.name.toLowerCase().includes(needle));
+  // Matched on code as well: half these venues are named "hotdsa213", and the
+  // code is the only thing that tells them apart.
+  const visibleLocations = locations.filter(
+    (l) => !needle || l.name.toLowerCase().includes(needle) || l.code.toLowerCase().includes(needle)
+  );
 
   const load = useCallback(
     async (targetPage: number, asRefresh = false) => {
@@ -184,53 +204,90 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
           them is what left iOS with an orphaned window after assigning. */}
       {picker !== null && (
         <View style={styles.pickerOverlay}>
-          <TouchableOpacity style={styles.pickerBackdrop} onPress={() => setPicker(null)} activeOpacity={1} />
-          <View style={styles.pickerPanel}>
-            <Text style={styles.pickerTitle}>
-              {picker === 'agent' ? t('assigned.filterTechnician') : t('assigned.filterLocation')}
-            </Text>
-            <ScrollView style={{ maxHeight: 340 }}>
-              <TouchableOpacity
-                style={styles.pickerRow}
-                onPress={() => {
-                  if (picker === 'agent') setAgentId(null);
-                  else setLocation(null);
-                  setPicker(null);
-                }}
-              >
-                <Text style={styles.pickerRowText}>
-                  {picker === 'agent' ? t('assigned.allTechnicians') : t('assigned.allLocations')}
-                </Text>
-              </TouchableOpacity>
-              {picker === 'agent'
-                ? agents
-                    // Dispatchers hold tickets too — filtering them out would
-                    // hide most of what is actually assigned.
-                    .filter((a) => a.isActive)
-                    .map((a) => (
+          <TouchableOpacity style={styles.pickerBackdrop} onPress={closePicker} activeOpacity={1} />
+          {/* The panel is anchored to the bottom, so without this the keyboard
+              would cover the very list being searched. */}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.pickerPanel}>
+              <Text style={styles.pickerTitle}>
+                {picker === 'agent' ? t('assigned.filterTechnician') : t('assigned.filterLocation')}
+              </Text>
+
+              <View style={styles.searchWrap}>
+                <Text style={styles.searchIcon}>🔎</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder={
+                    picker === 'agent' ? t('assigned.searchTechnician') : t('assigned.searchLocation')
+                  }
+                  placeholderTextColor={colors.muted}
+                  value={query}
+                  onChangeText={setQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  returnKeyType="search"
+                />
+                {query.length > 0 && (
+                  <TouchableOpacity onPress={() => setQuery('')} hitSlop={10}>
+                    <Text style={styles.searchClear}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <ScrollView style={{ maxHeight: 320 }} keyboardShouldPersistTaps="handled">
+                {/* The "all" reset stays out of the search results — it is not a
+                    row you look for by name, and hiding it would strand anyone
+                    who typed before clearing the filter. */}
+                <TouchableOpacity
+                  style={styles.pickerRow}
+                  onPress={() => {
+                    if (picker === 'agent') setAgentId(null);
+                    else setLocation(null);
+                    closePicker();
+                  }}
+                >
+                  <Text style={styles.pickerRowText}>
+                    {picker === 'agent' ? t('assigned.allTechnicians') : t('assigned.allLocations')}
+                  </Text>
+                </TouchableOpacity>
+
+                {picker === 'agent' ? (
+                  visibleAgents.length === 0 ? (
+                    <Text style={styles.noMatches}>{t('assigned.noMatches')}</Text>
+                  ) : (
+                    visibleAgents.map((a) => (
                       <TouchableOpacity
                         key={a.id}
                         style={styles.pickerRow}
-                        onPress={() => { setAgentId(a.id); setPicker(null); }}
+                        onPress={() => { setAgentId(a.id); closePicker(); }}
                       >
                         <Text style={[styles.pickerRowText, agentId === a.id && styles.pickerRowActive]}>
                           {a.name}
                         </Text>
                       </TouchableOpacity>
                     ))
-                : locations.map((l) => (
+                  )
+                ) : visibleLocations.length === 0 ? (
+                  <Text style={styles.noMatches}>{t('assigned.noMatches')}</Text>
+                ) : (
+                  visibleLocations.map((l) => (
                     <TouchableOpacity
                       key={l.id}
                       style={styles.pickerRow}
-                      onPress={() => { setLocation(l.code); setPicker(null); }}
+                      onPress={() => { setLocation(l.code); closePicker(); }}
                     >
                       <Text style={[styles.pickerRowText, location === l.code && styles.pickerRowActive]}>
                         {l.name}
                       </Text>
+                      {/* Two venues can share a name — the code is what tells
+                          them apart, and this data already has three. */}
+                      <Text style={styles.pickerRowSub}>{l.code}</Text>
                     </TouchableOpacity>
-                  ))}
-            </ScrollView>
-          </View>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       )}
     </View>
@@ -332,5 +389,22 @@ const styles = StyleSheet.create({
   },
   pickerRow: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderTopWidth: 1, borderTopColor: colors.border },
   pickerRowText: { fontSize: 15, color: colors.text },
+  pickerRowSub: { fontSize: 11, color: colors.muted, marginTop: 2 },
   pickerRowActive: { color: colors.green, fontWeight: '700' },
+  noMatches: { fontSize: 14, color: colors.muted, textAlign: 'center', paddingVertical: spacing.xl },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+  },
+  searchIcon: { fontSize: 14 },
+  searchInput: { flex: 1, color: colors.forest, fontSize: 15, paddingVertical: spacing.sm + 2 },
+  searchClear: { color: colors.muted, fontSize: 15, fontWeight: '700' },
 });

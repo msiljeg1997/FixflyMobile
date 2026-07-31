@@ -230,6 +230,9 @@
     "filterLocation": "Filtriraj po lokaciji",
     "empty": "Nema dodijeljenih prijava za ovaj odabir.",
     "pageOf": "Str. {{page}} / {{total}}",
-    "total": "ukupno {{count}}"
+    "total": "ukupno {{count}}",
+    "searchTechnician": "Pretraži po imenu...",
+    "searchLocation": "Pretraži naziv ili šifru...",
+    "noMatches": "Nema podudaranja."
   }
 }

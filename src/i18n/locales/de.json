@@ -230,6 +230,9 @@
     "filterLocation": "Nach Standort filtern",
     "empty": "Keine zugewiesenen Meldungen für diese Auswahl.",
     "pageOf": "Seite {{page}} / {{total}}",
-    "total": "{{count}} insgesamt"
+    "total": "{{count}} insgesamt",
+    "searchTechnician": "Nach Namen suchen...",
+    "searchLocation": "Name oder Code suchen...",
+    "noMatches": "Keine Treffer."
   }
 }

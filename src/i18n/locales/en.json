@@ -230,6 +230,9 @@
     "filterLocation": "Filter by location",
     "empty": "No assigned tickets match this selection.",
     "pageOf": "Page {{page}} / {{total}}",
-    "total": "{{count}} total"
+    "total": "{{count}} total",
+    "searchTechnician": "Search by name...",
+    "searchLocation": "Search name or code...",
+    "noMatches": "No matches."
   }
 }
