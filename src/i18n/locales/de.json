@@ -85,7 +85,7 @@
     "tasks": "Aufgaben",
     "chat": "Chat",
     "profile": "Profil",
-    "inbox": "Eingang"
+    "inbox": "Meldungen"
   },
   "lock": {
     "unlockTitle": "App entsperren",
@@ -161,7 +161,7 @@
     "codeError": "Der Code ist ungültig oder abgelaufen."
   },
   "inbox": {
-    "title": "Eingang",
+    "title": "Meldungen",
     "loadError": "Laden fehlgeschlagen.",
     "allClear": "Alles erledigt",
     "allClearBody": "Nichts wartet auf Ihre Entscheidung.",
@@ -169,7 +169,7 @@
     "andMore": "und {{count}} weitere",
     "backlogTitle": "Aufzuräumen",
     "backlogBody": "{{count}} Meldungen älter als {{days}} Tage — nicht im Eingang",
-    "backlogHint": "Diese liegen zu lange, um heutige Arbeit zu sein. Auswählen und gemeinsam schließen.",
+    "backlogHint": "Liegen länger als {{days}} Tage — zu lange für heutige Arbeit. Auswählen und gemeinsam schließen.",
     "ageDays": "{{count}} Tage alt",
     "closeSelected": "Ausgewählte schließen ({{count}})",
     "bulkCloseTitle": "Ausgewählte schließen?",
@@ -196,6 +196,28 @@
       "close": "Schließen",
       "setUrgent": "Als dringend markieren",
       "unsetUrgent": "Dringend entfernen"
+    },
+    "tabTodo": "Zu erledigen",
+    "tabCleanup": "Aufzuräumen",
+    "backlogEmpty": "Nichts aufzuräumen.",
+    "selectAll": "Alle auswählen ({{count}})",
+    "deselectAll": "Auswahl aufheben",
+    "closeConfirm": "Diese Meldung wird geschlossen. In der App nicht widerrufbar.",
+    "assignCategoryHint": "Kategorie: {{category}} — Empfohlene stehen zuerst.",
+    "field": {
+      "category": "Kategorie",
+      "reporter": "Kontakt des Melders",
+      "assigned": "Zugewiesen an",
+      "returnReason": "Grund der Rückgabe",
+      "guestPhoto": "Foto des Melders",
+      "resolution": "Lösung",
+      "timeline": "Verlauf"
+    },
+    "time": {
+      "created": "Gemeldet",
+      "forwarded": "Weitergeleitet",
+      "accepted": "Angenommen",
+      "done": "Erledigt"
     }
   }
 }

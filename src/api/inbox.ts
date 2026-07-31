@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { AdminInbox, BacklogResponse } from './types';
+import type { AdminInbox, AdminTicketDetail, BacklogResponse } from './types';
 
 // Manager surface (company / location admin). Everything here runs against
 // /api/admin/* with a User token — the same endpoints the dashboard uses, so
@@ -18,6 +18,13 @@ export async function getInbox(perBucket = 5): Promise<AdminInbox> {
 /** Stalled past the company's inbox horizon — cleanup, closable in bulk. */
 export async function getBacklog(limit = 200): Promise<BacklogResponse> {
   const { data } = await apiClient.get<BacklogResponse>('/api/admin/inbox/backlog', { params: { limit } });
+  return data;
+}
+
+export async function getTicket(ticketId: string): Promise<AdminTicketDetail> {
+  const { data } = await apiClient.get<AdminTicketDetail>(
+    `/api/admin/tickets/${encodeURIComponent(ticketId)}`
+  );
   return data;
 }
 

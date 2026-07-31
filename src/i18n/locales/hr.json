@@ -85,7 +85,7 @@
     "tasks": "Zadaci",
     "chat": "Chat",
     "profile": "Profil",
-    "inbox": "Inbox"
+    "inbox": "Prijave"
   },
   "lock": {
     "unlockTitle": "Otključaj aplikaciju",
@@ -161,7 +161,7 @@
     "codeError": "Kod nije ispravan ili je istekao."
   },
   "inbox": {
-    "title": "Inbox",
+    "title": "Prijave",
     "loadError": "Podaci se nisu mogli učitati.",
     "allClear": "Sve je pod kontrolom",
     "allClearBody": "Nema prijava koje čekaju vašu odluku.",
@@ -169,7 +169,7 @@
     "andMore": "i još {{count}}",
     "backlogTitle": "Za čišćenje",
     "backlogBody": "{{count}} prijava starijih od {{days}} dana — nisu u inboxu",
-    "backlogHint": "Ove stoje predugo da bi bile današnji posao. Označite ih i zatvorite odjednom.",
+    "backlogHint": "Stoje dulje od {{days}} dana — predugo da bi bile današnji posao. Označite ih i zatvorite odjednom.",
     "ageDays": "star {{count}} dana",
     "closeSelected": "Zatvori označeno ({{count}})",
     "bulkCloseTitle": "Zatvoriti odabrane?",
@@ -196,6 +196,28 @@
       "close": "Zatvori",
       "setUrgent": "Označi hitno",
       "unsetUrgent": "Makni oznaku hitno"
+    },
+    "tabTodo": "Za rješavanje",
+    "tabCleanup": "Za čišćenje",
+    "backlogEmpty": "Nema ničega za čišćenje.",
+    "selectAll": "Označi sve ({{count}})",
+    "deselectAll": "Odznači sve",
+    "closeConfirm": "Prijava će biti zatvorena. Ovo se ne može poništiti iz aplikacije.",
+    "assignCategoryHint": "Kategorija: {{category}} — preporučeni su prvi na popisu.",
+    "field": {
+      "category": "Kategorija",
+      "reporter": "Kontakt prijavitelja",
+      "assigned": "Dodijeljen",
+      "returnReason": "Razlog vraćanja",
+      "guestPhoto": "Fotografija prijavitelja",
+      "resolution": "Rješenje",
+      "timeline": "Tijek"
+    },
+    "time": {
+      "created": "Prijavljeno",
+      "forwarded": "Proslijeđeno",
+      "accepted": "Prihvaćeno",
+      "done": "Riješeno"
     }
   }
 }

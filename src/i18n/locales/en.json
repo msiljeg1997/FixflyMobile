@@ -85,7 +85,7 @@
     "tasks": "Tasks",
     "chat": "Chat",
     "profile": "Profile",
-    "inbox": "Inbox"
+    "inbox": "Tickets"
   },
   "lock": {
     "unlockTitle": "Unlock the app",
@@ -161,7 +161,7 @@
     "codeError": "That code is not valid or has expired."
   },
   "inbox": {
-    "title": "Inbox",
+    "title": "Tickets",
     "loadError": "Could not load.",
     "allClear": "All clear",
     "allClearBody": "Nothing is waiting on your decision.",
@@ -169,7 +169,7 @@
     "andMore": "and {{count}} more",
     "backlogTitle": "To clear",
     "backlogBody": "{{count}} tickets older than {{days}} days — kept out of the inbox",
-    "backlogHint": "These have sat too long to be today’s work. Select and close them together.",
+    "backlogHint": "Sitting longer than {{days}} days — too long to be today’s work. Select and close them together.",
     "ageDays": "{{count}} days old",
     "closeSelected": "Close selected ({{count}})",
     "bulkCloseTitle": "Close selected?",
@@ -196,6 +196,28 @@
       "close": "Close",
       "setUrgent": "Mark urgent",
       "unsetUrgent": "Remove urgent"
+    },
+    "tabTodo": "To handle",
+    "tabCleanup": "To clear",
+    "backlogEmpty": "Nothing to clear.",
+    "selectAll": "Select all ({{count}})",
+    "deselectAll": "Deselect all",
+    "closeConfirm": "This ticket will be closed. It cannot be undone from the app.",
+    "assignCategoryHint": "Category: {{category}} — the recommended come first.",
+    "field": {
+      "category": "Category",
+      "reporter": "Reporter contact",
+      "assigned": "Assigned to",
+      "returnReason": "Why it came back",
+      "guestPhoto": "Reporter’s photo",
+      "resolution": "Resolution",
+      "timeline": "Timeline"
+    },
+    "time": {
+      "created": "Reported",
+      "forwarded": "Forwarded",
+      "accepted": "Accepted",
+      "done": "Resolved"
     }
   }
 }

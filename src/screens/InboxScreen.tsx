@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -16,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import * as inboxApi from '../api/inbox';
 import { AdminInbox, BacklogItem, InboxItem, InboxReason } from '../api/types';
+import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
 import { formatDuration } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -37,27 +37,30 @@ const REASON_KEY: Record<InboxReason, string> = {
   [InboxReason.AwaitingClosure]: 'awaitingClosure',
 };
 
+type Tab = 'todo' | 'cleanup';
+
 /**
- * What needs the manager, and nothing else.
+ * A manager's tickets: what needs a decision, and what needs clearing out.
  *
- * Deliberately not a ticket list — the dashboard already has one, and a phone
- * list of every ticket is a list nobody opens twice. Everything here is in a
- * state that will not move without a person, and every row can be acted on
- * without leaving the screen: an inbox exists to be emptied, and a round trip
- * through a detail screen per ticket defeats that.
+ * Deliberately not every ticket — the dashboard already lists those, and a
+ * phone list of everything is a list nobody opens twice. The two tabs are the
+ * two different jobs: acting on what still matters, and closing out what has
+ * been dead for months.
  */
 export function InboxScreen() {
   const { t } = useTranslation();
   const { manager } = useAuth();
   const insets = useSafeAreaInsets();
 
+  const [tab, setTab] = useState<Tab>('todo');
   const [data, setData] = useState<AdminInbox | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const [backlogOpen, setBacklogOpen] = useState(false);
+  const [openTicket, setOpenTicket] = useState<string | null>(null);
+
   const [backlog, setBacklog] = useState<BacklogItem[] | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -74,99 +77,25 @@ export function InboxScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
-
-  const run = async (action: () => Promise<unknown>, failureKey: string) => {
-    setBusy(true);
-    try {
-      await action();
-      await load(true);
-    } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.message || t(failureKey));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const openActions = (item: InboxItem) => {
-    const buttons: any[] = [];
-
-    if (item.reason === InboxReason.AwaitingClosure) {
-      buttons.push({
-        text: t('inbox.action.close'),
-        onPress: () => run(() => inboxApi.closeTicket(item.ticketId), 'inbox.actionError'),
-      });
-    }
-
-    buttons.push({
-      text: item.isUrgent ? t('inbox.action.unsetUrgent') : t('inbox.action.setUrgent'),
-      onPress: () => run(() => inboxApi.setUrgent(item.ticketId, !item.isUrgent), 'inbox.actionError'),
-    });
-
-    // Assigning needs a person picked from a location- and category-scoped
-    // list, so it opens its own sheet rather than guessing.
-    buttons.push({
-      text: t('inbox.action.assign'),
-      onPress: () => openAssign(item),
-    });
-
-    if (item.reason !== InboxReason.AwaitingClosure) {
-      buttons.push({
-        text: t('inbox.action.close'),
-        style: 'destructive',
-        onPress: () => run(() => inboxApi.closeTicket(item.ticketId), 'inbox.actionError'),
-      });
-    }
-
-    buttons.push({ text: t('common.cancel'), style: 'cancel' });
-
-    Alert.alert(
-      item.locationName || item.location,
-      `${item.ticketId}\n\n${item.description}`,
-      buttons
-    );
-  };
-
-  const openAssign = async (item: InboxItem) => {
-    try {
-      const res = await inboxApi.getForwardOptions(item.ticketId);
-      if (res.options.length === 0) {
-        Alert.alert(t('inbox.action.assign'), t('inbox.noAssignees'));
-        return;
-      }
-      Alert.alert(
-        t('inbox.action.assign'),
-        res.categoryName
-          ? t('inbox.assignForCategory', { category: res.categoryName })
-          : item.ticketId,
-        [
-          ...res.options.slice(0, 8).map((o) => ({
-            // The server sorts recommended-first; the marker keeps that
-            // visible in a plain alert list.
-            text: `${o.matchesCategory ? '★ ' : ''}${o.name}`,
-            onPress: () => run(() => inboxApi.forwardTicket(item.ticketId, o.id), 'inbox.actionError'),
-          })),
-          { text: t('common.cancel'), style: 'cancel' as const },
-        ]
-      );
-    } catch (err: any) {
-      Alert.alert(t('common.error'), err?.response?.data?.message || t('inbox.actionError'));
-    }
-  };
-
-  const openBacklog = async () => {
-    setBacklogOpen(true);
-    setSelected(new Set());
+  const loadBacklog = useCallback(async () => {
     try {
       const res = await inboxApi.getBacklog();
       setBacklog(res.items);
     } catch {
       setBacklog([]);
     }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
+
+  const openCleanup = () => {
+    setTab('cleanup');
+    setSelected(new Set());
+    if (backlog === null) loadBacklog();
   };
 
   const toggleSelected = (ticketId: string) => {
@@ -178,33 +107,34 @@ export function InboxScreen() {
     });
   };
 
+  const allSelected = !!backlog && backlog.length > 0 && selected.size === backlog.length;
+  const toggleAll = () => {
+    if (!backlog) return;
+    setSelected(allSelected ? new Set() : new Set(backlog.map((b) => b.ticketId)));
+  };
+
   const confirmBulkClose = () => {
     const ids = Array.from(selected);
     if (ids.length === 0) return;
-    Alert.alert(
-      t('inbox.bulkCloseTitle'),
-      t('inbox.bulkCloseBody', { count: ids.length }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('inbox.action.close'),
-          style: 'destructive',
-          onPress: async () => {
-            setBusy(true);
-            try {
-              await inboxApi.bulkClose(ids, 'Zatvoreno iz mobilne aplikacije');
-              setBacklogOpen(false);
-              setBacklog(null);
-              await load(true);
-            } catch (err: any) {
-              Alert.alert(t('common.error'), err?.response?.data?.message || t('inbox.actionError'));
-            } finally {
-              setBusy(false);
-            }
-          },
+    Alert.alert(t('inbox.bulkCloseTitle'), t('inbox.bulkCloseBody', { count: ids.length }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('inbox.action.close'),
+        style: 'destructive',
+        onPress: async () => {
+          setBusy(true);
+          try {
+            await inboxApi.bulkClose(ids, 'Zatvoreno iz mobilne aplikacije');
+            setSelected(new Set());
+            await Promise.all([load(true), loadBacklog()]);
+          } catch (err: any) {
+            Alert.alert(t('common.error'), err?.response?.data?.message || t('inbox.actionError'));
+          } finally {
+            setBusy(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderItem = (item: InboxItem) => {
@@ -214,8 +144,7 @@ export function InboxScreen() {
         key={item.ticketId}
         style={[styles.card, { borderLeftColor: color }]}
         activeOpacity={0.75}
-        disabled={busy}
-        onPress={() => openActions(item)}
+        onPress={() => setOpenTicket(item.ticketId)}
       >
         <View style={styles.cardTop}>
           <Text style={styles.cardLocation} numberOfLines={1}>
@@ -256,87 +185,93 @@ export function InboxScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xl },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.green} />
-        }
-      >
+      <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
         <Text style={styles.title}>{t('inbox.title')}</Text>
         <Text style={styles.subtitle}>{manager?.locationName || manager?.companyName || ''}</Text>
 
-        {error && <Text style={styles.errorText}>{t('inbox.loadError')}</Text>}
-
-        {isClear && (
-          // Reaching zero is the goal, so it is stated — a blank screen would
-          // read as a failure to load.
-          <View style={styles.clearBox}>
-            <Text style={styles.clearIcon}>✓</Text>
-            <Text style={styles.clearTitle}>{t('inbox.allClear')}</Text>
-            <Text style={styles.clearBody}>{t('inbox.allClearBody')}</Text>
-          </View>
-        )}
-
-        {data?.buckets.map((bucket) => (
-          <View key={bucket.reason} style={styles.bucket}>
-            <View style={styles.bucketHeader}>
-              <View style={[styles.bucketDot, { backgroundColor: REASON_COLOR[bucket.reason] }]} />
-              <Text style={styles.bucketTitle}>{t(`inbox.reason.${REASON_KEY[bucket.reason]}`)}</Text>
-              <Text style={styles.bucketCount}>{bucket.count}</Text>
-            </View>
-            <Text style={styles.bucketHint}>{t(`inbox.hint.${REASON_KEY[bucket.reason]}`)}</Text>
-            {bucket.items.map(renderItem)}
-            {bucket.count > bucket.items.length && (
-              <Text style={styles.more}>
-                {t('inbox.andMore', { count: bucket.count - bucket.items.length })}
-              </Text>
-            )}
-          </View>
-        ))}
-
-        {!!data?.backlogCount && (
-          <TouchableOpacity style={styles.backlogRow} activeOpacity={0.7} onPress={openBacklog}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.backlogTitle}>{t('inbox.backlogTitle')}</Text>
-              <Text style={styles.backlogBody}>
-                {t('inbox.backlogBody', { count: data.backlogCount, days: data.backlogHorizonDays })}
-              </Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
+        {/* Cleanup is a tab, not a row at the bottom of the list: with a long
+            queue that row is several screens down, exactly when there is most
+            to clear. */}
+        <View style={styles.segment}>
+          <TouchableOpacity
+            style={[styles.segmentItem, tab === 'todo' && styles.segmentItemActive]}
+            onPress={() => setTab('todo')}
+          >
+            <Text style={[styles.segmentText, tab === 'todo' && styles.segmentTextActive]}>
+              {t('inbox.tabTodo')} {data ? `(${data.totalCount})` : ''}
+            </Text>
           </TouchableOpacity>
-        )}
-      </ScrollView>
-
-      {busy && (
-        <View style={styles.busyOverlay}>
-          <ActivityIndicator color={colors.green} size="large" />
+          <TouchableOpacity
+            style={[styles.segmentItem, tab === 'cleanup' && styles.segmentItemActive]}
+            onPress={openCleanup}
+          >
+            <Text style={[styles.segmentText, tab === 'cleanup' && styles.segmentTextActive]}>
+              {t('inbox.tabCleanup')} {data ? `(${data.backlogCount})` : ''}
+            </Text>
+          </TouchableOpacity>
         </View>
-      )}
+      </View>
 
-      <Modal
-        visible={backlogOpen}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setBacklogOpen(false)}
-      >
-        <View style={styles.container}>
-          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.sm }]}>
-            <TouchableOpacity onPress={() => setBacklogOpen(false)} hitSlop={10}>
-              <Text style={styles.sheetClose}>✕</Text>
-            </TouchableOpacity>
-            <Text style={styles.sheetTitle}>{t('inbox.backlogTitle')}</Text>
-            <Text style={styles.sheetCount}>{selected.size || ''}</Text>
-          </View>
+      {tab === 'todo' ? (
+        <ScrollView
+          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.green} />
+          }
+        >
+          {error && <Text style={styles.errorText}>{t('inbox.loadError')}</Text>}
 
-          {backlog === null ? (
-            <View style={styles.center}><ActivityIndicator color={colors.green} /></View>
-          ) : (
-            <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 120 }}>
-              <Text style={styles.bucketHint}>{t('inbox.backlogHint')}</Text>
-              {backlog.map((b) => {
+          {isClear && (
+            // Reaching zero is the goal, so it is stated — a blank screen would
+            // read as a failure to load.
+            <View style={styles.clearBox}>
+              <Text style={styles.clearIcon}>✓</Text>
+              <Text style={styles.clearTitle}>{t('inbox.allClear')}</Text>
+              <Text style={styles.clearBody}>{t('inbox.allClearBody')}</Text>
+            </View>
+          )}
+
+          {data?.buckets.map((bucket) => (
+            <View key={bucket.reason} style={styles.bucket}>
+              <View style={styles.bucketHeader}>
+                <View style={[styles.bucketDot, { backgroundColor: REASON_COLOR[bucket.reason] }]} />
+                <Text style={styles.bucketTitle}>{t(`inbox.reason.${REASON_KEY[bucket.reason]}`)}</Text>
+                <Text style={styles.bucketCount}>{bucket.count}</Text>
+              </View>
+              <Text style={styles.bucketHint}>{t(`inbox.hint.${REASON_KEY[bucket.reason]}`)}</Text>
+              {bucket.items.map(renderItem)}
+              {bucket.count > bucket.items.length && (
+                <Text style={styles.more}>
+                  {t('inbox.andMore', { count: bucket.count - bucket.items.length })}
+                </Text>
+              )}
+            </View>
+          ))}
+        </ScrollView>
+      ) : (
+        <>
+          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 120 }]}>
+            <Text style={styles.bucketHint}>
+              {t('inbox.backlogHint', { days: data?.backlogHorizonDays ?? 7 })}
+            </Text>
+
+            {backlog !== null && backlog.length > 0 && (
+              <TouchableOpacity style={styles.selectAllRow} onPress={toggleAll} activeOpacity={0.7}>
+                <Text style={[styles.checkbox, allSelected && styles.checkboxOn]}>
+                  {allSelected ? '✓' : ''}
+                </Text>
+                <Text style={styles.selectAllText}>
+                  {allSelected ? t('inbox.deselectAll') : t('inbox.selectAll', { count: backlog.length })}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {backlog === null ? (
+              <ActivityIndicator color={colors.green} style={{ marginTop: spacing.xl }} />
+            ) : backlog.length === 0 ? (
+              <Text style={styles.muted}>{t('inbox.backlogEmpty')}</Text>
+            ) : (
+              backlog.map((b) => {
                 const on = selected.has(b.ticketId);
                 return (
                   <TouchableOpacity
@@ -344,6 +279,7 @@ export function InboxScreen() {
                     style={[styles.card, on && styles.cardSelected, { borderLeftColor: colors.muted }]}
                     activeOpacity={0.75}
                     onPress={() => toggleSelected(b.ticketId)}
+                    onLongPress={() => setOpenTicket(b.ticketId)}
                   >
                     <View style={styles.cardTop}>
                       <Text style={styles.cardLocation} numberOfLines={1}>
@@ -358,12 +294,12 @@ export function InboxScreen() {
                     </Text>
                   </TouchableOpacity>
                 );
-              })}
-            </ScrollView>
-          )}
+              })
+            )}
+          </ScrollView>
 
           {selected.size > 0 && (
-            <View style={[styles.sheetFooter, { paddingBottom: insets.bottom + spacing.md }]}>
+            <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
               <TouchableOpacity style={styles.dangerButton} onPress={confirmBulkClose} disabled={busy}>
                 <Text style={styles.dangerButtonText}>
                   {t('inbox.closeSelected', { count: selected.size })}
@@ -371,16 +307,33 @@ export function InboxScreen() {
               </TouchableOpacity>
             </View>
           )}
+        </>
+      )}
+
+      {busy && (
+        <View style={styles.busyOverlay}>
+          <ActivityIndicator color={colors.green} size="large" />
         </View>
-      </Modal>
+      )}
+
+      <ManagerTicketSheet
+        ticketId={openTicket}
+        visible={openTicket !== null}
+        onClose={() => setOpenTicket(null)}
+        onChanged={() => {
+          load(true);
+          if (tab === 'cleanup') loadBacklog();
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
-  content: { paddingHorizontal: spacing.md },
+  content: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface },
+  muted: { color: colors.muted, fontSize: 14, textAlign: 'center', marginTop: spacing.xl },
   busyOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: '#0D111799',
@@ -388,9 +341,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  title: { fontSize: 24, fontWeight: '700', color: colors.forest, paddingHorizontal: spacing.xs },
-  subtitle: { fontSize: 13, color: colors.muted, marginTop: 2, marginBottom: spacing.lg, paddingHorizontal: spacing.xs },
-  errorText: { color: colors.error, fontSize: 14, marginBottom: spacing.md, paddingHorizontal: spacing.xs },
+  header: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, backgroundColor: colors.surface },
+  title: { fontSize: 24, fontWeight: '700', color: colors.forest },
+  subtitle: { fontSize: 13, color: colors.muted, marginTop: 2, marginBottom: spacing.md },
+  errorText: { color: colors.error, fontSize: 14, marginBottom: spacing.md },
+
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 3,
+  },
+  segmentItem: {
+    flex: 1,
+    paddingVertical: spacing.xs + 3,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentItemActive: { backgroundColor: colors.green },
+  segmentText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  segmentTextActive: { color: colors.white },
 
   clearBox: { alignItems: 'center', paddingVertical: spacing.xl },
   clearIcon: { fontSize: 44, color: colors.green, marginBottom: spacing.sm },
@@ -410,6 +383,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     lineHeight: 17,
   },
+
+  selectAllRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  selectAllText: { fontSize: 14, fontWeight: '600', color: colors.green },
 
   card: {
     backgroundColor: colors.card,
@@ -442,33 +425,6 @@ const styles = StyleSheet.create({
   photoCount: { fontSize: 12, color: colors.muted },
   more: { fontSize: 12, color: colors.muted, paddingHorizontal: spacing.xs, marginTop: 2 },
 
-  backlogRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginTop: spacing.sm,
-  },
-  backlogTitle: { fontSize: 15, fontWeight: '700', color: colors.forest },
-  backlogBody: { fontSize: 12, color: colors.muted, marginTop: 2, lineHeight: 17 },
-  chevron: { fontSize: 20, color: colors.muted },
-
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  sheetClose: { fontSize: 20, color: colors.muted, width: 24 },
-  sheetTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: colors.forest },
-  sheetCount: { fontSize: 15, fontWeight: '700', color: colors.green, minWidth: 24, textAlign: 'right' },
   checkbox: {
     width: 22,
     height: 22,
@@ -481,7 +437,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   checkboxOn: { backgroundColor: colors.green, borderColor: colors.green },
-  sheetFooter: {
+
+  footer: {
     padding: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,

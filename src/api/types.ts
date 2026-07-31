@@ -402,3 +402,30 @@ export interface BacklogResponse {
   totalCount: number;
   items: BacklogItem[];
 }
+
+/** Full ticket as the dashboard sees it — GET /api/admin/tickets/{ticketId}. */
+export interface AdminTicketDetail {
+  id: number;
+  ticketId: string;
+  createdAt: string;
+  location: string;
+  role: string;
+  description: string;
+  reporterPhone: string | null;
+  imageUrl: string | null;
+  status: TicketStatus;
+  isUrgent: boolean;
+  category: { id: number; name: string; icon: string } | null;
+  assignedAgentId: number | null;
+  assignedAgent: { id: number; name: string; phoneNumber: string } | null;
+  resolvedByAgent: { id: number; name: string } | null;
+  roomNumber: string | null;
+  /** Why a technician handed it back — the first thing a manager needs to read. */
+  returnReason: string | null;
+  resolutionComment: string | null;
+  assignedAt: string | null;
+  forwardedAt: string | null;
+  acceptedAt: string | null;
+  doneAt: string | null;
+  resolutionPhotos: ResolutionPhoto[];
+}
