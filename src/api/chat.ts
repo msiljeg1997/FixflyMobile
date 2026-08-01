@@ -3,6 +3,17 @@ import { tokenStorage } from './storage';
 import type { ChatMessage, ChatThread } from './types';
 
 /**
+ * The venue manager has no chat surface — by decision, not by omission. The
+ * screens are hidden for that principal, so reaching here means a new caller
+ * forgot; fail loudly rather than 404 against an endpoint that was removed.
+ */
+async function managerChatBase(): Promise<string> {
+  const base = await tokenStorage.managerBase();
+  if (base === '/api/location') throw new Error('Voditelj objekta nema chat.');
+  return base;
+}
+
+/**
  * The same conversation lives behind two controllers: agents reach it through
  * /api/agent/tasks/{id}, managers through /api/admin/tickets/{id}. Resolving
  * the path here rather than at each call site keeps ChatScreen and
@@ -12,7 +23,7 @@ import type { ChatMessage, ChatThread } from './types';
 async function ticketBase(ticketId: string): Promise<string> {
   const id = encodeURIComponent(ticketId);
   return (await tokenStorage.isManager())
-    ? `${await tokenStorage.managerBase()}/tickets/${id}`
+    ? `${await managerChatBase()}/tickets/${id}`
     : `/api/agent/tasks/${id}`;
 }
 
@@ -27,7 +38,7 @@ async function ticketBase(ticketId: string): Promise<string> {
  */
 export async function getThreads(limit = 50): Promise<ChatThread[]> {
   const path = (await tokenStorage.isManager())
-    ? `${await tokenStorage.managerBase()}/chat/threads`
+    ? `${await managerChatBase()}/chat/threads`
     : '/api/agent/chat/threads';
   const { data } = await apiClient.get<ChatThread[]>(path, { params: { limit } });
   return data;

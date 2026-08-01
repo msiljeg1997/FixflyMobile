@@ -32,7 +32,7 @@ function TabIcon({ glyph, color }: { glyph: string; color: string }) {
 export function MainTabs() {
   const { t } = useTranslation();
   const { total } = useUnread();
-  const { principal } = useAuth();
+  const { principal, isVenueManager } = useAuth();
   // A manager triages; an agent works a queue. Same shell, different first
   // tab — they are not variations of one screen.
   const isManager = principal === MobilePrincipal.Manager;
@@ -76,16 +76,19 @@ export function MainTabs() {
           }}
         />
       )}
-      <Tab.Screen
-        name="ChatTab"
-        component={ChatStackNavigator}
-        options={{
-          tabBarLabel: t('tabs.chat'),
-          tabBarIcon: ({ color }) => <TabIcon glyph="💬" color={color} />,
-          tabBarBadge: total > 0 ? (total > 99 ? '99+' : total) : undefined,
-          tabBarBadgeStyle: { backgroundColor: colors.green, color: colors.white, fontSize: 10 },
-        }}
-      />
+      {/* The venue manager reads; he does not take part in the conversation.
+          His side of a ticket is the report and its progress, and the chat is
+          between the people doing the work. */}
+      {!isVenueManager && <Tab.Screen
+          name="ChatTab"
+          component={ChatStackNavigator}
+          options={{
+            tabBarLabel: t('tabs.chat'),
+            tabBarIcon: ({ color }) => <TabIcon glyph="💬" color={color} />,
+            tabBarBadge: total > 0 ? (total > 99 ? '99+' : total) : undefined,
+            tabBarBadgeStyle: { backgroundColor: colors.green, color: colors.white, fontSize: 10 },
+          }}
+        />}
       <Tab.Screen
         name="ProfileTab"
         component={isManager ? ManagerProfileScreen : ProfileScreen}

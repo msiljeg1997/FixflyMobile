@@ -111,10 +111,6 @@ export function ManagerTicketSheet({
 
   const statusColor = ticket ? STATUS_COLORS[ticket.status] : colors.muted;
   const canAct = !!ticket && ticket.status !== TicketStatus.Closed && !isVenueManager;
-  // A venue manager still gets the chat button — it is the whole point of
-  // their app. It sits alone rather than inside the action footer, which
-  // they never see.
-  const chatOnly = !!ticket && isVenueManager;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
@@ -284,17 +280,6 @@ export function ManagerTicketSheet({
               disabled={busy}
             >
               <Text style={styles.primaryText}>{t('inbox.action.assign')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {chatOnly && (
-          <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-            <TouchableOpacity
-              style={styles.chatButton}
-              onPress={() => onOpenChat(ticketId!, ticket!.locationName || ticket!.location)}
-            >
-              <Text style={styles.chatButtonText}>💬 {t('taskDetail.openChat')}</Text>
             </TouchableOpacity>
           </View>
         )}
