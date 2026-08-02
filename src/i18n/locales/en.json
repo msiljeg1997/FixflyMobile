@@ -94,7 +94,9 @@
     "queueDiscardTitle": "Discard the saved resolution?",
     "queueDiscardBody": "The comment and photos will be permanently deleted from this device.",
     "openTasks": "{{count}} open",
-    "navigate": "Directions"
+    "navigate": "Directions",
+    "handoverLabel": "Handover note",
+    "handoverPlaceholder": "What does the new technician need to know? (e.g. water is off, key with the neighbour)"
   },
   "tabs": {
     "tasks": "Tasks",
@@ -124,7 +126,21 @@
     "loadError": "Couldn't load messages.",
     "viaWhatsApp": "via WhatsApp",
     "queued": "Waiting to send",
-    "photo": "Photo"
+    "photo": "Photo",
+    "roomWork": "Conversation",
+    "roomInternal": "Internal",
+    "internalHint": "Only you and management see this. The technician has no access.",
+    "readOnly": "This job is no longer assigned to you. You can read the conversation but not write.",
+    "periodCount_one": "{{count}} message",
+    "periodCount_other": "{{count}} messages",
+    "periodRejected": "declined",
+    "periodTimedOut": "did not accept in time",
+    "periodReassigned": "reassigned",
+    "periodClosed": "report closed",
+    "periodActive": "active",
+    "removeFromList": "Remove from list",
+    "removeFromListBody": "This only removes the thread from your list. The messages are kept and management still sees them.",
+    "removed": "Removed from list"
   },
   "role": {
     "technician": "Technician",

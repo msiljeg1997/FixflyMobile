@@ -94,7 +94,9 @@
     "queueDiscardTitle": "Gespeicherte Lösung verwerfen?",
     "queueDiscardBody": "Kommentar und Fotos werden dauerhaft vom Gerät gelöscht.",
     "openTasks": "{{count}} offen",
-    "navigate": "Route"
+    "navigate": "Route",
+    "handoverLabel": "Übergabenotiz",
+    "handoverPlaceholder": "Was muss der neue Techniker wissen? (z. B. Wasser ist ab, Schlüssel beim Nachbarn)"
   },
   "tabs": {
     "tasks": "Aufgaben",
@@ -124,7 +126,21 @@
     "loadError": "Nachrichten konnten nicht geladen werden.",
     "viaWhatsApp": "über WhatsApp",
     "queued": "Wartet auf Senden",
-    "photo": "Foto"
+    "photo": "Foto",
+    "roomWork": "Gespräch",
+    "roomInternal": "Intern",
+    "internalHint": "Das sehen nur Sie und die Leitung. Der Techniker hat keinen Zugriff.",
+    "readOnly": "Dieser Auftrag ist Ihnen nicht mehr zugewiesen. Sie können mitlesen, aber nicht schreiben.",
+    "periodCount_one": "{{count}} Nachricht",
+    "periodCount_other": "{{count}} Nachrichten",
+    "periodRejected": "abgelehnt",
+    "periodTimedOut": "nicht rechtzeitig angenommen",
+    "periodReassigned": "neu zugewiesen",
+    "periodClosed": "Meldung geschlossen",
+    "periodActive": "aktiv",
+    "removeFromList": "Aus Liste entfernen",
+    "removeFromListBody": "Das entfernt den Verlauf nur aus Ihrer Liste. Die Nachrichten bleiben erhalten und die Leitung sieht sie weiterhin.",
+    "removed": "Aus Liste entfernt"
   },
   "role": {
     "technician": "Techniker",

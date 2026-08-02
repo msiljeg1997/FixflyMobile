@@ -1,6 +1,6 @@
 import { apiClient } from './client';
 import { tokenStorage } from './storage';
-import type { ChatMessage, ChatThread } from './types';
+import type { ChatAccess, ChatMessage, ChatRoom, ChatThread } from './types';
 
 /**
  * The venue manager has no chat surface — by decision, not by omission. The
@@ -44,12 +44,36 @@ export async function getThreads(limit = 50): Promise<ChatThread[]> {
   return data;
 }
 
-export async function getMessages(ticketId: string, before?: string, limit = 50): Promise<ChatMessage[]> {
+export async function getMessages(
+  ticketId: string,
+  before?: string,
+  limit = 50,
+  room: ChatRoom = 0
+): Promise<ChatMessage[]> {
   const { data } = await apiClient.get<ChatMessage[]>(
     `${await ticketBase(ticketId)}/messages`,
-    { params: { before, limit } }
+    { params: { before, limit, room } }
   );
   return data;
+}
+
+/**
+ * What this person may do here. Asked once when the thread opens so the UI
+ * hides what it must never offer — a technician is not shown that the
+ * internal room exists, and one whose period has ended gets no composer.
+ */
+export async function getAccess(ticketId: string): Promise<ChatAccess> {
+  const { data } = await apiClient.get<ChatAccess>(`${await ticketBase(ticketId)}/chat/access`);
+  return data;
+}
+
+/**
+ * Takes the thread off THIS person's list so old jobs stop cluttering the
+ * app. Nothing is deleted — the company keeps every message — which is why
+ * the button says "remove from list" and never "delete".
+ */
+export async function hideThread(ticketId: string): Promise<void> {
+  await apiClient.post(`${await ticketBase(ticketId)}/chat/hide`);
 }
 
 export interface ChatImage {
@@ -67,10 +91,12 @@ export async function sendMessage(
   ticketId: string,
   clientMessageId: string,
   text?: string,
-  image?: ChatImage
+  image?: ChatImage,
+  room: ChatRoom = 0
 ): Promise<ChatMessage> {
   const form = new FormData();
   form.append('clientMessageId', clientMessageId);
+  form.append('room', String(room));
   if (text) form.append('text', text);
   if (image) {
     form.append('image', {

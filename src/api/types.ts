@@ -232,6 +232,33 @@ export interface AgentStats {
 
 // ── §13 — Chat (W8) ──────────────────────────────────────────────────────────
 
+/**
+ * The one boundary a ticket thread has. Work is the job; Internal is the
+ * management side talking about it. A technician is never told Internal
+ * exists — the room you are in is the room you write to.
+ */
+export enum ChatRoom {
+  Work = 0,
+  Internal = 1,
+}
+
+/** A stretch of time one technician was on the ticket. */
+export interface ChatPeriod {
+  agentId: number;
+  agentName: string;
+  from: string;
+  to: string | null;
+  endReason: string | null;
+}
+
+export interface ChatAccess {
+  canSeeInternal: boolean;
+  /** False once a technician's period has closed — he reads, he does not write. */
+  canWrite: boolean;
+  /** Empty for a technician: he sees a flat thread, not the cast. */
+  periods: ChatPeriod[];
+}
+
 export interface ChatMessage {
   id: number;
   ticketId: string;

@@ -22,7 +22,7 @@ import { isNetworkError } from '../api/client';
 import { outbox, OutboxItem } from '../offline/outbox';
 import { signalRService } from '../realtime/signalr';
 import { useUnread } from '../context/UnreadContext';
-import { ChatMessage, ChatSenderType } from '../api/types';
+import { ChatAccess, ChatMessage, ChatPeriod, ChatRoom, ChatSenderType } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { ImageViewerModal } from '../components/ImageViewerModal';
 import { getInitials } from '../utils/format';
@@ -36,13 +36,65 @@ function dayLabel(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+/**
+ * Rows for the thread: system events and live messages inline, each PAST
+ * technician folded into one line.
+ *
+ * A manager opening a ticket that has changed hands twice wants the story,
+ * not a replay of three conversations — and the folded header usually
+ * answers the question on its own ("Ivan · 6 poruka · odbio: nema dijela").
+ * A technician has one stretch and no cast, so this collapses to a plain
+ * list for him without a special case.
+ */
+type Row =
+  | { kind: 'msg'; message: ChatMessage }
+  | { kind: 'period'; period: ChatPeriod; messages: ChatMessage[] };
+
+function buildRows(messages: ChatMessage[], periods: ChatPeriod[]): Row[] {
+  if (periods.length === 0) return messages.map((m) => ({ kind: 'msg' as const, message: m }));
+
+  // Two or more people on the ticket at once is a group conversation, not a
+  // sequence — folding it would invent an order that is not there.
+  if (periods.filter((x) => x.to === null).length > 1)
+    return messages.map((m) => ({ kind: 'msg' as const, message: m }));
+
+  const blocks = new Map<string, ChatMessage[]>();
+  const rows: Row[] = [];
+
+  for (const m of messages) {
+    // System messages are the spine and never fold away.
+    if (m.senderType === ChatSenderType.System) {
+      rows.push({ kind: 'msg', message: m });
+      continue;
+    }
+    const at = new Date(m.sentAt).getTime();
+    const period = periods.find(
+      (x) => at >= new Date(x.from).getTime() && (x.to === null || at <= new Date(x.to).getTime())
+    );
+    if (!period) {
+      // Written while nobody held the ticket — belongs to no stretch.
+      rows.push({ kind: 'msg', message: m });
+      continue;
+    }
+    const key = `${period.agentId}-${period.from}`;
+    if (!blocks.has(key)) {
+      blocks.set(key, []);
+      rows.push({ kind: 'period', period, messages: blocks.get(key)! });
+    }
+    blocks.get(key)!.push(m);
+  }
+
+  // A stretch with nothing said in it is already told by the system rows.
+  return rows.filter((r) => r.kind !== 'period' || r.messages.length > 0);
+}
+
 export function ChatScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
   const route = useRoute<RouteProp<TasksStackParamList, 'Chat'>>();
   const { ticketId, title } = route.params;
   const insets = useSafeAreaInsets();
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef<FlatList<Row>>(null);
   const { refresh: refreshUnread, setActiveThread } = useUnread();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -52,11 +104,16 @@ export function ChatScreen() {
   const [sending, setSending] = useState(false);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
   const [pending, setPending] = useState<OutboxItem[]>([]);
+  const [room, setRoom] = useState<ChatRoom>(ChatRoom.Work);
+  const [access, setAccess] = useState<ChatAccess | null>(null);
+  // Past stretches start folded. The one still running is what somebody
+  // opening this screen came to read.
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
 
   const load = useCallback(async () => {
     setError(false);
     try {
-      const data = await chatApi.getMessages(ticketId);
+      const data = await chatApi.getMessages(ticketId, undefined, 50, room);
       setMessages(data);
       // Opening the thread counts as reading it — drives the other side's
       // "Seen" and clears this ticket's unread badge.
@@ -66,11 +123,23 @@ export function ChatScreen() {
     } finally {
       setLoading(false);
     }
-  }, [ticketId, refreshUnread]);
+  }, [ticketId, refreshUnread, room]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    chatApi
+      .getAccess(ticketId)
+      .then((a) => {
+        setAccess(a);
+        setExpanded(new Set(a.periods.filter((x) => x.to === null).map((x) => x.agentId)));
+      })
+      // A failure here must not block the thread: the safe fallback is the
+      // narrow one — work room only, and no internal tab.
+      .catch(() => setAccess({ canSeeInternal: false, canWrite: true, periods: [] }));
+  }, [ticketId]);
 
   // Suppress the in-app banner for the thread currently on screen.
   useEffect(() => {
@@ -92,11 +161,14 @@ export function ChatScreen() {
   useEffect(() => {
     const off = signalRService.onChatMessageReceived((evt) => {
       if (evt.ticketId !== ticketId) return;
+      // The event carries no room, so only refetch what is on screen rather
+      // than appending an internal message into the work thread.
+      if (room !== ChatRoom.Work) { load(); return; }
       setMessages((prev) => (prev.some((m) => m.id === evt.message.id) ? prev : [...prev, evt.message]));
       chatApi.markRead(ticketId).then(() => refreshUnread()).catch(() => {});
     });
     return off;
-  }, [ticketId]);
+  }, [ticketId, room, load]);
 
   const send = async (image?: ChatImage) => {
     const text = draft.trim();
@@ -107,7 +179,7 @@ export function ChatScreen() {
     // after a dropped connection can't post the same message twice.
     const clientMessageId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     try {
-      const saved = await chatApi.sendMessage(ticketId, clientMessageId, text || undefined, image);
+      const saved = await chatApi.sendMessage(ticketId, clientMessageId, text || undefined, image, room);
       setMessages((prev) => (prev.some((m) => m.id === saved.id) ? prev : [...prev, saved]));
       setDraft('');
     } catch (e) {
@@ -144,16 +216,44 @@ export function ChatScreen() {
     }
   };
 
-  const renderMessage = ({ item, index }: { item: ChatMessage; index: number }) => {
-    // "Mine" = sent from this app by an agent. Manager/WhatsApp/System rows
-    // are the other side of the conversation.
+  const rows = buildRows(messages, access?.periods ?? []);
+
+  const endReasonLabel = (r: string | null) => {
+    switch (r) {
+      case 'Rejected': return t('chat.periodRejected');
+      case 'TimedOut': return t('chat.periodTimedOut');
+      case 'Reassigned': return t('chat.periodReassigned');
+      case 'TicketClosed': return t('chat.periodClosed');
+      default: return t('chat.periodActive');
+    }
+  };
+
+  const renderBubble = (item: ChatMessage, prev?: ChatMessage) => {
+    // "Mine" = sent from this app by an agent. Manager/WhatsApp rows are the
+    // other side; system rows are neither and get their own centred style.
+    const isSystem = item.senderType === ChatSenderType.System;
     const mine = item.senderType === ChatSenderType.Technician || item.senderType === ChatSenderType.Dispatcher;
     const isLegacy = item.senderType === ChatSenderType.WhatsApp;
-    const prev = messages[index - 1];
     const showDay = !prev || dayLabel(prev.sentAt) !== dayLabel(item.sentAt);
 
+    if (isSystem) {
+      return (
+        <View key={item.id}>
+          {showDay && (
+            <View style={styles.dayDivider}>
+              <Text style={styles.dayText}>{dayLabel(item.sentAt)}</Text>
+            </View>
+          )}
+          <View style={styles.systemRow}>
+            <Text style={styles.systemText}>{item.text}</Text>
+            <Text style={styles.systemTime}>{timeLabel(item.sentAt)}</Text>
+          </View>
+        </View>
+      );
+    }
+
     return (
-      <>
+      <View key={item.id}>
         {showDay && (
           <View style={styles.dayDivider}>
             <Text style={styles.dayText}>{dayLabel(item.sentAt)}</Text>
@@ -180,7 +280,43 @@ export function ChatScreen() {
             </View>
           </View>
         </View>
-      </>
+      </View>
+    );
+  };
+
+  const renderRow = ({ item, index }: { item: Row; index: number }) => {
+    if (item.kind === 'msg') {
+      const prevRow = rows[index - 1];
+      const prev = prevRow?.kind === 'msg' ? prevRow.message : undefined;
+      return renderBubble(item.message, prev);
+    }
+
+    const { period, messages: inside } = item;
+    const open = expanded.has(period.agentId);
+    return (
+      <View style={styles.periodBlock}>
+        <TouchableOpacity
+          style={styles.periodHeader}
+          activeOpacity={0.7}
+          onPress={() =>
+            setExpanded((prev) => {
+              const next = new Set(prev);
+              if (next.has(period.agentId)) next.delete(period.agentId);
+              else next.add(period.agentId);
+              return next;
+            })
+          }
+        >
+          <Text style={styles.periodChevron}>{open ? '▾' : '▸'}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.periodName} numberOfLines={1}>{period.agentName}</Text>
+            <Text style={styles.periodMeta} numberOfLines={1}>
+              {t('chat.periodCount', { count: inside.length })} · {endReasonLabel(period.endReason)}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        {open && <View style={styles.periodBody}>{inside.map((m, i) => renderBubble(m, inside[i - 1]))}</View>}
+      </View>
     );
   };
 
@@ -204,6 +340,35 @@ export function ChatScreen() {
         </View>
       </View>
 
+      {/* Two rooms, not a picker above the keyboard: you write into the room
+          you are standing in, so there is no control to misread and no way
+          to put an internal remark in front of the technician. He is never
+          shown this switch at all. */}
+      {access?.canSeeInternal && (
+        <View style={styles.segment}>
+          <TouchableOpacity
+            style={[styles.segmentItem, room === ChatRoom.Work && styles.segmentItemActive]}
+            onPress={() => setRoom(ChatRoom.Work)}
+          >
+            <Text style={[styles.segmentText, room === ChatRoom.Work && styles.segmentTextActive]}>
+              {t('chat.roomWork')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentItem, room === ChatRoom.Internal && styles.segmentItemActive]}
+            onPress={() => setRoom(ChatRoom.Internal)}
+          >
+            <Text style={[styles.segmentText, room === ChatRoom.Internal && styles.segmentTextActive]}>
+              🔒 {t('chat.roomInternal')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {room === ChatRoom.Internal && (
+        <Text style={styles.internalHint}>{t('chat.internalHint')}</Text>
+      )}
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.green} size="large" />
@@ -218,9 +383,9 @@ export function ChatScreen() {
       ) : (
         <FlatList
           ref={listRef}
-          data={messages}
-          keyExtractor={(m) => String(m.id)}
-          renderItem={renderMessage}
+          data={rows}
+          keyExtractor={(r, i) => (r.kind === 'msg' ? `m${r.message.id}` : `p${r.period.agentId}-${i}`)}
+          renderItem={renderRow}
           contentContainerStyle={messages.length === 0 ? styles.center : styles.list}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
           ListEmptyComponent={<Text style={styles.muted}>{t('chat.empty')}</Text>}
@@ -244,6 +409,14 @@ export function ChatScreen() {
         />
       )}
 
+      {access && !access.canWrite ? (
+        // He keeps his own history — the photos he took and what he was told
+        // — but the job is somebody else's now, and a message from him would
+        // arrive where nobody is expecting one.
+        <View style={[styles.readOnly, { paddingBottom: insets.bottom + spacing.sm }]}>
+          <Text style={styles.readOnlyText}>{t('chat.readOnly')}</Text>
+        </View>
+      ) : (
       <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.sm }]}>
         <TouchableOpacity style={styles.attachButton} onPress={takePhoto} disabled={sending}>
           <Text style={styles.attachIcon}>📷</Text>
@@ -267,6 +440,7 @@ export function ChatScreen() {
           {sending ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.sendIcon}>➤</Text>}
         </TouchableOpacity>
       </View>
+      )}
 
       <ImageViewerModal uri={viewerUri} onClose={() => setViewerUri(null)} />
     </KeyboardAvoidingView>
@@ -274,6 +448,64 @@ export function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
+  segment: {
+    flexDirection: 'row',
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.card,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 3,
+  },
+  segmentItem: { flex: 1, paddingVertical: spacing.xs + 3, borderRadius: radius.pill, alignItems: 'center' },
+  segmentItemActive: { backgroundColor: colors.green },
+  segmentText: { fontSize: 12, fontWeight: '600', color: colors.muted },
+  segmentTextActive: { color: colors.white },
+  internalHint: {
+    fontSize: 11,
+    color: colors.muted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+  },
+
+  systemRow: { alignItems: 'center', paddingVertical: spacing.xs, gap: 2 },
+  systemText: {
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: 'center',
+    lineHeight: 17,
+    paddingHorizontal: spacing.lg,
+  },
+  systemTime: { fontSize: 10, color: colors.muted },
+
+  periodBlock: { marginVertical: spacing.xs },
+  periodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  periodChevron: { fontSize: 13, color: colors.muted },
+  periodName: { fontSize: 14, fontWeight: '700', color: colors.forest },
+  periodMeta: { fontSize: 11, color: colors.muted, marginTop: 1 },
+  periodBody: { marginTop: spacing.sm, gap: spacing.xs },
+
+  readOnly: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  readOnlyText: { fontSize: 13, color: colors.muted, textAlign: 'center', lineHeight: 18 },
+
   root: { flex: 1, backgroundColor: colors.surface },
   center: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   muted: { color: colors.muted, fontSize: 14 },

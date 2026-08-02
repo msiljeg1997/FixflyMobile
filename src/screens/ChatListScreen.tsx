@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -49,6 +49,30 @@ export function ChatListScreen() {
     return off;
   }, [load]);
 
+  /**
+   * Long-press tidies an old job off this list. Worded as "remove from list"
+   * and spelled out in the confirmation, because nothing is deleted — the
+   * company keeps every message — and a button that said "delete" would be
+   * lying to the person tapping it.
+   */
+  const confirmRemove = (item: ChatThread) => {
+    Alert.alert(t('chat.removeFromList'), t('chat.removeFromListBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('chat.removeFromList'),
+        style: 'destructive',
+        onPress: async () => {
+          setItems((prev) => prev.filter((x) => x.ticketId !== item.ticketId));
+          try {
+            await chatApi.hideThread(item.ticketId);
+          } catch {
+            load(true); // put it back if the server disagreed
+          }
+        },
+      },
+    ]);
+  };
+
   const renderItem = ({ item }: { item: ChatThread }) => {
     const unread = item.unreadCount > 0;
     // A bare image has no text to preview — say so rather than showing nothing.
@@ -57,6 +81,7 @@ export function ChatListScreen() {
       <TouchableOpacity
         style={styles.row}
         activeOpacity={0.7}
+        onLongPress={() => confirmRemove(item)}
         onPress={() =>
           navigation.navigate('Chat', {
             ticketId: item.ticketId,

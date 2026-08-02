@@ -80,10 +80,20 @@ export async function getTechnicians(ticketId?: string): Promise<TechnicianOptio
   return data;
 }
 
-export async function forwardTask(ticketId: string, technicianAgentId: number): Promise<TaskDetail> {
+/**
+ * @param handoverNote what the receiving technician needs to know. It is the
+ * only thing he inherits — the conversation stays with whoever had the ticket
+ * — so the dispatcher decides here what carries forward.
+ */
+export async function forwardTask(
+  ticketId: string,
+  technicianAgentId: number,
+  handoverNote?: string
+): Promise<TaskDetail> {
   const { data } = await apiClient.post<TaskDetail>(
     `/api/agent/tasks/${encodeURIComponent(ticketId)}/forward`,
-    { technicianAgentId }
+    { technicianAgentId, handoverNote }
   );
   return data;
 }
+

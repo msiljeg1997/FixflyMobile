@@ -94,7 +94,9 @@
     "queueDiscardTitle": "Odbaciti spremljeno rješenje?",
     "queueDiscardBody": "Komentar i fotografije bit će trajno izbrisani s uređaja.",
     "openTasks": "{{count}} otvorenih",
-    "navigate": "Navigiraj"
+    "navigate": "Navigiraj",
+    "handoverLabel": "Napomena za preuzimanje",
+    "handoverPlaceholder": "Što novi tehničar mora znati? (npr. voda zatvorena, ključ kod susjeda)"
   },
   "tabs": {
     "tasks": "Zadaci",
@@ -124,7 +126,22 @@
     "loadError": "Poruke se nisu mogle učitati.",
     "viaWhatsApp": "putem WhatsAppa",
     "queued": "Čeka slanje",
-    "photo": "Fotografija"
+    "photo": "Fotografija",
+    "roomWork": "Razgovor",
+    "roomInternal": "Interno",
+    "internalHint": "Ovo vidite samo vi i uprava. Tehničar nema pristup.",
+    "readOnly": "Prijava vam više nije dodijeljena. Razgovor možete čitati, ali ne i pisati.",
+    "periodCount_one": "{{count}} poruka",
+    "periodCount_few": "{{count}} poruke",
+    "periodCount_other": "{{count}} poruka",
+    "periodRejected": "odbio",
+    "periodTimedOut": "nije prihvatio na vrijeme",
+    "periodReassigned": "preusmjereno",
+    "periodClosed": "prijava zatvorena",
+    "periodActive": "aktivan",
+    "removeFromList": "Ukloni s popisa",
+    "removeFromListBody": "Razgovor se miče samo s vašeg popisa. Poruke ostaju sačuvane i uprava ih i dalje vidi.",
+    "removed": "Uklonjeno s popisa"
   },
   "role": {
     "technician": "Tehničar",

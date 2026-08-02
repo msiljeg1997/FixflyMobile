@@ -111,6 +111,7 @@ export function TaskDetailScreen() {
 
   // Forward sheet (Dispatcher/Hausmajstor only) — hand the task to a technician
   const [forwarding, setForwarding] = useState(false);
+  const [handoverNote, setHandoverNote] = useState('');
   const [technicians, setTechnicians] = useState<TechnicianOption[]>([]);
   const [techniciansLoading, setTechniciansLoading] = useState(false);
 
@@ -266,8 +267,9 @@ export function TaskDetailScreen() {
   const onForward = async (technicianId: number) => {
     setActing(true);
     try {
-      setTask(await tasksApi.forwardTask(ticketId, technicianId));
+      setTask(await tasksApi.forwardTask(ticketId, technicianId, handoverNote.trim() || undefined));
       setForwarding(false);
+      setHandoverNote('');
     } catch (e) {
       showError(e);
     } finally {
@@ -710,6 +712,19 @@ export function TaskDetailScreen() {
           </View>
 
           <ScrollView style={styles.sheetBody} contentContainerStyle={styles.sheetBodyContent}>
+            {/* The receiving technician does not get the previous one's
+                conversation — only this. Asking for it here is what turns a
+                hand-over from a leak into a decision. */}
+            <Text style={styles.handoverLabel}>{t('taskDetail.handoverLabel')}</Text>
+            <TextInput
+              style={styles.handoverInput}
+              placeholder={t('taskDetail.handoverPlaceholder')}
+              placeholderTextColor={colors.muted}
+              value={handoverNote}
+              onChangeText={setHandoverNote}
+              multiline
+            />
+
             {techniciansLoading ? (
               <ActivityIndicator color={colors.green} style={{ marginTop: spacing.lg }} />
             ) : technicians.length === 0 ? (
@@ -782,6 +797,20 @@ export function TaskDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  handoverLabel: { fontSize: 13, fontWeight: '700', color: colors.forest, marginBottom: spacing.xs },
+  handoverInput: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    color: colors.forest,
+    fontSize: 14,
+    minHeight: 68,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
+    textAlignVertical: 'top',
+  },
+
   root: { flex: 1, backgroundColor: colors.surface },
   content: { paddingHorizontal: spacing.lg, gap: spacing.md },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg, backgroundColor: colors.surface },
