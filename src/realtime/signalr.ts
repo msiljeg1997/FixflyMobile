@@ -24,6 +24,8 @@ class SignalRService {
   private chatReceivedListeners = new Set<Listener<ChatMessageReceivedEvent>>();
   private chatReadListeners = new Set<Listener<ChatMessageReadEvent>>();
   private companyChangedListeners = new Set<() => void>();
+  /** Which thread is on screen, so it can be re-announced after a reconnect. */
+  private openThread: string | null = null;
 
   async connect(): Promise<void> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) return;
@@ -46,6 +48,10 @@ class SignalRService {
 
     this.connection.onreconnected(() => {
       this.joinGroups().catch(() => {});
+      // Presence lives with the socket that reported it, so a reconnect on a
+      // new socket has to say it again — otherwise the screen stays open and
+      // the server quietly starts pushing to it.
+      if (this.openThread) this.enterThread(this.openThread).catch(() => {});
     });
 
     try {
@@ -73,6 +79,21 @@ class SignalRService {
     // the group only decides *when* they refresh, not what they can read.
     const method = (await tokenStorage.isManager()) ? 'JoinAdminGroup' : 'JoinMyGroups';
     await this.connection?.invoke(method).catch(() => {});
+  }
+
+  /**
+   * Tells the server this thread is on screen, so it skips the push — a
+   * notification for the conversation you are reading is noise. Best
+   * effort: a failure here only means one redundant notification.
+   */
+  async enterThread(ticketId: string): Promise<void> {
+    this.openThread = ticketId;
+    await this.connection?.invoke('EnterThread', ticketId).catch(() => {});
+  }
+
+  async leaveThread(ticketId: string): Promise<void> {
+    if (this.openThread === ticketId) this.openThread = null;
+    await this.connection?.invoke('LeaveThread', ticketId).catch(() => {});
   }
 
   private registerHandlers(): void {

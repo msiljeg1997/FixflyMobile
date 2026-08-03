@@ -147,7 +147,14 @@ export function ChatScreen() {
   // Suppress the in-app banner for the thread currently on screen.
   useEffect(() => {
     setActiveThread(ticketId);
-    return () => setActiveThread(null);
+    // The server suppresses pushes for a thread that is open, so it has to
+    // be told — and told again on reconnect, since presence lives with the
+    // socket that reported it.
+    signalRService.enterThread(ticketId);
+    return () => {
+      setActiveThread(null);
+      signalRService.leaveThread(ticketId);
+    };
   }, [ticketId, setActiveThread]);
 
   // Mirror the outbox so queued-but-unsent messages stay visible in the
