@@ -25,6 +25,7 @@ import { useUnread } from '../context/UnreadContext';
 import { ChatAccess, ChatMessage, ChatPeriod, ChatRoom, ChatSenderType } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { ImageViewerModal } from '../components/ImageViewerModal';
+import { shrinkForUpload } from '../utils/image';
 import { getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -202,7 +203,7 @@ export function ChatScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] });
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];
-      send({ uri: a.uri, fileName: a.fileName, mimeType: a.mimeType });
+      send(await shrinkForUpload({ uri: a.uri, fileName: a.fileName, mimeType: a.mimeType, width: a.width, height: a.height }));
     }
   };
 
@@ -212,7 +213,7 @@ export function ChatScreen() {
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];
-      send({ uri: a.uri, fileName: a.fileName, mimeType: a.mimeType });
+      send(await shrinkForUpload({ uri: a.uri, fileName: a.fileName, mimeType: a.mimeType, width: a.width, height: a.height }));
     }
   };
 

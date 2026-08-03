@@ -96,7 +96,10 @@
     "openTasks": "{{count}} open",
     "navigate": "Directions",
     "handoverLabel": "Handover note",
-    "handoverPlaceholder": "What does the new technician need to know? (e.g. water is off, key with the neighbour)"
+    "handoverPlaceholder": "What does the new technician need to know? (e.g. water is off, key with the neighbour)",
+    "forwardOther": "Forward to another technician",
+    "urgentOn": "Mark URGENT",
+    "urgentOff": "Remove URGENT"
   },
   "tabs": {
     "tasks": "Tasks",

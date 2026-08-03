@@ -18,6 +18,7 @@ import * as inboxApi from '../api/inbox';
 import type { ForwardOption } from '../api/inbox';
 import { AdminTicketDetail, AgentAvailability, TicketStatus } from '../api/types';
 import { formatDateTime, getInitials } from '../utils/format';
+import { ImageViewerModal } from './ImageViewerModal';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -67,6 +68,7 @@ export function ManagerTicketSheet({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!ticketId) return;
@@ -177,7 +179,7 @@ export function ManagerTicketSheet({
 
             {/* Why it came back is the manager's whole decision on an unowned
                 ticket — never buried below the timeline. */}
-            {!!ticket.returnReason && (
+            {!!ticket.returnReason && ticket.status === TicketStatus.Returned && (
               <View style={styles.calloutWarn}>
                 <Text style={styles.calloutLabel}>{t('inbox.field.returnReason')}</Text>
                 <Text style={styles.calloutText}>{ticket.returnReason}</Text>
@@ -187,7 +189,9 @@ export function ManagerTicketSheet({
             {!!ticket.imageUrl && (
               <>
                 <Text style={styles.sectionLabel}>{t('inbox.field.guestPhoto')}</Text>
+                <TouchableOpacity activeOpacity={0.85} onPress={() => setViewerUri(ticket.imageUrl!)}>
                 <Image source={{ uri: ticket.imageUrl }} style={styles.photo} resizeMode="cover" />
+              </TouchableOpacity>
               </>
             )}
 
@@ -200,17 +204,16 @@ export function ManagerTicketSheet({
                 {ticket.resolutionPhotos.length > 0 && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: spacing.sm }}>
                     {ticket.resolutionPhotos.map((p) => (
-                      <Image key={p.id} source={{ uri: p.url }} style={styles.proofPhoto} resizeMode="cover" />
+                      <TouchableOpacity key={p.id} activeOpacity={0.85} onPress={() => setViewerUri(p.url)}>
+                        <Image source={{ uri: p.url }} style={styles.proofPhoto} resizeMode="cover" />
+                      </TouchableOpacity>
                     ))}
                   </ScrollView>
                 )}
               </View>
             )}
 
-            <Text style={styles.sectionLabel}>{t('inbox.field.timeline')}</Text>
             <TimeRow label={t('inbox.time.created')} value={ticket.createdAt} />
-            <TimeRow label={t('inbox.time.forwarded')} value={ticket.forwardedAt} />
-            <TimeRow label={t('inbox.time.accepted')} value={ticket.acceptedAt} />
             <TimeRow label={t('inbox.time.done')} value={ticket.doneAt} />
 
             {/* The same activity trail the technician and dispatcher see. It
@@ -283,6 +286,8 @@ export function ManagerTicketSheet({
             </TouchableOpacity>
           </View>
         )}
+
+        <ImageViewerModal uri={viewerUri} onClose={() => setViewerUri(null)} />
 
         {busy && (
           <View style={styles.busyOverlay}><ActivityIndicator color={colors.green} size="large" /></View>

@@ -85,6 +85,15 @@ export async function getTechnicians(ticketId?: string): Promise<TechnicianOptio
  * only thing he inherits — the conversation stays with whoever had the ticket
  * — so the dispatcher decides here what carries forward.
  */
+/**
+ * Marking a ticket urgent swaps the acceptance deadline for the company's
+ * shorter urgent one and pushes every dispatcher covering the location — so
+ * it is a real lever, not a label.
+ */
+export async function setTaskUrgent(ticketId: string, isUrgent: boolean): Promise<void> {
+  await apiClient.patch(`/api/agent/tasks/${encodeURIComponent(ticketId)}/urgent`, { isUrgent });
+}
+
 export async function forwardTask(
   ticketId: string,
   technicianAgentId: number,

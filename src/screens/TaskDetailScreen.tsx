@@ -26,6 +26,7 @@ import * as tasksApi from '../api/tasks';
 import type { ResolveImage } from '../api/tasks';
 import { AgentAvailability, AgentRole, TaskDetail, TaskHistoryEvent, TechnicianOption, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
+import { shrinkForUpload } from '../utils/image';
 import { categoryLabel, formatDateTime, getInitials } from '../utils/format';
 import { ImageViewerModal } from '../components/ImageViewerModal';
 import { colors, radius, spacing, tint } from '../theme/tokens';
@@ -218,8 +219,9 @@ export function TaskDetailScreen() {
 
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];
+      const small = await shrinkForUpload({ uri: a.uri, fileName: a.fileName, mimeType: a.mimeType, width: a.width, height: a.height });
       setPhotos((prev) =>
-        prev.length >= MAX_PHOTOS ? prev : [...prev, { uri: a.uri, fileName: a.fileName, mimeType: a.mimeType }]
+        prev.length >= MAX_PHOTOS ? prev : [...prev, { uri: small.uri, fileName: small.fileName, mimeType: small.mimeType }]
       );
     }
   };
@@ -264,6 +266,19 @@ export function TaskDetailScreen() {
     }
   };
 
+  const onToggleUrgent = async () => {
+    if (!task) return;
+    setActing(true);
+    try {
+      await tasksApi.setTaskUrgent(ticketId, !task.isUrgent);
+      setTask(await tasksApi.getTask(ticketId));
+    } catch (e) {
+      showError(e);
+    } finally {
+      setActing(false);
+    }
+  };
+
   const onForward = async (technicianId: number) => {
     setActing(true);
     try {
@@ -302,9 +317,10 @@ export function TaskDetailScreen() {
     (isDispatcher && (task.status === TicketStatus.New || task.status === TicketStatus.Returned));
   const canResolve = task.status === TicketStatus.Accepted;
   const canReject = task.status === TicketStatus.ForwardedToTechnician && agent?.role === AgentRole.Technician;
+  const awaitingAcceptance = task.status === TicketStatus.ForwardedToTechnician;
+  const forwardLabel = awaitingAcceptance ? t('taskDetail.forwardOther') : t('taskDetail.forward');
   const canForward =
     isDispatcher &&
-    task.status !== TicketStatus.ForwardedToTechnician &&
     task.status !== TicketStatus.Done &&
     task.status !== TicketStatus.Closed;
   const isDone = task.status === TicketStatus.Done || task.status === TicketStatus.Closed;
@@ -319,10 +335,12 @@ export function TaskDetailScreen() {
   if (isDispatcher) {
     if (canResolve) {
       actions.push({ key: 'resolve', label: t('taskDetail.resolve'), onPress: () => setResolving(true), variant: 'primary' });
-      if (canForward) actions.push({ key: 'forward', label: t('taskDetail.forward'), onPress: openForward, variant: 'secondary' });
+      if (canForward) actions.push({ key: 'forward', label: forwardLabel, onPress: openForward, variant: 'secondary' });
+      actions.push({ key: 'urgent', label: task.isUrgent ? t('taskDetail.urgentOff') : t('taskDetail.urgentOn'), onPress: onToggleUrgent, variant: 'secondary' });
     } else if (isMineToAccept) {
-      actions.push({ key: 'forward', label: t('taskDetail.forward'), onPress: openForward, variant: 'primary' });
+      actions.push({ key: 'forward', label: forwardLabel, onPress: openForward, variant: 'primary' });
       actions.push({ key: 'accept', label: t('taskDetail.accept'), onPress: onAccept, variant: 'secondary' });
+      actions.push({ key: 'urgent', label: task.isUrgent ? t('taskDetail.urgentOff') : t('taskDetail.urgentOn'), onPress: onToggleUrgent, variant: 'secondary' });
     }
   } else {
     if (isMineToAccept) actions.push({ key: 'accept', label: t('taskDetail.accept'), onPress: onAccept, variant: 'primary' });

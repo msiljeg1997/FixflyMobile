@@ -96,7 +96,10 @@
     "openTasks": "{{count}} offen",
     "navigate": "Route",
     "handoverLabel": "Übergabenotiz",
-    "handoverPlaceholder": "Was muss der neue Techniker wissen? (z. B. Wasser ist ab, Schlüssel beim Nachbarn)"
+    "handoverPlaceholder": "Was muss der neue Techniker wissen? (z. B. Wasser ist ab, Schlüssel beim Nachbarn)",
+    "forwardOther": "An anderen Techniker weiterleiten",
+    "urgentOn": "Als DRINGEND markieren",
+    "urgentOff": "DRINGEND entfernen"
   },
   "tabs": {
     "tasks": "Aufgaben",

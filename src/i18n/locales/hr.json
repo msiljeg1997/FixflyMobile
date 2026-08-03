@@ -96,7 +96,10 @@
     "openTasks": "{{count}} otvorenih",
     "navigate": "Navigiraj",
     "handoverLabel": "Napomena za preuzimanje",
-    "handoverPlaceholder": "Što novi tehničar mora znati? (npr. voda zatvorena, ključ kod susjeda)"
+    "handoverPlaceholder": "Što novi tehničar mora znati? (npr. voda zatvorena, ključ kod susjeda)",
+    "forwardOther": "Proslijedi drugom tehničaru",
+    "urgentOn": "Označi HITNO",
+    "urgentOff": "Makni HITNO"
   },
   "tabs": {
     "tasks": "Zadaci",
