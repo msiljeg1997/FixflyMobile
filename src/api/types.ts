@@ -269,6 +269,10 @@ export interface ChatMessage {
   sentAt: string;
   clientMessageId: string | null; // for idempotent offline retries
   seen: boolean; // computed against the caller's TicketReadState
+  /** Written by the person reading it — decided server-side, since a
+   *  dispatcher and a technician are both agents and sender TYPE cannot
+   *  tell two sides of a conversation apart. */
+  mine: boolean;
 }
 
 /**

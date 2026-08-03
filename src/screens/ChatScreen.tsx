@@ -52,40 +52,40 @@ type Row =
   | { kind: 'period'; period: ChatPeriod; messages: ChatMessage[] };
 
 function buildRows(messages: ChatMessage[], periods: ChatPeriod[]): Row[] {
-  if (periods.length === 0) return messages.map((m) => ({ kind: 'msg' as const, message: m }));
+  const closed = periods.filter((p) => p.to !== null);
+  if (closed.length === 0) return messages.map((m) => ({ kind: 'msg' as const, message: m }));
 
-  // Two or more people on the ticket at once is a group conversation, not a
-  // sequence — folding it would invent an order that is not there.
-  if (periods.filter((x) => x.to === null).length > 1)
-    return messages.map((m) => ({ kind: 'msg' as const, message: m }));
-
-  const blocks = new Map<string, ChatMessage[]>();
   const rows: Row[] = [];
+  let open: { period: ChatPeriod; messages: ChatMessage[] } | null = null;
 
   for (const m of messages) {
-    // System messages are the spine and never fold away.
-    if (m.senderType === ChatSenderType.System) {
-      rows.push({ kind: 'msg', message: m });
-      continue;
-    }
+    // Only a FINISHED stretch folds. The one still running is the live
+    // conversation — folding it would hide what somebody came to read, and
+    // pulling its messages out of order to do so is how the urgent notices
+    // ended up below a reply that came after them.
     const at = new Date(m.sentAt).getTime();
-    const period = periods.find(
-      (x) => at >= new Date(x.from).getTime() && (x.to === null || at <= new Date(x.to).getTime())
-    );
+    const period =
+      m.senderType === ChatSenderType.System
+        ? undefined
+        : closed.find(
+            (x) => at >= new Date(x.from).getTime() && at <= new Date(x.to!).getTime()
+          );
+
     if (!period) {
-      // Written while nobody held the ticket — belongs to no stretch.
+      // A system row (or anything outside a closed stretch) ends the current
+      // block, so what follows cannot be pulled back above it.
+      open = null;
       rows.push({ kind: 'msg', message: m });
       continue;
     }
-    const key = `${period.agentId}-${period.from}`;
-    if (!blocks.has(key)) {
-      blocks.set(key, []);
-      rows.push({ kind: 'period', period, messages: blocks.get(key)! });
+
+    if (!open || open.period !== period) {
+      open = { period, messages: [] };
+      rows.push({ kind: 'period', period, messages: open.messages });
     }
-    blocks.get(key)!.push(m);
+    open.messages.push(m);
   }
 
-  // A stretch with nothing said in it is already told by the system rows.
   return rows.filter((r) => r.kind !== 'period' || r.messages.length > 0);
 }
 
@@ -233,7 +233,7 @@ export function ChatScreen() {
     // "Mine" = sent from this app by an agent. Manager/WhatsApp rows are the
     // other side; system rows are neither and get their own centred style.
     const isSystem = item.senderType === ChatSenderType.System;
-    const mine = item.senderType === ChatSenderType.Technician || item.senderType === ChatSenderType.Dispatcher;
+    const mine = item.mine;
     const isLegacy = item.senderType === ChatSenderType.WhatsApp;
     const showDay = !prev || dayLabel(prev.sentAt) !== dayLabel(item.sentAt);
 
