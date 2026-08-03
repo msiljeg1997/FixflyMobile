@@ -112,11 +112,15 @@ export function ChatScreen() {
   // Past stretches start folded. The one still running is what somebody
   // opening this screen came to read.
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  // Something arrived in the room you are not looking at. Without this the
+  // only hint would be finding it later by chance.
+  const [otherRoomUnread, setOtherRoomUnread] = useState(false);
 
   const load = useCallback(async () => {
     setError(false);
     try {
       const data = await chatApi.getMessages(ticketId, undefined, 50, room);
+      setOtherRoomUnread(false);
       setMessages(data);
       // Opening the thread counts as reading it — drives the other side's
       // "Seen" and clears this ticket's unread badge.
@@ -171,9 +175,13 @@ export function ChatScreen() {
   useEffect(() => {
     const off = signalRService.onChatMessageReceived((evt) => {
       if (evt.ticketId !== ticketId) return;
-      // The event carries no room, so only refetch what is on screen rather
-      // than appending an internal message into the work thread.
-      if (room !== ChatRoom.Work) { load(); return; }
+      // A message belongs to exactly one room. Appending it to whichever
+      // room happens to be on screen put internal notes in the work thread
+      // until the tab was switched and the list refetched.
+      if (evt.message.room !== room) {
+        setOtherRoomUnread(true);
+        return;
+      }
       // The broadcast is one payload for everybody and says mine=false.
       // Only this device knows who it is, so it answers that here —
       // otherwise a message landed on the wrong side until the screen was
@@ -371,7 +379,7 @@ export function ChatScreen() {
             onPress={() => setRoom(ChatRoom.Work)}
           >
             <Text style={[styles.segmentText, room === ChatRoom.Work && styles.segmentTextActive]}>
-              {t('chat.roomWork')}
+              {t('chat.roomWork')}{otherRoomUnread && room === ChatRoom.Internal ? ' •' : ''}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -379,7 +387,7 @@ export function ChatScreen() {
             onPress={() => setRoom(ChatRoom.Internal)}
           >
             <Text style={[styles.segmentText, room === ChatRoom.Internal && styles.segmentTextActive]}>
-              🔒 {t('chat.roomInternal')}
+              🔒 {t('chat.roomInternal')}{otherRoomUnread && room === ChatRoom.Work ? ' •' : ''}
             </Text>
           </TouchableOpacity>
         </View>

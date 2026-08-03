@@ -277,6 +277,8 @@ export interface ChatMessage {
    *  ownership per recipient — each client answers that from these. */
   senderAgentId: number | null;
   senderUserId: number | null;
+  /** Which room it belongs to — a listener has one room on screen. */
+  room: ChatRoom;
 }
 
 /**
