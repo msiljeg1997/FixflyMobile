@@ -273,6 +273,10 @@ export interface ChatMessage {
    *  dispatcher and a technician are both agents and sender TYPE cannot
    *  tell two sides of a conversation apart. */
   mine: boolean;
+  /** Who wrote it. A realtime broadcast reaches everyone, so it cannot set
+   *  ownership per recipient — each client answers that from these. */
+  senderAgentId: number | null;
+  senderUserId: number | null;
 }
 
 /**

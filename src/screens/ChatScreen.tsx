@@ -22,6 +22,7 @@ import { isNetworkError } from '../api/client';
 import { outbox, OutboxItem } from '../offline/outbox';
 import { signalRService } from '../realtime/signalr';
 import { useUnread } from '../context/UnreadContext';
+import { useAuth } from '../context/AuthContext';
 import { ChatAccess, ChatMessage, ChatPeriod, ChatRoom, ChatSenderType } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
 import { ImageViewerModal } from '../components/ImageViewerModal';
@@ -97,6 +98,7 @@ export function ChatScreen() {
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<Row>>(null);
   const { refresh: refreshUnread, setActiveThread } = useUnread();
+  const { agent, manager } = useAuth();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,11 +167,21 @@ export function ChatScreen() {
       // The event carries no room, so only refetch what is on screen rather
       // than appending an internal message into the work thread.
       if (room !== ChatRoom.Work) { load(); return; }
-      setMessages((prev) => (prev.some((m) => m.id === evt.message.id) ? prev : [...prev, evt.message]));
+      // The broadcast is one payload for everybody and says mine=false.
+      // Only this device knows who it is, so it answers that here —
+      // otherwise a message landed on the wrong side until the screen was
+      // closed and reopened.
+      const incoming: ChatMessage = {
+        ...evt.message,
+        mine:
+          (agent != null && evt.message.senderAgentId === agent.id) ||
+          (manager != null && evt.message.senderUserId === manager.id),
+      };
+      setMessages((prev) => (prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]));
       chatApi.markRead(ticketId).then(() => refreshUnread()).catch(() => {});
     });
     return off;
-  }, [ticketId, room, load]);
+  }, [ticketId, room, load, agent, manager]);
 
   const send = async (image?: ChatImage) => {
     const text = draft.trim();
