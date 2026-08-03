@@ -669,6 +669,132 @@ export function TaskDetailScreen() {
         </View>
       )}
 
+      {/* Reject — focused modal sheet instead of an inline form at the
+          bottom of the scroll */}
+      <Modal visible={rejecting} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setRejecting(false)}>
+        <KeyboardAvoidingView
+          style={styles.sheet}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.sm }]}>
+            <TouchableOpacity onPress={() => setRejecting(false)} disabled={acting} hitSlop={12}>
+              <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.sheetTitle} numberOfLines={1}>{t('taskDetail.reject')}</Text>
+            <View style={styles.sheetHeaderSpacer} />
+          </View>
+
+          {/* keyboardDismissMode="on-drag" is the iOS-native way out of a
+              multiline field — swiping the content down closes the keyboard,
+              so no extra "Done" affordance is needed. */}
+          <ScrollView
+            style={styles.sheetBody}
+            contentContainerStyle={styles.sheetBodyContent}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.sheetHint}>{t('taskDetail.rejectHint')}</Text>
+            <Text style={styles.sectionLabel}>{t('taskDetail.rejectReason')}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('taskDetail.rejectPlaceholder')}
+              placeholderTextColor={colors.muted}
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              multiline
+              autoFocus
+            />
+          </ScrollView>
+
+          <View style={[styles.sheetFooter, { paddingBottom: insets.bottom + spacing.md }]}>
+            <TouchableOpacity
+              style={[styles.sheetPrimaryButton, styles.sheetDangerButton, !rejectReason.trim() && styles.sheetButtonDisabled]}
+              onPress={onReject}
+              disabled={acting}
+            >
+              {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.sheetButtonText}>{t('taskDetail.rejectConfirm')}</Text>}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Resolve — same sheet treatment, scrollable body for the photo grid */}
+      <Modal visible={resolving} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setResolving(false)}>
+        <KeyboardAvoidingView
+          style={styles.sheet}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.sm }]}>
+            <TouchableOpacity onPress={() => setResolving(false)} disabled={acting} hitSlop={12}>
+              <Text style={styles.sheetCancel}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.sheetTitle} numberOfLines={1}>{t('taskDetail.resolve')}</Text>
+            <View style={styles.sheetHeaderSpacer} />
+          </View>
+
+          <ScrollView
+            style={styles.sheetBody}
+            contentContainerStyle={styles.sheetBodyContent}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.sectionLabel}>{t('taskDetail.resolveComment')}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t('taskDetail.resolvePlaceholder')}
+              placeholderTextColor={colors.muted}
+              value={comment}
+              onChangeText={setComment}
+              multiline
+              autoFocus
+            />
+
+            <View style={styles.photoHeader}>
+              <Text style={styles.sectionLabel}>{t('taskDetail.resolvePhotos')}</Text>
+              <Text style={styles.photoCount}>{photos.length}/{MAX_PHOTOS}</Text>
+            </View>
+            <View style={styles.photoRow}>
+              {photos.map((p, i) => (
+                <View key={p.uri} style={styles.thumbWrap}>
+                  <Image source={{ uri: p.uri }} style={styles.thumb} />
+                  <TouchableOpacity
+                    style={styles.thumbRemoveBtn}
+                    onPress={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.thumbRemoveText}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <>
+                  <TouchableOpacity style={styles.addPhoto} onPress={() => pickPhoto(true)}>
+                    <Text style={styles.addPhotoText}>📷</Text>
+                    <Text style={styles.addPhotoLabel}>{t('taskDetail.camera')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.addPhoto} onPress={() => pickPhoto(false)}>
+                    <Text style={styles.addPhotoText}>🖼️</Text>
+                    <Text style={styles.addPhotoLabel}>{t('taskDetail.gallery')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </ScrollView>
+
+          <View style={[styles.sheetFooter, { paddingBottom: insets.bottom + spacing.md }]}>
+            <TouchableOpacity
+              style={[styles.sheetPrimaryButton, !comment.trim() && styles.sheetButtonDisabled]}
+              onPress={onResolve}
+              disabled={acting || !comment.trim()}
+            >
+              {acting ? <ActivityIndicator color={colors.white} /> : <Text style={styles.sheetButtonText}>{t('taskDetail.resolveConfirm')}</Text>}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Forward — dispatcher picks a technician; tapping a row forwards
+          immediately (a picker, not a form that needs a separate confirm) */}
       <Modal visible={forwarding} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setForwarding(false)}>
         <View style={styles.sheet}>
           <View style={[styles.sheetHeader, { paddingTop: insets.top + spacing.sm }]}>
