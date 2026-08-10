@@ -8,6 +8,8 @@ import { LockScreen } from '../screens/LockScreen';
 import { ForgotPasswordScreen } from '../screens/ForgotPasswordScreen';
 import { ForgotPinScreen } from '../screens/ForgotPinScreen';
 import { MainTabs } from './MainTabs';
+import { navigationRef } from './navigationRef';
+import { usePushNavigation } from '../push/pushNavigation';
 import { colors } from '../theme/tokens';
 
 export type RootStackParamList = {
@@ -46,6 +48,11 @@ export function RootNavigator() {
   const [recoveringPassword, setRecoveringPassword] = useState(false);
   const [recoveringPin, setRecoveringPin] = useState(false);
 
+  // Follows a notification tap to its ticket, but only once the tabs exist to
+  // navigate to — before that the tap is held, not lost. Called above the
+  // early return so the hook order stays fixed across renders.
+  usePushNavigation(status === 'signedIn');
+
   if (status === 'checking') {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface }}>
@@ -55,7 +62,7 @@ export function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {status === 'signedIn' ? (
           <Stack.Screen name="Main" component={MainTabs} />

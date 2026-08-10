@@ -52,6 +52,15 @@
         {
           "faceIDPermission": "Fixfly Pro uses Face ID to unlock the app quickly instead of typing your password."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#0ACC6B",
+          "defaultChannel": "default",
+          "mode": "production"
+        }
       ]
     ]
   }

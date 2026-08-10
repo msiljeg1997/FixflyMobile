@@ -3,6 +3,8 @@ import { AppState, AppStateStatus } from 'react-native';
 import * as authApi from '../api/auth';
 import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
+import { forgetPushRegistration, registerForPush } from '../push/push';
+import { forgetPendingPushNavigation } from '../push/pushNavigation';
 import { appLock } from '../security/appLock';
 import { MobilePrincipal } from '../api/types';
 import type { AgentLoginRequest, AgentProfile, ManagerProfile } from '../api/types';
@@ -80,6 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const doLogout = useCallback(async () => {
     await authApi.logout();
     await signalRService.disconnect();
+    forgetPushRegistration();
+    forgetPendingPushNavigation();
     // Clearing the PIN with the session keeps the gate tied to one agent —
     // otherwise the next person to sign in on this device would inherit it.
     await appLock.clear();
@@ -108,6 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setManager(restored.manager);
         setPrincipal(restored.principal);
         connectRealtimeSafe();
+        // FCM rotates tokens on its own schedule, so a restored session
+        // re-registers rather than trusting what was filed at first login.
+        registerForPush();
         // A stored session behind an ENABLED lock starts locked, not open.
         setStatus((await appLock.isLockEnabled()) ? 'locked' : 'signedIn');
       } catch (error) {
@@ -151,6 +158,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setManager(result.manager);
     setPrincipal(result.principal);
     connectRealtimeSafe();
+    // After sign-in, not before: the endpoint is authenticated and the token
+    // belongs to whoever is signed in. Not awaited — a slow permission dialog
+    // must not hold up the screen behind it.
+    registerForPush();
     // Offer the quick-unlock gate once, and only to a device that has never
     // answered. Someone who turned the lock off stays signed straight in —
     // re-asking on every login is how a declined option becomes nagging.
@@ -193,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setManager(restored.manager);
     setPrincipal(restored.principal);
     connectRealtimeSafe();
+    registerForPush();
     setStatus((await appLock.hasChosen()) ? 'signedIn' : 'pinSetup');
   }, []);
 
