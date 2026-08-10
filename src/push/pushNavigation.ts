@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { navigationRef } from '../navigation/navigationRef';
+import { tokenStorage } from '../api/storage';
 
 /**
  * Opening the screen a notification is about.
@@ -40,31 +41,49 @@ function readPayload(response: Notifications.NotificationResponse): PushData {
 /**
  * Ticket code under either name, and a nudge toward the right screen when
  * `type` is missing: a chat notification is the one that names `ticketId`.
+ *
+ * The tab depends on who is signed in, because the two apps do not have the
+ * same tabs. An agent works a queue and has TasksTab; an admin triages and has
+ * InboxTab instead. Sending an admin to a tab that is not mounted would look
+ * like the notification simply did nothing.
  */
-function route(data: PushData): { tab: 'ChatTab' | 'TasksTab'; ticketId: string } | null {
+async function route(data: PushData): Promise<{ tab: string; screen: string; ticketId: string } | null> {
   const ticketId = data.taskId || data.ticketId;
   if (!ticketId) return null;
+
   const isChat = data.type === 'chat' || (!data.type && !data.taskId);
-  return { tab: isChat ? 'ChatTab' : 'TasksTab', ticketId };
+  if (isChat) return { tab: 'ChatTab', screen: 'Chat', ticketId };
+
+  const isManager = await tokenStorage.isManager();
+  // The inbox is a single screen with no per-ticket route of its own, so a
+  // manager lands on the list rather than on the ticket. Better than a dead
+  // tap, and honest about what the screen can address today.
+  return isManager
+    ? { tab: 'InboxTab', screen: '', ticketId }
+    : { tab: 'TasksTab', screen: 'TaskDetail', ticketId };
 }
 
-function open(data: PushData): void {
+async function open(data: PushData): Promise<void> {
   if (!armed || !navigationRef.isReady()) {
     pending = data;
     return;
   }
-  const target = route(data);
+  const target = await route(data);
   if (!target) return;
+
+  // Awaiting the principal above means the gate may have closed underneath us
+  // — a session expiring mid-tap is rare but it is exactly when navigating
+  // into a signed-in screen would be wrong.
+  if (!armed || !navigationRef.isReady()) return;
 
   // Addressed all the way down from the root stack. 'ChatTab' means nothing at
   // the root — the root knows only Login/Lock/Main — so a partial target is
   // dropped silently rather than failing loudly. Same reasoning as ChatBanner.
   navigationRef.navigate('Main', {
     screen: target.tab,
-    params:
-      target.tab === 'ChatTab'
-        ? { screen: 'Chat', params: { ticketId: target.ticketId } }
-        : { screen: 'TaskDetail', params: { ticketId: target.ticketId } },
+    params: target.screen
+      ? { screen: target.screen, params: { ticketId: target.ticketId } }
+      : undefined,
   } as never);
 }
 

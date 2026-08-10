@@ -14,8 +14,8 @@ import { tokenStorage } from '../api/storage';
  * send time, which looks like "push just doesn't arrive" and never like a
  * wrong token.
  *
- * Everything here is best-effort. A technician who declines notifications, or
- * whose device cannot register, must still get a working app.
+ * Everything here is best-effort. Someone who declines notifications, or whose
+ * device cannot register, must still get a working app.
  */
 
 // Android needs a channel before anything can be shown, and the channel — not
@@ -24,6 +24,23 @@ import { tokenStorage } from '../api/storage';
 const CHANNEL_ID = 'default';
 
 let registeredToken: string | null = null;
+
+/**
+ * Where this session's token belongs. Technicians and dispatchers are Agents;
+ * a company admin is a User, and the two are filed in the same table under
+ * different owner types — so the endpoint, not a field in the body, is what
+ * decides whose device this is.
+ *
+ * A venue manager (LocationAdmin) is left out deliberately: nothing on the
+ * server sends to them, and asking for a permission we cannot act on is worse
+ * than not asking.
+ */
+async function tokenEndpoint(): Promise<string | null> {
+  const principal = await tokenStorage.getPrincipal();
+  if (principal === 'agent') return '/api/agent/device-token';
+  if (principal === 'manager') return '/api/admin/device-token';
+  return null;
+}
 
 /** Notifications while the app is open: the in-app banner already covers chat. */
 Notifications.setNotificationHandler({
@@ -56,11 +73,8 @@ export async function registerForPush(): Promise<void> {
     // like a real failure and is not one.
     if (!Device.isDevice) return;
 
-    // Agents only, for now. The endpoint lives on the agent controller and the
-    // send path addresses DeviceOwnerType.Agent, so a manager's token would be
-    // refused on the way in and ignored on the way out. Asking a manager for
-    // notification permission we cannot act on would be worse than not asking.
-    if ((await tokenStorage.getPrincipal()) !== 'agent') return;
+    const endpoint = await tokenEndpoint();
+    if (!endpoint) return;
 
     await ensureAndroidChannel();
 
@@ -83,7 +97,7 @@ export async function registerForPush(): Promise<void> {
     // write per app open for nothing.
     if (token === registeredToken) return;
 
-    await apiClient.post('/api/agent/device-token', {
+    await apiClient.post(endpoint, {
       token,
       platform: Platform.OS === 'ios' ? 'ios' : 'android',
     });
