@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { apiClient } from '../api/client';
@@ -22,6 +23,10 @@ import { tokenStorage } from '../api/storage';
 // the message — is what carries importance. Without one, notifications arrive
 // silently and the urgent ones read the same as the rest.
 const CHANNEL_ID = 'default';
+
+// The settings toggle, kept under the key ProfileScreen already wrote to so an
+// existing preference survives this becoming real.
+const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
 
 let registeredToken: string | null = null;
 
@@ -73,6 +78,11 @@ export async function registerForPush(): Promise<void> {
     // like a real failure and is not one.
     if (!Device.isDevice) return;
 
+    // Switched off in settings. Checked before the permission prompt, so
+    // someone who turned notifications off is not asked for permission on
+    // every sign-in.
+    if (!(await isPushEnabled())) return;
+
     const endpoint = await tokenEndpoint();
     if (!endpoint) return;
 
@@ -122,4 +132,46 @@ export function forgetPushRegistration(): void {
 /** True once this device has a token filed under the signed-in account. */
 export function isPushRegistered(): boolean {
   return registeredToken !== null;
+}
+
+/** The settings toggle. On unless the person has said otherwise. */
+export async function isPushEnabled(): Promise<boolean> {
+  const stored = await AsyncStorage.getItem(PUSH_PREF_KEY);
+  return stored === null ? true : stored === 'true';
+}
+
+/**
+ * Turning notifications off has to reach the server. Dropping only the local
+ * token would leave the row behind and the phone would keep buzzing — the
+ * setting would look like it worked and would not have.
+ *
+ * Turning them back on re-registers, which is also what recovers a device
+ * whose token was deleted while it was off.
+ */
+export async function setPushEnabled(enabled: boolean): Promise<void> {
+  await AsyncStorage.setItem(PUSH_PREF_KEY, String(enabled));
+
+  if (enabled) {
+    await registerForPush();
+    return;
+  }
+
+  try {
+    const endpoint = await tokenEndpoint();
+    if (!endpoint) return;
+
+    // The cached token is empty on a fresh launch while the server row still
+    // exists, so ask the device rather than skip the delete.
+    let token = registeredToken;
+    if (!token && Device.isDevice) {
+      token = String((await Notifications.getDevicePushTokenAsync()).data);
+    }
+    if (!token) return;
+
+    await apiClient.delete(endpoint, { data: { token } });
+    registeredToken = null;
+  } catch {
+    // Best effort. The preference is already stored, so this device stops
+    // registering either way; a stale row costs one undelivered push.
+  }
 }

@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import { appLock } from '../security/appLock';
+import { isPushEnabled, setPushEnabled } from '../push/push';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 import { getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
@@ -38,6 +39,19 @@ export function ManagerProfileScreen() {
   const [horizon, setHorizon] = useState('7');
   const [savingHorizon, setSavingHorizon] = useState(false);
   const [lockEnabled, setLockEnabled] = useState(false);
+  const [pushOn, setPushOn] = useState(true);
+
+  useEffect(() => {
+    isPushEnabled().then(setPushOn);
+  }, []);
+
+  // The switch moves first and the work happens behind it. Turning it off
+  // deletes the device token server-side, so the phone actually stops buzzing
+  // rather than the setting merely claiming it will.
+  const togglePush = (value: boolean) => {
+    setPushOn(value);
+    setPushEnabled(value);
+  };
 
   useEffect(() => {
     setDisplayName(manager?.name ?? '');
@@ -203,6 +217,27 @@ export function ManagerProfileScreen() {
 
         <Text style={styles.sectionLabel}>{t('profile.settings')}</Text>
         <View style={styles.settingsCard}>
+          {/* Only the company admin: nothing on the server pushes to a venue
+              manager, so offering them the switch would promise notifications
+              that are never sent. */}
+          {!isVenueManager && (
+            <View style={styles.settingRow}>
+              <View style={[styles.iconChip, { backgroundColor: tint(colors.green) }]}>
+                <Text style={styles.icon}>🔔</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.settingLabel}>{t('profile.pushNotifications')}</Text>
+              </View>
+              <Switch
+                value={pushOn}
+                onValueChange={togglePush}
+                trackColor={{ true: colors.green, false: colors.border }}
+                thumbColor={colors.white}
+                ios_backgroundColor={colors.border}
+              />
+            </View>
+          )}
+
           <View style={styles.settingRow}>
             <View style={[styles.iconChip, { backgroundColor: tint(colors.statusAccepted) }]}>
               <Text style={styles.icon}>🔒</Text>

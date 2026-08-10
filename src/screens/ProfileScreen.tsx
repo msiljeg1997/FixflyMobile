@@ -3,16 +3,15 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, Switch, Text, Touchab
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import * as profileApi from '../api/profile';
 import { appLock } from '../security/appLock';
+import { isPushEnabled, setPushEnabled } from '../push/push';
 import { AgentRole, AgentStats } from '../api/types';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 import { formatDuration, getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
-const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
 const LANGUAGE_NAMES: Record<SupportedLanguage, string> = { hr: 'Hrvatski', en: 'English', de: 'Deutsch' };
 
 export function ProfileScreen() {
@@ -23,19 +22,18 @@ export function ProfileScreen() {
   const [stats, setStats] = useState<AgentStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Local preference only — actual FCM permission/registration lands with
-  // the native-build push client (Expo Go can't hold a real device token).
-  const [pushEnabled, setPushEnabled] = useState(true);
+  const [pushOn, setPushOn] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.getItem(PUSH_PREF_KEY).then((v) => {
-      if (v !== null) setPushEnabled(v === 'true');
-    });
+    isPushEnabled().then(setPushOn);
   }, []);
 
+  // The switch moves first and the work happens behind it. Turning it off
+  // deletes the device token server-side, so the phone actually stops buzzing
+  // rather than the setting merely claiming it will.
   const togglePush = (value: boolean) => {
+    setPushOn(value);
     setPushEnabled(value);
-    AsyncStorage.setItem(PUSH_PREF_KEY, String(value));
   };
 
   // App lock (PIN / biometrics). Off is a legitimate choice: the session then
@@ -159,7 +157,7 @@ export function ProfileScreen() {
           </View>
           <Text style={styles.settingLabel}>{t('profile.pushNotifications')}</Text>
           <Switch
-            value={pushEnabled}
+            value={pushOn}
             onValueChange={togglePush}
             trackColor={{ true: colors.green, false: colors.border }}
             thumbColor={colors.white}
