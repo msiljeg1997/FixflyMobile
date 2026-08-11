@@ -32,7 +32,15 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "USE_BIOMETRIC", "USE_FINGERPRINT"],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -63,6 +71,11 @@
           "mode": "production"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "335082e9-4908-42ef-b5f4-ccc3eb6dd2eb"
+      }
+    }
   }
 }
