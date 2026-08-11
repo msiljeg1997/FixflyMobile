@@ -1,0 +1,46 @@
+# Što se NE šalje na EAS build server.
+#
+# Kad ova datoteka postoji, EAS je koristi umjesto .gitignore. Postoji upravo
+# zato: .gitignore izbacuje google-services.json i GoogleService-Info.plist,
+# pa bi build ostao bez Firebase konfiguracije i push nikad ne bi proradio —
+# a te dvije datoteke ionako putuju unutar svakog objavljenog APK-a, pa ih
+# držanje izvan gita čuva od slučajnog commita, ne od korisnika.
+#
+# Sve ostalo ispod je preslika onoga što i git preskače.
+
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# native
+/ios
+/android
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+
+# lokalne env datoteke
+.env
+.env.local
+.env*.local
+
+# alati
+.idea/
+.vscode/
+*.tsbuildinfo

@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
+    "eas-cli": "^21.7.1",
     "typescript": "~5.9.2"
   },
   "scripts": {

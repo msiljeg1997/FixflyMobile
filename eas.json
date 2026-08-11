@@ -25,6 +25,16 @@
       "env": {
         "EXPO_PUBLIC_API_URL": "https://app.fixfly.io"
       }
+    },
+    "klijent": {
+      "extends": "preview",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://app.fixfly.io"
+      }
     }
   },
   "submit": {
