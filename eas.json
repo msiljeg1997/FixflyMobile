@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://test.fixfly.io"
+        "EXPO_PUBLIC_API_URL": "https://app.fixfly.io"
       }
     },
     "preview": {
@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://test.fixfly.io"
+        "EXPO_PUBLIC_API_URL": "https://app.fixfly.io"
       }
     },
     "production": {

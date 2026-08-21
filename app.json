@@ -14,13 +14,15 @@
       "backgroundColor": "#0D1117"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "io.fixfly.pro",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSCameraUsageDescription": "Fixfly Pro uses the camera so you can photograph a fault and attach proof when resolving a task.",
         "NSPhotoLibraryUsageDescription": "Fixfly Pro needs photo access so you can attach existing photos to a task or chat message.",
         "NSFaceIDUsageDescription": "Fixfly Pro uses Face ID to unlock the app quickly instead of typing your password."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
       }
     },
     "android": {
