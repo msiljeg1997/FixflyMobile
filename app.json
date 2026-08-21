@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "Fixfly Pro",
-    "slug": "fixfly",
-    "owner": "zerodaysoftware",
+    "slug": "fixfly-pro",
+    "owner": "day-software-jdoo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -38,7 +38,8 @@
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.RECORD_AUDIO"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -76,7 +77,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "335082e9-4908-42ef-b5f4-ccc3eb6dd2eb"
+        "projectId": "e7af558b-4e9a-4aba-b93d-2cd9161ce5a3"
       }
     }
   }
