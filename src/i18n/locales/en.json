@@ -286,5 +286,21 @@
     "horizonSection": "Ticket horizon",
     "horizonHint": "How many days back tickets stay under \"To handle\". Older ones move to \"To clear\".",
     "horizonSaved": "Horizon saved."
+  },
+  "sys": {
+    "1": "{{by}} assigned the report to {{to}}",
+    "2": "Handover note: {{note}}",
+    "3": "{{by}} declined the report",
+    "4": "{{who}} did not accept in time — the report went back to dispatch",
+    "5": "{{by}} marked the report resolved",
+    "6": "{{by}} marked the report URGENT — the acceptance window is now {{minutes}} min",
+    "7": "{{by}} removed the URGENT flag — the acceptance window is {{minutes}} min again",
+    "8": "{{by}} closed the report",
+    "9": "{{by}} brought {{who}} back into the conversation",
+    "system": "System",
+    "someone": "The technician",
+    "3_reason": "{{by}} declined the report: {{reason}}",
+    "5_comment": "{{by}} marked the report resolved: {{comment}}",
+    "8_comment": "{{by}} closed the report: {{comment}}"
   }
 }

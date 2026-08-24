@@ -287,5 +287,21 @@
     "horizonSection": "Horizont prijava",
     "horizonHint": "Koliko dana unatrag prijave ostaju u \"Za rješavanje\". Starije idu u \"Za čišćenje\".",
     "horizonSaved": "Horizont je spremljen."
+  },
+  "sys": {
+    "1": "{{by}} je dodijelio prijavu: {{to}}",
+    "2": "Napomena za preuzimanje: {{note}}",
+    "3": "{{by}} je odbio prijavu",
+    "4": "{{who}} nije prihvatio na vrijeme — prijava je vraćena u raspoređivanje",
+    "5": "{{by}} je označio prijavu riješenom",
+    "6": "{{by}} je označio prijavu HITNOM — rok za prihvat je sada {{minutes}} min",
+    "7": "{{by}} je maknuo oznaku HITNO — rok za prihvat je ponovno {{minutes}} min",
+    "8": "{{by}} je zatvorio prijavu",
+    "9": "{{by}} je pozvao {{who}} natrag u razgovor",
+    "system": "Sustav",
+    "someone": "Tehničar",
+    "3_reason": "{{by}} je odbio prijavu: {{reason}}",
+    "5_comment": "{{by}} je označio prijavu riješenom: {{comment}}",
+    "8_comment": "{{by}} je zatvorio prijavu: {{comment}}"
   }
 }

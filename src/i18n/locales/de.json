@@ -286,5 +286,21 @@
     "horizonSection": "Meldungs-Horizont",
     "horizonHint": "Wie viele Tage zurück Meldungen unter „Zu erledigen\" bleiben. Ältere wandern zu „Aufzuräumen\".",
     "horizonSaved": "Horizont gespeichert."
+  },
+  "sys": {
+    "1": "{{by}} hat die Meldung zugewiesen an: {{to}}",
+    "2": "Übergabenotiz: {{note}}",
+    "3": "{{by}} hat die Meldung abgelehnt",
+    "4": "{{who}} hat nicht rechtzeitig angenommen — die Meldung ging zurück an die Disposition",
+    "5": "{{by}} hat die Meldung als erledigt markiert",
+    "6": "{{by}} hat die Meldung als DRINGEND markiert — die Annahmefrist beträgt jetzt {{minutes}} Min.",
+    "7": "{{by}} hat die Markierung DRINGEND entfernt — die Annahmefrist beträgt wieder {{minutes}} Min.",
+    "8": "{{by}} hat die Meldung geschlossen",
+    "9": "{{by}} hat {{who}} zurück in das Gespräch geholt",
+    "system": "System",
+    "someone": "Der Techniker",
+    "3_reason": "{{by}} hat die Meldung abgelehnt: {{reason}}",
+    "5_comment": "{{by}} hat die Meldung als erledigt markiert: {{comment}}",
+    "8_comment": "{{by}} hat die Meldung geschlossen: {{comment}}"
   }
 }

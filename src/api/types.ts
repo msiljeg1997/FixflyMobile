@@ -279,6 +279,21 @@ export interface ChatMessage {
   senderUserId: number | null;
   /** Which room it belongs to — a listener has one room on screen. */
   room: ChatRoom;
+  /**
+   * Which system event this line records, if it is one.
+   *
+   * The words used to come from the server already written, in Croatian, so a
+   * technician with the app in German read Croatian on the thread. The server
+   * now sends the event and its names and the sentence is built here — which
+   * is also how the same person can keep the phone in Croatian while their
+   * dashboard is in English.
+   *
+   * Null on typed messages and on rows written before this existed; `text` is
+   * the fallback there and for any event kind this build does not know.
+   */
+  systemEvent: number | null;
+  /** Names and numbers for the sentence, as a JSON string. */
+  systemEventData: string | null;
 }
 
 /**

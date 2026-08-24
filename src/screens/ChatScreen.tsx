@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { systemLine, senderLabel } from '../utils/systemLine';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -273,7 +274,7 @@ export function ChatScreen() {
             </View>
           )}
           <View style={styles.systemRow}>
-            <Text style={styles.systemText}>{item.text}</Text>
+            <Text style={styles.systemText}>{systemLine(item, t)}</Text>
             <Text style={styles.systemTime}>{timeLabel(item.sentAt)}</Text>
           </View>
         </View>
@@ -294,14 +295,18 @@ export function ChatScreen() {
             </View>
           )}
           <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs, isLegacy && styles.bubbleLegacy]}>
-            {!mine && <Text style={styles.senderName}>{item.senderName}</Text>}
+            {!mine && <Text style={styles.senderName}>{senderLabel(item, t)}</Text>}
             {isLegacy && <Text style={styles.legacyTag}>{t('chat.viaWhatsApp')}</Text>}
             {item.imageUrl && (
               <TouchableOpacity onPress={() => setViewerUri(item.imageUrl)} activeOpacity={0.85}>
                 <Image source={{ uri: item.imageUrl }} style={styles.messageImage} resizeMode="cover" />
               </TouchableOpacity>
             )}
-            {item.text && <Text style={[styles.messageText, mine && styles.messageTextMine]}>{item.text}</Text>}
+            {/* Through the translator too: the handover note is typed by a
+                person but carries a system-written prefix. */}
+            {systemLine(item, t) !== '' && (
+              <Text style={[styles.messageText, mine && styles.messageTextMine]}>{systemLine(item, t)}</Text>
+            )}
             <View style={styles.metaRow}>
               <Text style={[styles.time, mine && styles.timeMine]}>{timeLabel(item.sentAt)}</Text>
               {mine && item.seen && <Text style={styles.seen}>✓✓</Text>}
