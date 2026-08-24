@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import { appLock } from '../security/appLock';
-import { isPushEnabled, setPushEnabled } from '../push/push';
+import { isPushEnabled, setPushEnabled, registerForPush } from '../push/push';
 import { setLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from '../i18n';
 import { getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
@@ -133,7 +133,13 @@ export function ManagerProfileScreen() {
       undefined,
       SUPPORTED_LANGUAGES.map((lang) => ({
         text: LANGUAGE_NAMES[lang],
-        onPress: async () => setLanguage(lang),
+        onPress: async () => {
+          await setLanguage(lang);
+          // The server writes push notifications for us, so it has to be told
+          // — otherwise they keep arriving in the language this phone was
+          // registered with, however many times the user changes it here.
+          await registerForPush();
+        },
       })).concat([{ text: t('common.cancel'), onPress: async () => {} }])
     );
   };

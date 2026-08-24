@@ -4,6 +4,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { apiClient } from '../api/client';
 import { tokenStorage } from '../api/storage';
+import i18n from '../i18n';
 
 /**
  * Registering this device to be woken by the server.
@@ -29,6 +30,8 @@ const CHANNEL_ID = 'default';
 const PUSH_PREF_KEY = 'fixfly_push_notifications_enabled';
 
 let registeredToken: string | null = null;
+/** Alongside the token, so a language change re-registers instead of being skipped. */
+let registeredLanguage: string | null = null;
 
 /**
  * Where this session's token belongs. Technicians and dispatchers are Agents;
@@ -103,15 +106,22 @@ export async function registerForPush(): Promise<void> {
     const token = String(devicePushToken.data);
     if (!token) return;
 
-    // The same token every launch: re-posting it on each start would be a
-    // write per app open for nothing.
-    if (token === registeredToken) return;
+    // A push is written on the server while this app is closed, so it cannot
+    // be worded here — the language has to travel with the token.
+    const language = i18n.language?.slice(0, 2) ?? null;
+
+    // The same token every launch would be a write per app open for nothing —
+    // but a changed language still has to reach the server, or notifications
+    // keep arriving in the one it was registered with.
+    if (token === registeredToken && language === registeredLanguage) return;
 
     await apiClient.post(endpoint, {
       token,
       platform: Platform.OS === 'ios' ? 'ios' : 'android',
+      language,
     });
     registeredToken = token;
+    registeredLanguage = language;
   } catch {
     // Push is an enhancement. It must never be the reason a sign-in fails.
   }
