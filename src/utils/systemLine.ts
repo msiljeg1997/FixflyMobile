@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import { ChatMessage, ChatSenderType } from '../api/types';
+import type { LocationType, TaskDetail } from '../api/types';
 
 /**
  * The sentence for a system line on a ticket thread, in the language this
@@ -47,6 +48,35 @@ export function systemLine(m: ChatMessage, t: TFunction): string {
   // i18next echoes the key back when it is missing; the stored sentence is
   // better than showing "sys.7" to somebody.
   return out === key ? (m.text ?? '') : out;
+}
+
+/**
+ * The assignment note on a task, worded for this reader.
+ *
+ * The server writes it as Croatian text when the system is the author —
+ * "Preuzeo hausmajstor" — which is the wrong language for a German technician
+ * and, outside a building, the wrong job title: only a Zgrada has a
+ * Hausmajstor, everywhere else has a manager. So the event and the venue kind
+ * are rendered here instead.
+ *
+ * Falls back to the stored note for anything a person actually typed, and for
+ * any event this build does not know.
+ */
+export function assignmentNote(task: TaskDetail, t: TFunction): string {
+  if (task.assignmentEvent !== 1) return task.assignmentNote ?? '';
+
+  // The venue kind is stamped on the event, so a location re-typed later does
+  // not retitle what somebody did months ago. Falls back to the ticket's
+  // current venue for rows written before it was stamped.
+  let stamped: LocationType | null = null;
+  try {
+    stamped = task.assignmentEventData ? JSON.parse(task.assignmentEventData).locationType ?? null : null;
+  } catch {
+    stamped = null;
+  }
+
+  const kind = stamped ?? task.locationType;
+  return t(kind === 'Zgrada' ? 'sys.took_caretaker' : 'sys.took_manager') as unknown as string;
 }
 
 /** What to call the author of a system line. */

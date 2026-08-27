@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { isNetworkError } from '../api/client';
 import { outbox } from '../offline/outbox';
 import { taskCache } from '../offline/taskCache';
+import { assignmentNote } from '../utils/systemLine';
 import * as tasksApi from '../api/tasks';
 import { signalRService } from '../realtime/signalr';
 import { useLiveRefresh } from '../hooks/useLiveRefresh';
@@ -561,10 +562,10 @@ export function TaskDetailScreen() {
           </View>
         )}
 
-        {task.assignmentNote && (
+        {!!assignmentNote(task, t) && (
           <View style={[styles.card, styles.noteCard]}>
             <Text style={styles.sectionLabel}>{t('taskDetail.assignmentNote')}</Text>
-            <Text style={styles.description}>{task.assignmentNote}</Text>
+            <Text style={styles.description}>{assignmentNote(task, t)}</Text>
           </View>
         )}
 

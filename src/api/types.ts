@@ -105,6 +105,16 @@ export interface TaskCategory {
 }
 
 // Subset of Ticket relevant to the mobile list screen (Screen 2)
+/**
+ * Mirrors Models/TicketCategory.cs. Arrives as the NAME, not the number —
+ * the enum carries JsonStringEnumConverter — so this is a string union, the
+ * same shape the dashboard already uses.
+ *
+ * Only a Zgrada has a Hausmajstor; every other kind of venue has a manager,
+ * and the two are different jobs.
+ */
+export type LocationType = 'All' | 'Hotel' | 'Zgrada' | 'Kladionica' | 'Apartman' | 'Skladiste';
+
 export interface TaskListItem {
   ticketId: string; // business id, e.g. "TK-LOK01-20260705-1234"
   location: string;
@@ -120,6 +130,8 @@ export interface TaskListItem {
   doneAt: string | null;
   unreadChatCount: number; // for the chat badge (Screen 2)
   assignedAgentName: string | null; // who's handling it — drives the team tabs
+  /** Venue kind, so the dispatcher role can be named correctly. Null on older rows. */
+  locationType: LocationType | null;
 }
 
 // Full detail for Screen 3 (task detail + resolve)
@@ -133,6 +145,14 @@ export interface TaskDetail extends TaskListItem {
   resolutionPhotos: ResolutionPhoto[]; // W4
   assignmentNote: string | null; // dispatcher/admin's comment when forwarding or accepting
   assignedByName: string | null; // who forwarded/accepted this ticket last
+  /**
+   * Set when assignmentNote is a sentence the system wrote, not something a
+   * person typed. Rendered through the dictionary so it comes out in this
+   * phone's language and with the right job title for the venue; assignmentNote
+   * is the fallback when this is null or the event is unknown to this build.
+   */
+  assignmentEvent: number | null;
+  assignmentEventData: string | null;
   locationAddress: string | null;
   locationContactName: string | null;
   locationContactPhone: string | null;

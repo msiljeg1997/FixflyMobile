@@ -303,6 +303,8 @@
     "someone": "The technician",
     "3_reason": "{{by}} declined the report: {{reason}}",
     "5_comment": "{{by}} marked the report resolved: {{comment}}",
-    "8_comment": "{{by}} closed the report: {{comment}}"
+    "8_comment": "{{by}} closed the report: {{comment}}",
+    "took_caretaker": "Taken by the caretaker",
+    "took_manager": "Taken by the manager"
   }
 }

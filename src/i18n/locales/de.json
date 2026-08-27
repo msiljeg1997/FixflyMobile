@@ -303,6 +303,8 @@
     "someone": "Der Techniker",
     "3_reason": "{{by}} hat die Meldung abgelehnt: {{reason}}",
     "5_comment": "{{by}} hat die Meldung als erledigt markiert: {{comment}}",
-    "8_comment": "{{by}} hat die Meldung geschlossen: {{comment}}"
+    "8_comment": "{{by}} hat die Meldung geschlossen: {{comment}}",
+    "took_caretaker": "Vom Hausmeister übernommen",
+    "took_manager": "Vom Objektleiter übernommen"
   }
 }

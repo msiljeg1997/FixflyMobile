@@ -304,6 +304,8 @@
     "someone": "Tehničar",
     "3_reason": "{{by}} je odbio prijavu: {{reason}}",
     "5_comment": "{{by}} je označio prijavu riješenom: {{comment}}",
-    "8_comment": "{{by}} je zatvorio prijavu: {{comment}}"
+    "8_comment": "{{by}} je zatvorio prijavu: {{comment}}",
+    "took_caretaker": "Preuzeo hausmajstor",
+    "took_manager": "Preuzeo voditelj"
   }
 }
