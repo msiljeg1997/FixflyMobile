@@ -46,7 +46,13 @@ export function ChatListScreen() {
   // A new chat message can change unread counts on this list
   useEffect(() => {
     const off = signalRService.onChatMessageReceived(() => load(true));
-    return off;
+    // Threads that received messages while the socket was down never fired an
+    // event, so the list keeps showing old previews and unread counts.
+    const offResync = signalRService.onResync(() => load(true));
+    return () => {
+      off();
+      offResync();
+    };
   }, [load]);
 
   /**

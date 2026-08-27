@@ -24,6 +24,15 @@ class SignalRService {
   private chatReceivedListeners = new Set<Listener<ChatMessageReceivedEvent>>();
   private chatReadListeners = new Set<Listener<ChatMessageReadEvent>>();
   private companyChangedListeners = new Set<() => void>();
+  /**
+   * Fired after the socket comes back.
+   *
+   * SignalR does not replay what happened while the connection was down, so a
+   * screen that only listens to events shows whatever it had before the drop —
+   * with nothing on screen saying it is stale. Every subscriber re-fetches on
+   * this instead of trusting the events it may never have received.
+   */
+  private resyncListeners = new Set<() => void>();
   /** Which thread is on screen, so it can be re-announced after a reconnect. */
   private openThread: string | null = null;
 
@@ -52,6 +61,9 @@ class SignalRService {
       // new socket has to say it again — otherwise the screen stays open and
       // the server quietly starts pushing to it.
       if (this.openThread) this.enterThread(this.openThread).catch(() => {});
+      // Whatever happened during the gap was never delivered. Tell the screens
+      // to go and look rather than leave them showing the last thing they saw.
+      this.notifyResync();
     });
 
     try {
@@ -119,6 +131,22 @@ class SignalRService {
       this.connection.on(event, () => {
         this.companyChangedListeners.forEach((fn) => fn());
       });
+    }
+  }
+
+  /**
+   * "The connection was away; re-read what you show." Also called by hand when
+   * the app returns from the background, where the socket may have been torn
+   * down without SignalR noticing.
+   */
+  onResync(fn: () => void): () => void {
+    this.resyncListeners.add(fn);
+    return () => this.resyncListeners.delete(fn);
+  }
+
+  notifyResync(): void {
+    for (const fn of this.resyncListeners) {
+      try { fn(); } catch { /* one bad subscriber must not stop the others */ }
     }
   }
 

@@ -22,6 +22,7 @@ import type { ChatImage } from '../api/chat';
 import { isNetworkError } from '../api/client';
 import { outbox, OutboxItem } from '../offline/outbox';
 import { signalRService } from '../realtime/signalr';
+import { useLiveRefresh } from '../hooks/useLiveRefresh';
 import { useUnread } from '../context/UnreadContext';
 import { useAuth } from '../context/AuthContext';
 import { ChatAccess, ChatMessage, ChatPeriod, ChatRoom, ChatSenderType } from '../api/types';
@@ -137,17 +138,58 @@ export function ChatScreen() {
     load();
   }, [load]);
 
+  const loadAccess = useCallback(
+    (initial: boolean) =>
+      chatApi
+        .getAccess(ticketId)
+        .then((a) => {
+          setAccess(a);
+          // Only on the first read. Re-expanding on every refresh would
+          // reopen periods the reader had deliberately collapsed.
+          if (initial) {
+            setExpanded(new Set(a.periods.filter((x) => x.to === null).map((x) => x.agentId)));
+          }
+        })
+        // A failure here must not block the thread: the safe fallback is the
+        // narrow one — work room only, and no internal tab. On a refresh,
+        // keep whatever we already had rather than widening or narrowing on
+        // the strength of one failed request.
+        .catch(() => {
+          if (initial) setAccess({ canSeeInternal: false, canWrite: true, periods: [] });
+        }),
+    [ticketId]
+  );
+
   useEffect(() => {
-    chatApi
-      .getAccess(ticketId)
-      .then((a) => {
-        setAccess(a);
-        setExpanded(new Set(a.periods.filter((x) => x.to === null).map((x) => x.agentId)));
-      })
-      // A failure here must not block the thread: the safe fallback is the
-      // narrow one — work room only, and no internal tab.
-      .catch(() => setAccess({ canSeeInternal: false, canWrite: true, periods: [] }));
-  }, [ticketId]);
+    loadAccess(true);
+  }, [loadAccess]);
+
+  // Who may write is decided by the server from who currently holds the
+  // ticket, and that changes under an open screen: a dispatcher reassigns and
+  // the composer either stays open on somebody with no right to write — who
+  // then types a message the server refuses — or stays locked after the right
+  // was granted. Neither is visible without re-asking.
+  useEffect(() => {
+    const offStatus = signalRService.onTaskStatusChanged((evt) => {
+      if (evt.ticketId === ticketId) loadAccess(false);
+    });
+    const offAssigned = signalRService.onTaskAssigned((evt) => {
+      if (evt.ticketId === ticketId) loadAccess(false);
+    });
+    return () => {
+      offStatus();
+      offAssigned();
+    };
+  }, [ticketId, loadAccess]);
+
+  // Messages sent while the socket was down are never delivered — SignalR does
+  // not replay a gap. Without this the thread simply misses them until it is
+  // closed and reopened, which is exactly the "exit and re-enter" people learn
+  // to do and should not have to.
+  useLiveRefresh(() => {
+    load();
+    loadAccess(false);
+  });
 
   // Suppress the in-app banner for the thread currently on screen.
   useEffect(() => {

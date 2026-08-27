@@ -135,9 +135,14 @@ export function TasksScreen() {
   useEffect(() => {
     const offAssigned = signalRService.onTaskAssigned(() => load(tab, true));
     const offChanged = signalRService.onTaskStatusChanged(() => load(tab, true));
+    // Events cover what the server managed to tell us. A dropped socket or a
+    // spell in the background is the case where it could not, and the list
+    // would otherwise sit on pre-drop data with nothing saying so.
+    const offResync = signalRService.onResync(() => load(tab, true));
     return () => {
       offAssigned();
       offChanged();
+      offResync();
     };
   }, [tab, load]);
 

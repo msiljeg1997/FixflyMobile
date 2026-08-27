@@ -23,6 +23,8 @@ import { useAuth } from '../context/AuthContext';
 import { isNetworkError } from '../api/client';
 import { outbox } from '../offline/outbox';
 import * as tasksApi from '../api/tasks';
+import { signalRService } from '../realtime/signalr';
+import { useLiveRefresh } from '../hooks/useLiveRefresh';
 import type { ResolveImage } from '../api/tasks';
 import { AgentAvailability, AgentRole, TaskDetail, TaskHistoryEvent, TechnicianOption, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
@@ -139,12 +141,57 @@ export function TaskDetailScreen() {
     }
   }, [ticketId]);
 
+  // A silent reload: the visible one blanks the screen behind a spinner, and
+  // doing that under somebody reading a task is worse than the staleness it
+  // fixes. Only the values change.
+  const reload = useCallback(async () => {
+    try {
+      const [fresh, freshHistory] = await Promise.all([
+        tasksApi.getTask(ticketId),
+        tasksApi.getTaskHistory(ticketId),
+      ]);
+      setTask(fresh);
+      setHistory(freshHistory);
+      setError(false);
+    } catch {
+      // Keep what is on screen. A failed background refresh is not a reason
+      // to throw away data the person is reading.
+    }
+  }, [ticketId]);
+
+  const [focused, setFocused] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
+      setFocused(true);
       load();
       loadHistory();
+      return () => setFocused(false);
     }, [load, loadHistory])
   );
+
+  // The status and the timeline are the whole point of this screen, and both
+  // change from other people's actions — a dispatcher reassigning, another
+  // technician accepting, an admin closing. Without this the screen showed
+  // whatever it read on entry until it was left and re-entered.
+  useEffect(() => {
+    if (!focused) return;
+    const offStatus = signalRService.onTaskStatusChanged((evt) => {
+      if (evt.ticketId === ticketId) reload();
+    });
+    // Reassignment is not a status change: the ticket can land on somebody
+    // else at the same status, and this screen has to stop claiming it is
+    // still theirs.
+    const offAssigned = signalRService.onTaskAssigned((evt) => {
+      if (evt.ticketId === ticketId) reload();
+    });
+    return () => {
+      offStatus();
+      offAssigned();
+    };
+  }, [focused, ticketId, reload]);
+
+  useLiveRefresh(reload, focused);
 
   const callContact = () => {
     if (task?.locationContactPhone) Linking.openURL(`tel:${task.locationContactPhone}`);

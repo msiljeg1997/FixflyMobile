@@ -109,11 +109,20 @@ export function InboxScreen() {
   // is a view over all of them, so modelling each event separately would only
   // end in the same refetch.
   useEffect(() => {
+    // Same gap as everywhere else: no event was delivered while the socket
+    // was down, so the dispatcher's inbox has to go and look for itself.
+    const offResync = signalRService.onResync(() => {
+      load(true);
+      loadBacklog();
+    });
     const off = signalRService.onCompanyTicketsChanged(() => {
       load(true);
       if (tab === 'cleanup') loadBacklog();
     });
-    return off;
+    return () => {
+      off();
+      offResync();
+    };
   }, [load, loadBacklog, tab]);
 
   // Debounced: a manager types a ticket number character by character, and
