@@ -44,9 +44,23 @@ export interface ResolveImage {
   mimeType?: string | null;
 }
 
-export async function resolveTask(ticketId: string, comment: string, images: ResolveImage[]): Promise<TaskDetail> {
+/**
+ * @param resolvedAt when the technician actually marked it done, as epoch ms.
+ * Only meaningful for a resolve that sat in the outbox: a job finished in a
+ * basement reaches the server whenever signal returns, and stamping the
+ * arrival puts hours nobody worked into the average resolution time — and can
+ * push a job finished at 23:50 into the next day. The server ignores anything
+ * outside the acceptance-to-now window, so a wrong phone clock changes nothing.
+ */
+export async function resolveTask(
+  ticketId: string,
+  comment: string,
+  images: ResolveImage[],
+  resolvedAt?: number
+): Promise<TaskDetail> {
   const form = new FormData();
   form.append('comment', comment);
+  if (resolvedAt) form.append('resolvedAt', new Date(resolvedAt).toISOString());
   images.forEach((img, i) => {
     // React Native FormData file part: { uri, name, type }
     form.append('images', {

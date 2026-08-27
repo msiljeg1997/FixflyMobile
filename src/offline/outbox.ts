@@ -162,7 +162,11 @@ class Outbox {
       for (const item of [...this.items].filter((i) => !i.failedReason).sort((a, b) => a.queuedAt - b.queuedAt)) {
         try {
           if (item.kind === 'resolve') {
-            await tasksApi.resolveTask(item.ticketId, item.comment ?? '', item.images ?? []);
+            // queuedAt is when the technician tapped Resolve, which is when the
+            // work was finished — not now, which is merely when the signal came
+            // back. Sending it keeps the resolution time, and the day it falls
+            // on, true to what happened.
+            await tasksApi.resolveTask(item.ticketId, item.comment ?? '', item.images ?? [], item.queuedAt);
           } else {
             await chatApi.sendMessage(item.ticketId, item.id, item.text, item.image);
           }

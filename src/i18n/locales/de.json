@@ -36,7 +36,8 @@
     "scope_mine": "Meine",
     "scope_team": "Team",
     "syncPending": "⏳ Wartet auf Versand",
-    "syncFailed": "⚠ Senden fehlgeschlagen — Aufgabe öffnen"
+    "syncFailed": "⚠ Senden fehlgeschlagen — Aufgabe öffnen",
+    "offlineAsOf": "Offline — Daten von {{when}}"
   },
   "status": {
     "New": "Neu",
@@ -99,7 +100,8 @@
     "handoverPlaceholder": "Was muss der neue Techniker wissen? (z. B. Wasser ist ab, Schlüssel beim Nachbarn)",
     "forwardOther": "An anderen Techniker weiterleiten",
     "urgentOn": "Als DRINGEND markieren",
-    "urgentOff": "DRINGEND entfernen"
+    "urgentOff": "DRINGEND entfernen",
+    "offlineAsOf": "Offline — Stand von {{when}}"
   },
   "tabs": {
     "tasks": "Aufgaben",

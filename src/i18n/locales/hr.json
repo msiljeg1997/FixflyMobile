@@ -36,7 +36,8 @@
     "scope_mine": "Moji",
     "scope_team": "Tim",
     "syncPending": "⏳ Čeka slanje",
-    "syncFailed": "⚠ Slanje nije uspjelo — otvorite zadatak"
+    "syncFailed": "⚠ Slanje nije uspjelo — otvorite zadatak",
+    "offlineAsOf": "Bez mreže — podaci od {{when}}"
   },
   "status": {
     "New": "Novi",
@@ -99,7 +100,8 @@
     "handoverPlaceholder": "Što novi tehničar mora znati? (npr. voda zatvorena, ključ kod susjeda)",
     "forwardOther": "Proslijedi drugom tehničaru",
     "urgentOn": "Označi HITNO",
-    "urgentOff": "Makni HITNO"
+    "urgentOff": "Makni HITNO",
+    "offlineAsOf": "Bez mreže — prikazano stanje od {{when}}"
   },
   "tabs": {
     "tasks": "Zadaci",

@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { signalRService } from '../realtime/signalr';
 import { outbox } from '../offline/outbox';
+import { taskCache } from '../offline/taskCache';
+import { isNetworkError } from '../api/client';
 import * as tasksApi from '../api/tasks';
 import { AgentRole, TaskListItem, TaskTab, TicketStatus } from '../api/types';
 import type { TasksStackParamList } from '../navigation/TasksStackNavigator';
@@ -45,6 +47,8 @@ export function TasksScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  /** When the shown list was captured, if it came from the cache rather than the server. */
+  const [staleAt, setStaleAt] = useState<number | null>(null);
 
   // Pagination — the API has always been paged; the app previously showed
   // only page 1, silently hiding work past the 20th task.
@@ -93,8 +97,22 @@ export function TasksScreen() {
         setItems(res.items);
         setPage(res.page);
         setTotalPages(res.totalPages);
-      } catch {
-        setError(true);
+        setStaleAt(null);
+        taskCache.putList(which, res.items);
+      } catch (e) {
+        // Offline is not the same failure as a rejected request. With no
+        // network, fall back to what was last seen and say how old it is —
+        // a technician in a basement needs the address of the job he is
+        // standing in, and an error screen does not have it.
+        const cached = isNetworkError(e) ? await taskCache.getList(which) : null;
+        if (cached) {
+          setItems(cached.data);
+          setPage(1);
+          setTotalPages(1);
+          setStaleAt(cached.at);
+        } else {
+          setError(true);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -299,6 +317,16 @@ export function TasksScreen() {
           </TouchableOpacity>
         </View>
       ) : (
+        <>
+        {/* Cached data without its age on it is what makes people trust a
+            stale screen. The date is the whole point of the bar. */}
+        {staleAt !== null && (
+          <View style={styles.offlineBar}>
+            <Text style={styles.offlineBarText}>
+              {t('tasks.offlineAsOf', { when: formatDateTime(new Date(staleAt).toISOString()) })}
+            </Text>
+          </View>
+        )}
         <FlatList
           data={visibleItems}
           keyExtractor={(item) => item.ticketId}
@@ -320,6 +348,7 @@ export function TasksScreen() {
             </Text>
           }
         />
+        </>
       )}
     </View>
   );
@@ -327,6 +356,12 @@ export function TasksScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
+  offlineBar: {
+    backgroundColor: tint(colors.statusAccepted, '1F'),
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.lg,
+  },
+  offlineBarText: { fontSize: 12, color: colors.muted, textAlign: 'center' },
   header: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,

@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
 import { isNetworkError } from '../api/client';
 import { outbox } from '../offline/outbox';
+import { taskCache } from '../offline/taskCache';
 import * as tasksApi from '../api/tasks';
 import { signalRService } from '../realtime/signalr';
 import { useLiveRefresh } from '../hooks/useLiveRefresh';
@@ -86,6 +87,8 @@ export function TaskDetailScreen() {
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  /** When this was captured, if it is showing cached data rather than the server's. */
+  const [staleAt, setStaleAt] = useState<number | null>(null);
   const [acting, setActing] = useState(false);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
 
@@ -122,9 +125,21 @@ export function TaskDetailScreen() {
     setLoading(true);
     setError(false);
     try {
-      setTask(await tasksApi.getTask(ticketId));
-    } catch {
-      setError(true);
+      const fresh = await tasksApi.getTask(ticketId);
+      setTask(fresh);
+      setStaleAt(null);
+      taskCache.putDetail(fresh);
+    } catch (e) {
+      // The job in hand, without signal: this screen holds the address, the
+      // description and the contact number, which is exactly what is needed
+      // in the basement where the network died.
+      const cached = isNetworkError(e) ? await taskCache.getDetail(ticketId) : null;
+      if (cached) {
+        setTask(cached.data);
+        setStaleAt(cached.at);
+      } else {
+        setError(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -133,9 +148,14 @@ export function TaskDetailScreen() {
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      setHistory(await tasksApi.getTaskHistory(ticketId));
-    } catch {
-      setHistory([]);
+      const fresh = await tasksApi.getTaskHistory(ticketId);
+      setHistory(fresh);
+      taskCache.putHistory(ticketId, fresh);
+    } catch (e) {
+      // Empty would read as "nothing ever happened", which is a lie. Show the
+      // last known timeline instead; the bar above already says it is old.
+      const cached = isNetworkError(e) ? await taskCache.getHistory(ticketId) : null;
+      setHistory(cached ? cached.data : []);
     } finally {
       setHistoryLoading(false);
     }
@@ -153,6 +173,9 @@ export function TaskDetailScreen() {
       setTask(fresh);
       setHistory(freshHistory);
       setError(false);
+      setStaleAt(null);
+      taskCache.putDetail(fresh);
+      taskCache.putHistory(ticketId, freshHistory);
     } catch {
       // Keep what is on screen. A failed background refresh is not a reason
       // to throw away data the person is reading.
@@ -407,6 +430,17 @@ export function TaskDetailScreen() {
           { paddingTop: insets.top + spacing.sm, paddingBottom: hasFooter ? spacing.lg : insets.bottom + spacing.xl },
         ]}
       >
+        {/* Shown data with no age on it is what makes a stale screen look
+            current. Under the queue banner, because a resolve waiting to send
+            is the more urgent thing to say. */}
+        {staleAt !== null && (
+          <View style={styles.staleBanner}>
+            <Text style={styles.staleText}>
+              {t('taskDetail.offlineAsOf', { when: formatDateTime(new Date(staleAt).toISOString()) })}
+            </Text>
+          </View>
+        )}
+
         {!!queued && (
           <View style={[styles.queueBanner, queued.failedReason && styles.queueBannerFailed]}>
             <Text style={styles.queueTitle}>
@@ -1026,6 +1060,14 @@ const styles = StyleSheet.create({
   infoIcon: { fontSize: 16, width: 22, textAlign: 'center' },
   infoLabel: { fontSize: 11, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
   infoValue: { fontSize: 14, color: colors.text, fontWeight: '600', marginTop: 2 },
+  staleBanner: {
+    backgroundColor: tint(colors.statusAccepted, '1F'),
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  staleText: { fontSize: 12.5, color: colors.muted, textAlign: 'center' },
   queueBanner: {
     backgroundColor: tint(colors.warning),
     borderRadius: radius.sm,

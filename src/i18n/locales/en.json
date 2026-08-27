@@ -36,7 +36,8 @@
     "scope_mine": "Mine",
     "scope_team": "Team",
     "syncPending": "⏳ Waiting to send",
-    "syncFailed": "⚠ Could not send — open the task"
+    "syncFailed": "⚠ Could not send — open the task",
+    "offlineAsOf": "Offline — data from {{when}}"
   },
   "status": {
     "New": "New",
@@ -99,7 +100,8 @@
     "handoverPlaceholder": "What does the new technician need to know? (e.g. water is off, key with the neighbour)",
     "forwardOther": "Forward to another technician",
     "urgentOn": "Mark URGENT",
-    "urgentOff": "Remove URGENT"
+    "urgentOff": "Remove URGENT",
+    "offlineAsOf": "Offline — showing data from {{when}}"
   },
   "tabs": {
     "tasks": "Tasks",

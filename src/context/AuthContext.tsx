@@ -3,6 +3,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import * as authApi from '../api/auth';
 import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
+import { taskCache } from '../offline/taskCache';
 import { forgetPushRegistration, registerForPush } from '../push/push';
 import { forgetPendingPushNavigation } from '../push/pushNavigation';
 import { appLock } from '../security/appLock';
@@ -87,6 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clearing the PIN with the session keeps the gate tied to one agent —
     // otherwise the next person to sign in on this device would inherit it.
     await appLock.clear();
+    // The cached jobs go with it, for the same reason: a phone handed to the
+    // next shift must not still hold the previous technician's addresses and
+    // reporters' phone numbers.
+    await taskCache.clear();
     setAgent(null);
     setManager(null);
     setPrincipal(MobilePrincipal.Agent);
