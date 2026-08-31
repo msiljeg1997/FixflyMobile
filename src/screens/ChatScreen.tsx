@@ -155,7 +155,15 @@ export function ChatScreen() {
         // keep whatever we already had rather than widening or narrowing on
         // the strength of one failed request.
         .catch(() => {
-          if (initial) setAccess({ canSeeInternal: false, canWrite: true, periods: [] });
+          if (initial) {
+            setAccess({
+              canSeeInternal: false,
+              canWrite: true,
+              periods: [],
+              canSeeLocation: false,
+              canWriteLocation: false,
+            });
+          }
         }),
     [ticketId]
   );
@@ -163,6 +171,15 @@ export function ChatScreen() {
   useEffect(() => {
     loadAccess(true);
   }, [loadAccess]);
+
+  // A room can stop applying under an open screen — the fault is reassigned
+  // away from support and the venue tab disappears. Standing in it then leaves
+  // the reader on a thread with no tab highlighted and no way back except
+  // leaving the screen.
+  useEffect(() => {
+    if (room === ChatRoom.Location && access && !access.canSeeLocation) setRoom(ChatRoom.Work);
+    if (room === ChatRoom.Internal && access && !access.canSeeInternal) setRoom(ChatRoom.Work);
+  }, [room, access]);
 
   // Who may write is decided by the server from who currently holds the
   // ticket, and that changes under an open screen: a dispatcher reassigns and
@@ -419,29 +436,51 @@ export function ChatScreen() {
           you are standing in, so there is no control to misread and no way
           to put an internal remark in front of the technician. He is never
           shown this switch at all. */}
-      {access?.canSeeInternal && (
+      {(access?.canSeeInternal || access?.canSeeLocation) && (
         <View style={styles.segment}>
           <TouchableOpacity
             style={[styles.segmentItem, room === ChatRoom.Work && styles.segmentItemActive]}
             onPress={() => setRoom(ChatRoom.Work)}
           >
             <Text style={[styles.segmentText, room === ChatRoom.Work && styles.segmentTextActive]}>
-              {t('chat.roomWork')}{otherRoomUnread && room === ChatRoom.Internal ? ' •' : ''}
+              {t('chat.roomWork')}{otherRoomUnread && room !== ChatRoom.Work ? ' •' : ''}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.segmentItem, room === ChatRoom.Internal && styles.segmentItemActive]}
-            onPress={() => setRoom(ChatRoom.Internal)}
-          >
-            <Text style={[styles.segmentText, room === ChatRoom.Internal && styles.segmentTextActive]}>
-              🔒 {t('chat.roomInternal')}{otherRoomUnread && room === ChatRoom.Work ? ' •' : ''}
-            </Text>
-          </TouchableOpacity>
+          {access?.canSeeInternal && (
+            <TouchableOpacity
+              style={[styles.segmentItem, room === ChatRoom.Internal && styles.segmentItemActive]}
+              onPress={() => setRoom(ChatRoom.Internal)}
+            >
+              <Text style={[styles.segmentText, room === ChatRoom.Internal && styles.segmentTextActive]}>
+                🔒 {t('chat.roomInternal')}{otherRoomUnread && room !== ChatRoom.Internal ? ' •' : ''}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {access?.canSeeLocation && (
+            <TouchableOpacity
+              style={[styles.segmentItem, room === ChatRoom.Location && styles.segmentItemActive]}
+              onPress={() => setRoom(ChatRoom.Location)}
+            >
+              <Text style={[styles.segmentText, room === ChatRoom.Location && styles.segmentTextActive]}>
+                {t('chat.roomLocation')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
       {room === ChatRoom.Internal && (
         <Text style={styles.internalHint}>{t('chat.internalHint')}</Text>
+      )}
+
+      {room === ChatRoom.Location && (
+        <Text style={styles.internalHint}>{t('chat.locationHint')}</Text>
+      )}
+
+      {/* Says why rather than just hiding the box: an input that silently
+          disappears reads as a broken screen. */}
+      {room === ChatRoom.Location && !access?.canWriteLocation && (
+        <Text style={styles.closedHint}>{t('chat.locationClosed')}</Text>
       )}
 
       {loading ? (
@@ -484,10 +523,14 @@ export function ChatScreen() {
         />
       )}
 
-      {access && !access.canWrite ? (
+      {(access && !access.canWrite) || (room === ChatRoom.Location && !access?.canWriteLocation) ? (
         // He keeps his own history — the photos he took and what he was told
         // — but the job is somebody else's now, and a message from him would
         // arrive where nobody is expecting one.
+        //
+        // The venue room closes on its own schedule: it stops taking messages
+        // once the fault leaves the support technician, even for an admin who
+        // may still write everywhere else.
         <View style={[styles.readOnly, { paddingBottom: insets.bottom + spacing.sm }]}>
           <Text style={styles.readOnlyText}>{t('chat.readOnly')}</Text>
         </View>
@@ -543,6 +586,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.xs,
+  },
+  // A closed room explains itself rather than leaving a vanished input box to
+  // be read as a broken screen.
+  closedHint: {
+    fontSize: 11,
+    color: colors.muted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xs,
+    fontStyle: 'italic',
   },
 
   systemRow: { alignItems: 'center', paddingVertical: spacing.xs, gap: 2 },

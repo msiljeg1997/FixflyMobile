@@ -145,7 +145,10 @@
     "periodActive": "aktiv",
     "removeFromList": "Aus Liste entfernen",
     "removeFromListBody": "Das entfernt den Verlauf nur aus Ihrer Liste. Die Nachrichten bleiben erhalten und die Leitung sieht sie weiterhin.",
-    "removed": "Aus Liste entfernt"
+    "removed": "Aus Liste entfernt",
+    "roomLocation": "Standort",
+    "locationHint": "Sichtbar für den Standortleiter und den Support-Techniker der Meldung.",
+    "locationClosed": "Die Meldung ist nicht mehr bei einem Support-Techniker, daher ist dieses Gespräch geschlossen."
   },
   "role": {
     "technician": "Techniker",

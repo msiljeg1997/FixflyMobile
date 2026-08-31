@@ -145,7 +145,10 @@
     "periodActive": "active",
     "removeFromList": "Remove from list",
     "removeFromListBody": "This only removes the thread from your list. The messages are kept and management still sees them.",
-    "removed": "Removed from list"
+    "removed": "Removed from list",
+    "roomLocation": "Venue",
+    "locationHint": "Visible to the venue manager and the support technician on the report.",
+    "locationClosed": "The report is no longer with a support technician, so this conversation is closed."
   },
   "role": {
     "technician": "Technician",

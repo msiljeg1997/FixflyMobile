@@ -146,7 +146,10 @@
     "periodActive": "aktivan",
     "removeFromList": "Ukloni s popisa",
     "removeFromListBody": "Razgovor se miče samo s vašeg popisa. Poruke ostaju sačuvane i uprava ih i dalje vidi.",
-    "removed": "Uklonjeno s popisa"
+    "removed": "Uklonjeno s popisa",
+    "roomLocation": "Lokacija",
+    "locationHint": "Vidi voditelj lokacije i support tehničar na prijavi.",
+    "locationClosed": "Prijava više nije kod support tehničara, pa se u ovaj razgovor više ne piše."
   },
   "role": {
     "technician": "Tehničar",

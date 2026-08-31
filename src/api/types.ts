@@ -260,6 +260,12 @@ export interface AgentStats {
 export enum ChatRoom {
   Work = 0,
   Internal = 1,
+  /**
+   * The venue manager's room: them, the company admin, and the support
+   * technician on the fault. Reachable on this app only by a company admin —
+   * neither the venue manager nor a support technician has a phone.
+   */
+  Location = 2,
 }
 
 /** A stretch of time one technician was on the ticket. */
@@ -277,6 +283,10 @@ export interface ChatAccess {
   canWrite: boolean;
   /** Empty for a technician: he sees a flat thread, not the cast. */
   periods: ChatPeriod[];
+  /** Whether the venue room applies to this fault at all. */
+  canSeeLocation: boolean;
+  /** ...and whether it still takes messages, which ends when the fault moves on. */
+  canWriteLocation: boolean;
 }
 
 export interface ChatMessage {
