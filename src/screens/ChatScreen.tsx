@@ -285,8 +285,9 @@ export function ChatScreen() {
   };
 
   const attachImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    // The system picker returns only the image the user chose, so it needs no
+    // permission. Asking for one would mean declaring READ_MEDIA_IMAGES, which
+    // Google Play rejects for an app that just attaches a photo to a ticket.
     const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, mediaTypes: ['images'] });
     if (!result.canceled && result.assets[0]) {
       const a = result.assets[0];

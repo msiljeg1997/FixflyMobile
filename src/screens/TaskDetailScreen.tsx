@@ -279,10 +279,10 @@ export function TaskDetailScreen() {
   };
 
   const pickPhoto = async (fromCamera: boolean) => {
-    const permission = fromCamera
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return;
+    // Only the camera needs a permission. The system picker returns just the
+    // chosen image, and asking for library access would mean declaring
+    // READ_MEDIA_IMAGES, which Google Play rejects for this kind of app.
+    if (fromCamera && !(await ImagePicker.requestCameraPermissionsAsync()).granted) return;
 
     const result = fromCamera
       ? await ImagePicker.launchCameraAsync({ quality: 0.7 })
