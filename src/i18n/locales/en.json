@@ -101,7 +101,11 @@
     "forwardOther": "Forward to another technician",
     "urgentOn": "Mark URGENT",
     "urgentOff": "Remove URGENT",
-    "offlineAsOf": "Offline — showing data from {{when}}"
+    "offlineAsOf": "Offline — showing data from {{when}}",
+    "translate": "Translate",
+    "showOriginal": "Show original",
+    "translating": "Translating…",
+    "translateFailed": "Translation failed."
   },
   "tabs": {
     "tasks": "Tasks",

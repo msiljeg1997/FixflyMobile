@@ -120,3 +120,34 @@ export async function forwardTask(
   return data;
 }
 
+
+// ── Description translation ─────────────────────────────────────────────────
+
+export interface TicketTranslation {
+  ticketId: string;
+  language: string;
+  text: string;
+  detectedSource: string | null;
+  /** True when there was nothing to translate — hide the button. */
+  alreadyInLanguage: boolean;
+}
+
+/** Whether a translation key is configured at all. */
+export async function translationAvailable(): Promise<boolean> {
+  try {
+    const { data } = await apiClient.get<{ available: boolean }>('/api/translate/availability');
+    return data.available;
+  } catch {
+    // Hiding a button is recoverable; offering one that always errors is not.
+    return false;
+  }
+}
+
+/** The fault description in `lang` ("HR" | "EN" | "DE"). Cached server-side. */
+export async function translateTicket(ticketId: string, lang: string): Promise<TicketTranslation> {
+  const { data } = await apiClient.get<TicketTranslation>(
+    `/api/translate/ticket/${encodeURIComponent(ticketId)}`,
+    { params: { lang } }
+  );
+  return data;
+}

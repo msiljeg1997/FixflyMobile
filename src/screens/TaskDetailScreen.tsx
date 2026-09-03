@@ -78,7 +78,7 @@ function InfoRow({
 }
 
 export function TaskDetailScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { agent } = useAuth();
   const navigation = useNavigation<NativeStackNavigationProp<TasksStackParamList>>();
   const route = useRoute<RouteProp<TasksStackParamList, 'TaskDetail'>>();
@@ -92,6 +92,54 @@ export function TaskDetailScreen() {
   const [staleAt, setStaleAt] = useState<number | null>(null);
   const [acting, setActing] = useState(false);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
+
+  // ── Description translation ───────────────────────────────────────────
+  //
+  // A technician reads faults reported by guests who may not share their
+  // language. The result is cached server-side per ticket, so the second
+  // person to press this waits for nothing.
+  const [translationAvailable, setTranslationAvailable] = useState(false);
+  const [translatedText, setTranslatedText] = useState('');
+  const [showingTranslation, setShowingTranslation] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [nothingToTranslate, setNothingToTranslate] = useState(false);
+
+  useEffect(() => {
+    tasksApi.translationAvailable().then(setTranslationAvailable).catch(() => {});
+  }, []);
+
+  // A different ticket means a different description; carrying the last
+  // translation over would put one fault's words on another.
+  useEffect(() => {
+    setTranslatedText('');
+    setShowingTranslation(false);
+    setNothingToTranslate(false);
+  }, [ticketId]);
+
+  const canTranslate = translationAvailable && !nothingToTranslate && !!task;
+
+  const toggleTranslation = useCallback(async () => {
+    if (!task || translating) return;
+
+    if (showingTranslation) { setShowingTranslation(false); return; }
+    if (translatedText) { setShowingTranslation(true); return; }
+
+    setTranslating(true);
+    try {
+      // i18n language codes are lower case ("hr"); the API takes "HR".
+      const res = await tasksApi.translateTicket(task.ticketId, (i18n.language || 'hr').slice(0, 2).toUpperCase());
+      if (res.alreadyInLanguage) {
+        setNothingToTranslate(true);
+      } else {
+        setTranslatedText(res.text);
+        setShowingTranslation(true);
+      }
+    } catch {
+      Alert.alert(t('taskDetail.translateFailed'));
+    } finally {
+      setTranslating(false);
+    }
+  }, [task, translating, showingTranslation, translatedText, t]);
 
   // A resolve sitting in the outbox for THIS ticket. Surfaced here because a
   // queue that fails quietly is worse than no queue: the technician believes
@@ -570,8 +618,26 @@ export function TaskDetailScreen() {
         )}
 
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>
-          <Text style={styles.description}>{task.description}</Text>
+          <View style={styles.descriptionHeader}>
+            <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>
+            {/* Only when a key is configured AND there is something to
+                translate — a button that returns the same sentence reads as
+                broken. */}
+            {canTranslate && (
+              <TouchableOpacity onPress={toggleTranslation} disabled={translating}>
+                <Text style={styles.translateAction}>
+                  {translating
+                    ? t('taskDetail.translating')
+                    : showingTranslation
+                      ? t('taskDetail.showOriginal')
+                      : t('taskDetail.translate')}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={styles.description}>
+            {showingTranslation && translatedText ? translatedText : task.description}
+          </Text>
         </View>
 
         {task.reporterPhone && (
@@ -1090,6 +1156,17 @@ const styles = StyleSheet.create({
   callButton: { backgroundColor: colors.green, borderRadius: radius.pill, paddingHorizontal: spacing.md, paddingVertical: spacing.xs + 2 },
   callButtonText: { color: colors.white, fontSize: 12, fontWeight: '700' },
 
+  descriptionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  // On the label row, so it never competes with the description itself.
+  translateAction: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.green,
+  },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',

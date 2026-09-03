@@ -101,7 +101,11 @@
     "forwardOther": "An anderen Techniker weiterleiten",
     "urgentOn": "Als DRINGEND markieren",
     "urgentOff": "DRINGEND entfernen",
-    "offlineAsOf": "Offline — Stand von {{when}}"
+    "offlineAsOf": "Offline — Stand von {{when}}",
+    "translate": "Übersetzen",
+    "showOriginal": "Original anzeigen",
+    "translating": "Übersetze…",
+    "translateFailed": "Übersetzung fehlgeschlagen."
   },
   "tabs": {
     "tasks": "Aufgaben",

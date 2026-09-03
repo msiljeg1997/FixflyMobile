@@ -101,7 +101,11 @@
     "forwardOther": "Proslijedi drugom tehničaru",
     "urgentOn": "Označi HITNO",
     "urgentOff": "Makni HITNO",
-    "offlineAsOf": "Bez mreže — prikazano stanje od {{when}}"
+    "offlineAsOf": "Bez mreže — prikazano stanje od {{when}}",
+    "translate": "Prevedi",
+    "showOriginal": "Prikaži izvornik",
+    "translating": "Prevodim…",
+    "translateFailed": "Prijevod nije uspio."
   },
   "tabs": {
     "tasks": "Zadaci",
