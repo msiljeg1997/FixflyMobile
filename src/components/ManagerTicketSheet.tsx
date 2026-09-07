@@ -12,6 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
+import * as tasksApi from '../api/tasks';
 import { useAuth } from '../context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as inboxApi from '../api/inbox';
@@ -79,6 +81,54 @@ export function ManagerTicketSheet({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
+
+  // ── Description translation ────────────────────────────────────────────
+  //
+  // A manager reads faults reported by guests and staff who may not share
+  // their language — the same reason the technician's screen has this. The
+  // language is detected by the same call that translates, so nothing is
+  // spent on a description nobody asks about.
+  const [translationAvailable, setTranslationAvailable] = useState(false);
+  const [translatedText, setTranslatedText] = useState('');
+  const [showingTranslation, setShowingTranslation] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [nothingToTranslate, setNothingToTranslate] = useState(false);
+
+  const canTranslate = translationAvailable && !nothingToTranslate && !!ticket;
+
+  useEffect(() => {
+    tasksApi.translationAvailable().then(setTranslationAvailable).catch(() => {});
+  }, []);
+
+  // A different ticket is a different description; anything kept from the
+  // last one would be shown against text it does not belong to.
+  useEffect(() => {
+    setTranslatedText('');
+    setShowingTranslation(false);
+    setTranslating(false);
+    setNothingToTranslate(false);
+  }, [ticketId]);
+
+  const toggleTranslation = useCallback(async () => {
+    if (!ticket || translating) return;
+    if (showingTranslation) { setShowingTranslation(false); return; }
+    if (translatedText) { setShowingTranslation(true); return; }
+
+    setTranslating(true);
+    try {
+      const res = await tasksApi.translateTicket(ticket.ticketId, (i18n.language || 'hr').slice(0, 2).toUpperCase());
+      if (res.alreadyInLanguage) {
+        setNothingToTranslate(true);
+      } else {
+        setTranslatedText(res.text);
+        setShowingTranslation(true);
+      }
+    } catch {
+      Alert.alert(t('taskDetail.translateFailed'));
+    } finally {
+      setTranslating(false);
+    }
+  }, [ticket, translating, showingTranslation, translatedText, t]);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -153,7 +203,23 @@ export function ManagerTicketSheet({
             </View>
 
             <Text style={styles.ticketId}>{ticket.ticketId}</Text>
-            <Text style={styles.description}>{ticket.description}</Text>
+            <View style={styles.descriptionHeader}>
+              <Text style={styles.sectionLabel}>{t('taskDetail.description')}</Text>
+              {canTranslate && (
+                <TouchableOpacity onPress={toggleTranslation} disabled={translating}>
+                  <Text style={styles.translateAction}>
+                    {translating
+                      ? t('taskDetail.translating')
+                      : showingTranslation
+                        ? t('taskDetail.showOriginal')
+                        : t('taskDetail.translate')}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            <Text style={styles.description}>
+              {showingTranslation && translatedText ? translatedText : ticket.description}
+            </Text>
 
             {ticket.category && <Field label={t('inbox.field.category')} value={ticket.category.name} />}
             {ticket.roomNumber && <Field label={t('tasks.room')} value={ticket.roomNumber} />}
@@ -547,6 +613,9 @@ const styles = StyleSheet.create({
 
   ticketId: { fontSize: 12, color: colors.muted, marginBottom: spacing.xs },
   description: { fontSize: 16, color: colors.forest, lineHeight: 23, marginBottom: spacing.md },
+  descriptionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  // On the label row, so it never competes with the description itself.
+  translateAction: { fontSize: 12, fontWeight: '700', color: colors.green },
 
   field: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   // Same pill the technician screen uses, so a call looks like a call
