@@ -50,6 +50,7 @@ export function ManagerTicketSheet({
   onClose,
   onChanged,
   onOpenChat,
+  asScreen = false,
 }: {
   ticketId: string | null;
   visible: boolean;
@@ -59,6 +60,16 @@ export function ManagerTicketSheet({
   /** Handed up because the chat lives in another tab — the sheet must be
    *  dismissed before navigating, or iOS is left presenting over nothing. */
   onOpenChat: (ticketId: string, title: string) => void;
+  /**
+   * Render as a plain screen instead of a modal.
+   *
+   * A modal cannot be the body of a navigation screen: closing it means
+   * popping the screen, and popping a screen out from under a presented
+   * iOS modal leaves the modal on top of nothing — the close button looks
+   * dead. As a screen the stack does the presenting, and one back gesture
+   * or one tap on the cross does the same thing.
+   */
+  asScreen?: boolean;
 }) {
   const { t } = useTranslation();
   const { isVenueManager } = useAuth();
@@ -114,8 +125,7 @@ export function ManagerTicketSheet({
   const statusColor = ticket ? STATUS_COLORS[ticket.status] : colors.muted;
   const canAct = !!ticket && ticket.status !== TicketStatus.Closed && !isVenueManager;
 
-  return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+  const body = (
       <View style={styles.container}>
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <TouchableOpacity onPress={onClose} hitSlop={10}>
@@ -304,6 +314,13 @@ export function ManagerTicketSheet({
           }}
         />}
       </View>
+  );
+
+  if (asScreen) return body;
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+      {body}
     </Modal>
   );
 }

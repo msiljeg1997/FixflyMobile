@@ -17,20 +17,21 @@ type ParamList = { ManagerTicket: { ticketId: string } };
  * push notification about a ticket had to drop the manager on the list
  * instead (see pushNavigation).
  *
- * Same component underneath, so there is one ticket UI and not two: the sheet
- * is a full-screen Modal already, and here it simply never closes on its own —
- * dismissing it means leaving the screen.
+ * Same component underneath, so there is one ticket UI and not two — but drawn
+ * as a plain screen rather than a modal. A modal cannot be the body of a
+ * navigation screen: closing it means popping the screen, and popping a screen
+ * out from under a presented iOS modal leaves the modal sitting on top of
+ * nothing, which is why the close button appeared to do nothing at all.
  */
 export function ManagerTicketScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<Record<string, object | undefined>>>();
   const { ticketId } = useRoute<RouteProp<ParamList, 'ManagerTicket'>>().params;
 
   return (
-    // The modal presents over this; the ground behind it only shows during
-    // the transition, so it matches the app's surface rather than flashing.
     <View style={styles.root}>
       <ManagerTicketSheet
         ticketId={ticketId}
+        asScreen
         visible
         onClose={() => navigation.goBack()}
         // The inbox reloads whenever it regains focus, so a change made here
