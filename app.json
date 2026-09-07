@@ -8,11 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0D1117",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0D1117"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "io.fixfly.pro",
@@ -72,6 +67,15 @@
           "color": "#0ACC6B",
           "defaultChannel": "default",
           "mode": "production"
+        }
+      ],
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0D1117"
         }
       ]
     ],

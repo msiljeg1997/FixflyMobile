@@ -484,11 +484,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   // Covers the ticket sheet completely, so it reads as its own screen without
   // being a second Modal — see the comment on AssignSheet's return.
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, zIndex: 10 },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, zIndex: 10 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   muted: { color: colors.muted, fontSize: 14, textAlign: 'center' },
   busyOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: '#0D111799',
     justifyContent: 'center',
     alignItems: 'center',

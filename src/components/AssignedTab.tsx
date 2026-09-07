@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   pageInfo: { fontSize: 13, color: colors.text, fontWeight: '600', minWidth: 90, textAlign: 'center' },
   total: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: spacing.sm },
 
-  pickerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.surface, zIndex: 20 },
+  pickerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, zIndex: 20 },
   pickerPanel: { flex: 1, backgroundColor: colors.surface, paddingTop: spacing.md },
   pickerHeader: {
     flexDirection: 'row',

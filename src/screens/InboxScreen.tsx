@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.surface },
   muted: { color: colors.muted, fontSize: 14, textAlign: 'center', marginTop: spacing.xl },
   busyOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: '#0D111799',
     justifyContent: 'center',
     alignItems: 'center',
