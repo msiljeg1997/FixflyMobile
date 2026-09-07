@@ -19,7 +19,17 @@ const Stack = createNativeStackNavigator<TasksStackParamList>();
 // parent tab bar mounted for any screen pushed within a child stack by default.
 export function TasksStackNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      // Explicit rather than relying on the default: the whole back rule
+      // rests on this gesture, and a stack that quietly loses it would look
+      // like the rule was never implemented.
+      gestureEnabled: true,
+      // A screen that is covered stops re-rendering. The chat sits on top of
+      // a ticket screen that polls and listens, and without this both keep
+      // working while only one is visible.
+      freezeOnBlur: true,
+    }}>
       <Stack.Screen name="Tasks" component={TasksScreen} />
       <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />

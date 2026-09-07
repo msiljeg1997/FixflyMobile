@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -159,18 +160,27 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={colors.green} size="large" /></View>
       ) : (
-        <ScrollView
+        // Virtualised rather than a ScrollView of every card: the whole page
+        // was mounted at once, so opening this tab built fifty card subtrees
+        // before it could draw one, and scrolling carried all of them.
+        <FlatList
+          data={data?.items ?? []}
+          keyExtractor={(item) => item.ticketId}
+          renderItem={({ item }) => renderRow(item)}
           contentContainerStyle={styles.list}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(page, true)} tintColor={colors.green} />
           }
-        >
-          {!data || data.items.length === 0 ? (
-            <Text style={styles.empty}>{t('assigned.empty')}</Text>
-          ) : (
+          // A card is roughly this tall; the exact number only decides how
+          // much is drawn ahead, and being close is enough to stop the blank
+          // gap that appears when a fast scroll outruns the renderer.
+          initialNumToRender={8}
+          windowSize={11}
+          removeClippedSubviews
+          ListEmptyComponent={<Text style={styles.empty}>{t('assigned.empty')}</Text>}
+          ListFooterComponent={
+            !data || data.items.length === 0 ? null : (
             <>
-              {data.items.map(renderRow)}
-
               {data.totalPages > 1 && (
                 <View style={styles.pager}>
                   <TouchableOpacity
@@ -194,8 +204,9 @@ export function AssignedTab({ onOpenTicket }: { onOpenTicket: (ticketId: string)
               )}
               <Text style={styles.total}>{t('assigned.total', { count: data.totalCount })}</Text>
             </>
-          )}
-        </ScrollView>
+            )
+          }
+        />
       )}
 
       {/* Fills the tab rather than sitting on the bottom edge, and the search

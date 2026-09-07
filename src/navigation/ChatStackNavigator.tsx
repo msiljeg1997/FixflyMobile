@@ -24,7 +24,17 @@ const Stack = createNativeStackNavigator<ChatStackParamList>();
 // registered in both so either entry point works).
 export function ChatStackNavigator() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{
+      headerShown: false,
+      // Explicit rather than relying on the default: the whole back rule
+      // rests on this gesture, and a stack that quietly loses it would look
+      // like the rule was never implemented.
+      gestureEnabled: true,
+      // A screen that is covered stops re-rendering. The chat sits on top of
+      // a ticket screen that polls and listens, and without this both keep
+      // working while only one is visible.
+      freezeOnBlur: true,
+    }}>
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="TaskDetail" component={TaskDetailScreen} />
       <Stack.Screen name="ManagerTicket" component={ManagerTicketScreen} />

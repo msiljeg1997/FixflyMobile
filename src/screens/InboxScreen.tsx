@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  FlatList,
+  SectionList,
   ScrollView,
   StyleSheet,
   Text,
@@ -228,6 +230,11 @@ export function InboxScreen() {
     );
   };
 
+  const sections = useMemo(
+    () => (data?.buckets ?? []).map((b) => ({ reason: b.reason, count: b.count, data: b.items })),
+    [data]
+  );
+
   const isClear = !!data && data.totalCount === 0;
 
   return (
@@ -328,74 +335,104 @@ export function InboxScreen() {
       ) : tab === 'assigned' ? (
         <AssignedTab onOpenTicket={setOpenTicket} />
       ) : tab === 'todo' ? (
-        <ScrollView
+        // A SectionList rather than a ScrollView of every bucket: the inbox
+        // used to mount every card in every group before it could draw the
+        // first one, and then carry all of them on every scroll frame. The
+        // grouping is what the screen is for, so it stays — it just becomes
+        // the list's own sections instead of nested maps.
+        <SectionList
+          sections={sections}
+          keyExtractor={(item) => item.ticketId}
+          renderItem={({ item }) => renderItem(item)}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.bucketHeaderBlock}>
+              <View style={styles.bucketHeader}>
+                <View style={[styles.bucketDot, { backgroundColor: REASON_COLOR[section.reason] }]} />
+                <Text style={styles.bucketTitle}>{t(`inbox.reason.${REASON_KEY[section.reason]}`)}</Text>
+                <Text style={styles.bucketCount}>{section.count}</Text>
+              </View>
+              <Text style={styles.bucketHint}>{t(`inbox.hint.${REASON_KEY[section.reason]}`)}</Text>
+            </View>
+          )}
+          renderSectionFooter={({ section }) =>
+            section.count > section.data.length ? (
+              <Text style={styles.more}>
+                {t('inbox.andMore', { count: section.count - section.data.length })}
+              </Text>
+            ) : null
+          }
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.green} />
           }
-        >
-          {error && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{t('inbox.loadError')}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
-                <Text style={styles.retryText}>{t('common.retry')}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {isClear && (
-            // Reaching zero is the goal, so it is stated — a blank screen would
-            // read as a failure to load.
-            <View style={styles.clearBox}>
-              <Text style={styles.clearIcon}>✓</Text>
-              <Text style={styles.clearTitle}>{t('inbox.allClear')}</Text>
-              <Text style={styles.clearBody}>{t('inbox.allClearBody')}</Text>
-            </View>
-          )}
-
-          {data?.buckets.map((bucket) => (
-            <View key={bucket.reason} style={styles.bucket}>
-              <View style={styles.bucketHeader}>
-                <View style={[styles.bucketDot, { backgroundColor: REASON_COLOR[bucket.reason] }]} />
-                <Text style={styles.bucketTitle}>{t(`inbox.reason.${REASON_KEY[bucket.reason]}`)}</Text>
-                <Text style={styles.bucketCount}>{bucket.count}</Text>
-              </View>
-              <Text style={styles.bucketHint}>{t(`inbox.hint.${REASON_KEY[bucket.reason]}`)}</Text>
-              {bucket.items.map(renderItem)}
-              {bucket.count > bucket.items.length && (
-                <Text style={styles.more}>
-                  {t('inbox.andMore', { count: bucket.count - bucket.items.length })}
-                </Text>
+          initialNumToRender={8}
+          windowSize={11}
+          removeClippedSubviews
+          stickySectionHeadersEnabled={false}
+          ListHeaderComponent={
+            <>
+              {error && (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>{t('inbox.loadError')}</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
+                    <Text style={styles.retryText}>{t('common.retry')}</Text>
+                  </TouchableOpacity>
+                </View>
               )}
-            </View>
-          ))}
-        </ScrollView>
+
+              {isClear && (
+                // Reaching zero is the goal, so it is stated — a blank screen
+                // would read as a failure to load.
+                <View style={styles.clearBox}>
+                  <Text style={styles.clearIcon}>✓</Text>
+                  <Text style={styles.clearTitle}>{t('inbox.allClear')}</Text>
+                  <Text style={styles.clearBody}>{t('inbox.allClearBody')}</Text>
+                </View>
+              )}
+            </>
+          }
+        />
       ) : (
         <>
-          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 120 }]}>
-            <Text style={styles.bucketHint}>
-              {t('inbox.backlogHint', { days: data?.backlogHorizonDays ?? 7 })}
-            </Text>
-
-            {backlog !== null && backlog.length > 0 && (
-              <TouchableOpacity style={styles.selectAllRow} onPress={toggleAll} activeOpacity={0.7}>
-                <Text style={[styles.checkbox, allSelected && styles.checkboxOn]}>
-                  {allSelected ? '✓' : ''}
+          // Virtualised: the cleanup tab is the longest list in the app by
+          // design — it is everything old enough to be swept — and it was the
+          // one mounting every row at once.
+          <FlatList
+            data={backlog ?? []}
+            keyExtractor={(b: BacklogItem) => b.ticketId}
+            contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
+            initialNumToRender={10}
+            windowSize={11}
+            removeClippedSubviews
+            extraData={selected}
+            ListHeaderComponent={
+              <>
+                <Text style={styles.bucketHint}>
+                  {t('inbox.backlogHint', { days: data?.backlogHorizonDays ?? 7 })}
                 </Text>
-                <Text style={styles.selectAllText}>
-                  {allSelected ? t('inbox.deselectAll') : t('inbox.selectAll', { count: backlog.length })}
-                </Text>
-              </TouchableOpacity>
-            )}
 
-            {backlog === null ? (
-              <ActivityIndicator color={colors.green} style={{ marginTop: spacing.xl }} />
-            ) : backlog.length === 0 ? (
-              <Text style={styles.muted}>{t('inbox.backlogEmpty')}</Text>
-            ) : (
-              backlog.map((b) => {
-                const on = selected.has(b.ticketId);
-                return (
+                {backlog !== null && backlog.length > 0 && (
+                  <TouchableOpacity style={styles.selectAllRow} onPress={toggleAll} activeOpacity={0.7}>
+                    <Text style={[styles.checkbox, allSelected && styles.checkboxOn]}>
+                      {allSelected ? '✓' : ''}
+                    </Text>
+                    <Text style={styles.selectAllText}>
+                      {allSelected ? t('inbox.deselectAll') : t('inbox.selectAll', { count: backlog.length })}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            }
+            ListEmptyComponent={
+              backlog === null ? (
+                <ActivityIndicator color={colors.green} style={{ marginTop: spacing.xl }} />
+              ) : (
+                <Text style={styles.muted}>{t('inbox.backlogEmpty')}</Text>
+              )
+            }
+            renderItem={({ item: b }: { item: BacklogItem }) => {
+              const on = selected.has(b.ticketId);
+              return (
                   <TouchableOpacity
                     key={b.ticketId}
                     style={[styles.card, on && styles.cardSelected, { borderLeftColor: colors.muted }]}
@@ -415,10 +452,9 @@ export function InboxScreen() {
                       {b.categoryName ? ` · ${b.categoryName}` : ''}
                     </Text>
                   </TouchableOpacity>
-                );
-              })
-            )}
-          </ScrollView>
+              );
+            }}
+          />
 
           {selected.size > 0 && (
             <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -541,6 +577,7 @@ const styles = StyleSheet.create({
   clearTitle: { fontSize: 17, fontWeight: '700', color: colors.forest },
   clearBody: { fontSize: 14, color: colors.muted, marginTop: spacing.xs, textAlign: 'center' },
 
+  bucketHeaderBlock: { marginTop: spacing.lg },
   bucket: { marginBottom: spacing.lg },
   bucketHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xs },
   bucketDot: { width: 8, height: 8, borderRadius: 4 },

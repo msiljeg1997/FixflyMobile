@@ -150,6 +150,9 @@ export function ChatListScreen() {
           renderItem={renderItem}
           contentContainerStyle={items.length === 0 ? styles.center : styles.list}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={colors.green} />}
+          initialNumToRender={10}
+          windowSize={11}
+          removeClippedSubviews
           ListEmptyComponent={<Text style={styles.muted}>{t('chat.noThreads')}</Text>}
         />
       )}

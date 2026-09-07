@@ -99,6 +99,16 @@ export function ChatScreen() {
   const { ticketId, title } = route.params;
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<Row>>(null);
+  /**
+   * Whether the reader is standing at the bottom of the thread.
+   *
+   * The list used to jump to the end on every content-size change, and an
+   * image finishing its download is one — so reading something further up got
+   * you yanked to the newest message by a photo you were not looking at.
+   * Following the conversation is only wanted when you are already following
+   * it; anywhere else, staying put is the whole point.
+   */
+  const atBottomRef = useRef(true);
   const { refresh: refreshUnread, setActiveThread } = useUnread();
   const { agent, manager } = useAuth();
   // Which ticket screen this conversation belongs to. A manager cannot open
@@ -521,7 +531,20 @@ export function ChatScreen() {
           keyExtractor={(r, i) => (r.kind === 'msg' ? `m${r.message.id}` : `p${r.period.agentId}-${i}`)}
           renderItem={renderRow}
           contentContainerStyle={messages.length === 0 ? styles.center : styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          onContentSizeChange={() => {
+            if (atBottomRef.current) listRef.current?.scrollToEnd({ animated: false });
+          }}
+          onScroll={(e) => {
+            const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+            // A bubble's worth of slack, so a thumb resting just above the
+            // last message still counts as following along.
+            atBottomRef.current =
+              contentSize.height - (contentOffset.y + layoutMeasurement.height) < 80;
+          }}
+          scrollEventThrottle={32}
+          initialNumToRender={15}
+          maxToRenderPerBatch={10}
+          windowSize={11}
           ListEmptyComponent={<Text style={styles.muted}>{t('chat.empty')}</Text>}
           ListFooterComponent={
             pending.length > 0 ? (
