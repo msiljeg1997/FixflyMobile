@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
 import i18n from '../i18n';
 import * as tasksApi from '../api/tasks';
 import { useAuth } from '../context/AuthContext';
@@ -130,6 +131,33 @@ export function ManagerTicketSheet({
     }
   }, [ticket, translating, showingTranslation, translatedText, t]);
   const [viewerUri, setViewerUri] = useState<string | null>(null);
+
+  // Back closes what is on top, not what is underneath.
+  //
+  // The assign picker is an overlay inside this screen, not a screen of its
+  // own — deliberately, because nesting one iOS modal in another and
+  // dismissing both at once leaves an orphaned black window (see AssignSheet).
+  // But that also means the stack knows nothing about it, so a back gesture
+  // popped the whole ticket and landed on whatever was under it. Here the pop
+  // is cancelled while an overlay is up and the overlay is closed instead, so
+  // one gesture undoes one step whichever kind of step it was.
+  const navigation = useNavigation();
+  const overlayOpen = assignOpen || viewerUri !== null;
+
+  // Assigning closes the picker AND leaves the ticket in the same commit, so
+  // the guard below would still be mounted and would cancel that departure.
+  // This says "the code asked to leave" as opposed to "a gesture did".
+  const leavingRef = useRef(false);
+
+  useEffect(() => {
+    if (!overlayOpen) return;
+    return navigation.addListener('beforeRemove', (e) => {
+      if (leavingRef.current) return;
+      e.preventDefault();
+      setAssignOpen(false);
+      setViewerUri(null);
+    });
+  }, [navigation, overlayOpen]);
 
   const load = useCallback(async () => {
     if (!ticketId) return;
@@ -374,6 +402,7 @@ export function ManagerTicketSheet({
           visible={assignOpen}
           onClose={() => setAssignOpen(false)}
           onAssigned={(agentName) => {
+            leavingRef.current = true;
             setAssignOpen(false);
             onChanged(t('inbox.toastAssigned', { name: agentName }));
             onClose();

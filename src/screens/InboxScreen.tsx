@@ -66,7 +66,10 @@ export function InboxScreen() {
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const [openTicket, setOpenTicket] = useState<string | null>(null);
+  const openTicket = useCallback(
+    (ticketId: string) => navigation.navigate('ManagerTicket', { ticketId }),
+    [navigation]
+  );
   // Short confirmation after an action. Without it the sheet just closes and
   // nothing says the assignment landed.
   const [toast, setToast] = useState<string | null>(null);
@@ -201,7 +204,7 @@ export function InboxScreen() {
         key={item.ticketId}
         style={[styles.card, { borderLeftColor: color }]}
         activeOpacity={0.75}
-        onPress={() => setOpenTicket(item.ticketId)}
+        onPress={() => openTicket(item.ticketId)}
       >
         <View style={styles.cardTop}>
           <Text style={styles.cardLocation} numberOfLines={1}>
@@ -313,7 +316,7 @@ export function InboxScreen() {
                   key={r.ticketId}
                   style={[styles.card, { borderLeftColor: colors.muted }]}
                   activeOpacity={0.75}
-                  onPress={() => setOpenTicket(r.ticketId)}
+                  onPress={() => openTicket(r.ticketId)}
                 >
                   <View style={styles.cardTop}>
                     <Text style={styles.cardLocation} numberOfLines={1}>{r.location}</Text>
@@ -333,7 +336,7 @@ export function InboxScreen() {
         // the first load runs.
         <View style={styles.center}><ActivityIndicator color={colors.green} size="large" /></View>
       ) : tab === 'assigned' ? (
-        <AssignedTab onOpenTicket={setOpenTicket} />
+        <AssignedTab onOpenTicket={openTicket} />
       ) : tab === 'todo' ? (
         // A SectionList rather than a ScrollView of every bucket: the inbox
         // used to mount every card in every group before it could draw the
@@ -438,7 +441,7 @@ export function InboxScreen() {
                     style={[styles.card, on && styles.cardSelected, { borderLeftColor: colors.muted }]}
                     activeOpacity={0.75}
                     onPress={() => toggleSelected(b.ticketId)}
-                    onLongPress={() => setOpenTicket(b.ticketId)}
+                    onLongPress={() => openTicket(b.ticketId)}
                   >
                     <View style={styles.cardTop}>
                       <Text style={styles.cardLocation} numberOfLines={1}>
@@ -480,25 +483,6 @@ export function InboxScreen() {
         </View>
       )}
 
-      <ManagerTicketSheet
-        ticketId={openTicket}
-        visible={openTicket !== null}
-        onClose={() => setOpenTicket(null)}
-        onChanged={(message) => {
-          load(true);
-          if (tab === 'cleanup') loadBacklog();
-          if (message) setToast(message);
-        }}
-        onOpenChat={(ticketId, title) => {
-          // Dismiss first: navigating out from under a presented modal leaves
-          // iOS showing it over a screen that is no longer there.
-          setOpenTicket(null);
-          // Stays in this tab now. It used to jump to the Chat tab, which put
-          // a list of unrelated threads behind a conversation opened from a
-          // ticket — so backing out of it left the ticket you came from.
-          openChatWithTicket(navigation, 'ManagerTicket', ticketId, title);
-        }}
-      />
     </View>
   );
 }
