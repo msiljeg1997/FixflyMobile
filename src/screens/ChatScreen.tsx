@@ -101,6 +101,15 @@ export function ChatScreen() {
   const listRef = useRef<FlatList<Row>>(null);
   const { refresh: refreshUnread, setActiveThread } = useUnread();
   const { agent, manager } = useAuth();
+  // Which ticket screen this conversation belongs to. A manager cannot open
+  // an agent's job card — that screen reads the agent task endpoint.
+  const detailRoute = manager ? 'ManagerTicket' : 'TaskDetail';
+  // This screen is registered in three stacks and the route name differs by
+  // role, so the typed navigator cannot describe the call. Narrowed to the
+  // one method used rather than cast to any.
+  const openTicket = () =>
+    (navigation as unknown as { navigate: (name: string, params: object) => void })
+      .navigate(detailRoute, { ticketId });
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -423,14 +432,24 @@ export function ChatScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Text style={styles.back}>‹</Text>
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
+        {/* The title is the ticket, so tapping it opens the ticket. Back
+            already lands there, but only people who try it find that out —
+            and the code sitting right here is what somebody is squinting at
+            when they want the fault behind the conversation. navigate rather
+            than push: it steps back onto the ticket already under this
+            screen instead of stacking a second copy of it. */}
+        <TouchableOpacity
+          style={{ flex: 1 }}
+          activeOpacity={0.6}
+          onPress={openTicket}
+        >
           <Text style={styles.headerTitle} numberOfLines={1}>
             {title ?? t('chat.title')}
           </Text>
           <Text style={styles.headerSub} numberOfLines={1}>
-            {ticketId}
+            {ticketId} ›
           </Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Two rooms, not a picker above the keyboard: you write into the room

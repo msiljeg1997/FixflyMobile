@@ -3,6 +3,8 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnread } from '../context/UnreadContext';
+import { useAuth } from '../context/AuthContext';
+import { openChatFromRoot } from '../navigation/openChat';
 import { getInitials } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -14,6 +16,7 @@ import { colors, radius, spacing, tint } from '../theme/tokens';
  */
 export function ChatBanner() {
   const { banner, dismissBanner } = useUnread();
+  const { manager } = useAuth();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
 
@@ -25,12 +28,12 @@ export function ChatBanner() {
     dismissBanner();
     // The banner renders as a sibling of Tab.Navigator, so its navigation
     // context is the ROOT stack (Login/Lock/Main) — not the tabs. The target
-    // has to be addressed all the way down: Main → ChatTab → Chat, otherwise
-    // react-navigation can't resolve 'ChatTab' and drops the action.
-    navigation.navigate('Main', {
-      screen: 'ChatTab',
-      params: { screen: 'Chat', params: { ticketId } },
-    });
+    // has to be addressed all the way down, otherwise react-navigation can't
+    // resolve the tab name and drops the action. Which tab that is depends on
+    // the account: a manager's conversations live in his own tab, next to the
+    // tickets he can read. The ticket goes under the thread here too, so a
+    // banner is not the one way in that leaves you stranded.
+    openChatFromRoot((name, params) => navigation.navigate(name, params), !!manager, ticketId);
   };
 
   return (

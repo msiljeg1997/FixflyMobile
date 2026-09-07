@@ -18,6 +18,7 @@ import * as inboxApi from '../api/inbox';
 import { signalRService } from '../realtime/signalr';
 import { AdminInbox, BacklogItem, InboxItem, InboxReason } from '../api/types';
 import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
+import { openChatWithTicket } from '../navigation/openChat';
 import { AssignedTab } from '../components/AssignedTab';
 import { formatDuration } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
@@ -456,7 +457,10 @@ export function InboxScreen() {
           // Dismiss first: navigating out from under a presented modal leaves
           // iOS showing it over a screen that is no longer there.
           setOpenTicket(null);
-          navigation.navigate('ChatTab', { screen: 'Chat', params: { ticketId, title } });
+          // Stays in this tab now. It used to jump to the Chat tab, which put
+          // a list of unrelated threads behind a conversation opened from a
+          // ticket — so backing out of it left the ticket you came from.
+          openChatWithTicket(navigation, 'ManagerTicket', ticketId, title);
         }}
       />
     </View>

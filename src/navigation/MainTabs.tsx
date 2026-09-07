@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TasksStackNavigator } from './TasksStackNavigator';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { ProfileScreen } from '../screens/ProfileScreen';
-import { InboxScreen } from '../screens/InboxScreen';
+import { InboxStackNavigator } from './InboxStackNavigator';
 import { ManagerProfileScreen } from '../screens/ManagerProfileScreen';
 import { ChatBanner } from '../components/ChatBanner';
 import { useUnread } from '../context/UnreadContext';
@@ -60,7 +60,7 @@ export function MainTabs() {
       {isManager ? (
         <Tab.Screen
           name="InboxTab"
-          component={InboxScreen}
+          component={InboxStackNavigator}
           options={{
             tabBarLabel: t('tabs.inbox'),
             tabBarIcon: ({ color }) => <TabIcon glyph="📥" color={color} />,

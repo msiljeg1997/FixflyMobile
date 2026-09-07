@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import * as Notifications from 'expo-notifications';
 import { navigationRef } from '../navigation/navigationRef';
 import { tokenStorage } from '../api/storage';
+import { chatTargetFor } from '../navigation/openChat';
 
 /**
  * Opening the screen a notification is about.
@@ -47,19 +48,25 @@ function readPayload(response: Notifications.NotificationResponse): PushData {
  * InboxTab instead. Sending an admin to a tab that is not mounted would look
  * like the notification simply did nothing.
  */
-async function route(data: PushData): Promise<{ tab: string; screen: string; ticketId: string } | null> {
+async function route(data: PushData): Promise<{ tab: string; screen: string; under?: string; ticketId: string } | null> {
   const ticketId = data.taskId || data.ticketId;
   if (!ticketId) return null;
 
-  const isChat = data.type === 'chat' || (!data.type && !data.taskId);
-  if (isChat) return { tab: 'ChatTab', screen: 'Chat', ticketId };
-
   const isManager = await tokenStorage.isManager();
-  // The inbox is a single screen with no per-ticket route of its own, so a
-  // manager lands on the list rather than on the ticket. Better than a dead
-  // tap, and honest about what the screen can address today.
+
+  const isChat = data.type === 'chat' || (!data.type && !data.taskId);
+  // A conversation opened from a notification follows the same rule as one
+  // opened by hand: the ticket goes underneath it, so backing out lands on
+  // the fault rather than on a thread list nobody asked for. A manager stays
+  // in his own tab, where the ticket he can actually read lives.
+  if (isChat) {
+    const { tab, under } = chatTargetFor(isManager);
+    return { tab, screen: 'Chat', under, ticketId };
+  }
+  // The inbox has a per-ticket route now, so a notification about a ticket
+  // opens that ticket instead of dropping the manager on the list.
   return isManager
-    ? { tab: 'InboxTab', screen: '', ticketId }
+    ? { tab: 'InboxTab', screen: 'ManagerTicket', ticketId }
     : { tab: 'TasksTab', screen: 'TaskDetail', ticketId };
 }
 
@@ -79,12 +86,19 @@ async function open(data: PushData): Promise<void> {
   // Addressed all the way down from the root stack. 'ChatTab' means nothing at
   // the root — the root knows only Login/Lock/Main — so a partial target is
   // dropped silently rather than failing loudly. Same reasoning as ChatBanner.
-  navigationRef.navigate('Main', {
-    screen: target.tab,
-    params: target.screen
-      ? { screen: target.screen, params: { ticketId: target.ticketId } }
-      : undefined,
-  } as never);
+  const go = (screen: string) =>
+    navigationRef.navigate('Main', {
+      screen: target.tab,
+      params: screen ? { screen, params: { ticketId: target.ticketId } } : undefined,
+    } as never);
+
+  // The ticket first, then the conversation on top of it, so a thread opened
+  // from a notification backs out onto its fault like every other route into
+  // it. Two dispatches rather than one built state: the tab's stack is a
+  // child navigator, and addressing it from the root is the only handle we
+  // have here.
+  if (target.under) go(target.under);
+  go(target.screen);
 }
 
 /**
