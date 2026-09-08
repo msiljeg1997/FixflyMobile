@@ -118,13 +118,33 @@ export function ChatScreen() {
   // This screen is registered in three stacks and the route name differs by
   // role, so the typed navigator cannot describe the call. Narrowed to the
   // one method used rather than cast to any.
+  /**
+   * Is this conversation's ticket the screen directly underneath?
+   *
+   * It is whenever the conversation was opened FROM the ticket, and then the
+   * ticket is not somewhere to go forward to — it is where back already
+   * leads. Pushing it again would stack a second copy of the screen you came
+   * from, and leave you two steps from where one would do.
+   */
+  const ticketIsBelow = (): boolean => {
+    const state = (navigation as unknown as {
+      getState: () => { index: number; routes: { name: string; params?: { ticketId?: string } }[] };
+    }).getState();
+    const below = state.routes[state.index - 1];
+    return below?.name === detailRoute && below.params?.ticketId === ticketId;
+  };
+
   // Pushed, not navigated to: the ticket is a step forward from the
   // conversation, so it comes in from the right like every other step forward.
   // navigate() would find an earlier copy of it further down the stack and
   // animate backwards to it, which reads as undoing something.
-  const openTicket = () =>
+  const pushTicket = () =>
     (navigation as unknown as { push: (name: string, params: object) => void })
       .push(detailRoute, { ticketId });
+
+  // The header always means "show me this ticket", so it goes back to the one
+  // you came from when there is one, and opens it when there is not.
+  const openTicket = () => (ticketIsBelow() ? navigation.goBack() : pushTicket());
 
   /**
    * Drag left to see the fault this conversation is about.
@@ -140,8 +160,13 @@ export function ChatScreen() {
   // Held in a ref, and refreshed every render: PanResponder.create runs once,
   // so a handler closing over the first render would keep opening the first
   // ticket this screen ever showed.
+  // The gesture is the forward half only. Dragging left where the ticket is
+  // already behind you would be asking to go forward to the thing you just
+  // came from; back is the move there, and it is one drag the other way.
   const openTicketRef = useRef(() => {});
-  openTicketRef.current = openTicket;
+  openTicketRef.current = () => {
+    if (!ticketIsBelow()) pushTicket();
+  };
 
   const swipe = useRef(
     PanResponder.create({
