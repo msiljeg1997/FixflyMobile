@@ -34,6 +34,7 @@ import { shrinkForUpload } from '../utils/image';
 import { categoryLabel, formatDateTime, getInitials } from '../utils/format';
 import { ImageViewerModal } from '../components/ImageViewerModal';
 import { colors, radius, spacing, tint } from '../theme/tokens';
+import { openChat } from '../navigation/openChat';
 
 const MAX_PHOTOS = 5;
 
@@ -543,7 +544,7 @@ export function TaskDetailScreen() {
           style={styles.chatButton}
           activeOpacity={0.7}
           onPress={() =>
-            navigation.navigate('Chat', { ticketId: task.ticketId, title: task.locationName || task.location })
+            openChat(navigation, task.ticketId, task.locationName || task.location)
           }
         >
           <Text style={styles.chatButtonIcon}>💬</Text>

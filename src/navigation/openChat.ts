@@ -30,8 +30,27 @@ export function openChat(
   ticketId: string,
   title?: string
 ): void {
-  (navigation as unknown as { navigate: (name: string, params: object) => void })
-    .navigate('Chat', { ticketId, title });
+  const nav = navigation as unknown as {
+    push: (name: string, params: object) => void;
+    goBack: () => void;
+    getState: () => { index: number; routes: { name: string; params?: { ticketId?: string } }[] };
+  };
+
+  // The conversation is already the screen underneath — this is the mirror of
+  // the ticket's own rule. Opening it again would stack a second copy of the
+  // screen you came from and leave you two steps from where one would do.
+  const state = nav.getState();
+  const below = state.routes[state.index - 1];
+  if (below?.name === 'Chat' && below.params?.ticketId === ticketId) {
+    nav.goBack();
+    return;
+  }
+
+  // push, never navigate: navigate matches an existing Chat by NAME and
+  // rewrites its params, so opening a second ticket's thread would pop back
+  // onto the first one's screen and relabel it — throwing away everything
+  // pushed above it, and animating backwards while doing it.
+  nav.push('Chat', { ticketId, title });
 }
 
 /** The same, addressed from the root stack — the banner and push both sit outside the tabs. */
