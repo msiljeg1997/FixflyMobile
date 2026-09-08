@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
-import { openChatWithTicket } from '../navigation/openChat';
+import { openChat } from '../navigation/openChat';
 import { colors } from '../theme/tokens';
 
 type ParamList = { ManagerTicket: { ticketId: string } };
@@ -37,7 +37,7 @@ export function ManagerTicketScreen() {
         // The inbox reloads whenever it regains focus, so a change made here
         // is already picked up on the way back — nothing to forward.
         onChanged={() => {}}
-        onOpenChat={(id, title) => openChatWithTicket(navigation, 'ManagerTicket', id, title)}
+        onOpenChat={(id, title) => openChat(navigation, id, title)}
       />
     </View>
   );

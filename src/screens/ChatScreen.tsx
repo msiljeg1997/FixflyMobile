@@ -4,6 +4,7 @@ import {
   FlatList,
   Image,
   KeyboardAvoidingView,
+  PanResponder,
   Platform,
   StyleSheet,
   Text,
@@ -117,9 +118,42 @@ export function ChatScreen() {
   // This screen is registered in three stacks and the route name differs by
   // role, so the typed navigator cannot describe the call. Narrowed to the
   // one method used rather than cast to any.
+  // Pushed, not navigated to: the ticket is a step forward from the
+  // conversation, so it comes in from the right like every other step forward.
+  // navigate() would find an earlier copy of it further down the stack and
+  // animate backwards to it, which reads as undoing something.
   const openTicket = () =>
-    (navigation as unknown as { navigate: (name: string, params: object) => void })
-      .navigate(detailRoute, { ticketId });
+    (navigation as unknown as { push: (name: string, params: object) => void })
+      .push(detailRoute, { ticketId });
+
+  /**
+   * Drag left to see the fault this conversation is about.
+   *
+   * The pair reads as two pages side by side — the thread, and the ticket to
+   * the right of it — so dragging left goes forward and dragging right is
+   * back, everywhere, without back ever meaning two different things.
+   *
+   * Only leftward drags are claimed. A rightward one is left alone so the
+   * stack's own back gesture still gets it, and the horizontal movement has
+   * to clearly beat the vertical or the message list would stop scrolling.
+   */
+  // Held in a ref, and refreshed every render: PanResponder.create runs once,
+  // so a handler closing over the first render would keep opening the first
+  // ticket this screen ever showed.
+  const openTicketRef = useRef(() => {});
+  openTicketRef.current = openTicket;
+
+  const swipe = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) =>
+        g.dx < -18 && Math.abs(g.dx) > Math.abs(g.dy) * 2,
+      onPanResponderRelease: (_e, g) => {
+        // Either a decisive flick or a long enough drag, so a hesitant one
+        // does not open a screen nobody asked for.
+        if (g.dx < -60 || g.vx < -0.5) openTicketRef.current();
+      },
+    })
+  ).current;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -434,6 +468,7 @@ export function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
+      {...swipe.panHandlers}
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={0}

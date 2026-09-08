@@ -20,7 +20,6 @@ import * as inboxApi from '../api/inbox';
 import { signalRService } from '../realtime/signalr';
 import { AdminInbox, BacklogItem, InboxItem, InboxReason } from '../api/types';
 import { ManagerTicketSheet } from '../components/ManagerTicketSheet';
-import { openChatWithTicket } from '../navigation/openChat';
 import { AssignedTab } from '../components/AssignedTab';
 import { formatDuration } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';

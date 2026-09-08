@@ -8,9 +8,7 @@ import * as chatApi from '../api/chat';
 import { signalRService } from '../realtime/signalr';
 import { ChatThread } from '../api/types';
 import type { ChatStackParamList } from '../navigation/ChatStackNavigator';
-import { openChatWithTicket } from '../navigation/openChat';
-import { useAuth } from '../context/AuthContext';
-import { MobilePrincipal } from '../api/types';
+import { openChat } from '../navigation/openChat';
 import { formatChatTimestamp } from '../utils/format';
 import { colors, radius, spacing, tint } from '../theme/tokens';
 
@@ -22,11 +20,6 @@ import { colors, radius, spacing, tint } from '../theme/tokens';
 export function ChatListScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<ChatStackParamList>>();
-  const { principal } = useAuth();
-  // Which ticket screen belongs under a thread. An agent's job card carries
-  // accept and resolve and reads the agent task endpoint; a manager cannot
-  // call that endpoint and would get an empty screen.
-  const detailRoute = principal === MobilePrincipal.Manager ? 'ManagerTicket' : 'TaskDetail';
   const insets = useSafeAreaInsets();
 
   const [items, setItems] = useState<ChatThread[]>([]);
@@ -97,12 +90,7 @@ export function ChatListScreen() {
         activeOpacity={0.7}
         onLongPress={() => confirmRemove(item)}
         onPress={() =>
-          openChatWithTicket(
-            navigation,
-            detailRoute,
-            item.ticketId,
-            item.locationName || item.location
-          )
+          openChat(navigation, item.ticketId, item.locationName || item.location)
         }
       >
         <View style={styles.icon}>
