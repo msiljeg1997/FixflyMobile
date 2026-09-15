@@ -539,6 +539,14 @@ export function TaskDetailScreen() {
           {task.roomNumber ? ` · ${t('tasks.room')} ${task.roomNumber}` : ''}
         </Text>
         {task.category && <Text style={styles.category}>{categoryLabel(task.category)}</Text>}
+        {/* When it was reported — how long a fault has been waiting is the
+            first thing somebody arriving at it wants to know, and the manager's
+            ticket screen has always shown it. Same label, same format. */}
+        {!!task.createdAt && (
+          <Text style={styles.reportedAt}>
+            {t('inbox.time.created')} {formatDateTime(task.createdAt)}
+          </Text>
+        )}
 
         <TouchableOpacity
           style={styles.chatButton}
@@ -1076,6 +1084,7 @@ const styles = StyleSheet.create({
   ticketId: { fontSize: 13, color: colors.muted, marginTop: spacing.sm, marginBottom: 2 },
   location: { fontSize: 22, fontWeight: '700', color: colors.forest },
   category: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  reportedAt: { fontSize: 13, color: colors.muted, marginTop: 2, fontVariant: ['tabular-nums'] },
 
   chatButton: {
     flexDirection: 'row',

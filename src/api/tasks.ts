@@ -133,14 +133,38 @@ export interface TicketTranslation {
 }
 
 /** Whether a translation key is configured at all. */
-export async function translationAvailable(): Promise<boolean> {
-  try {
-    const { data } = await apiClient.get<{ available: boolean }>('/api/translate/availability');
-    return data.available;
-  } catch {
-    // Hiding a button is recoverable; offering one that always errors is not.
-    return false;
+/**
+ * Asked once per session, not once per screen.
+ *
+ * Whether a translation key is configured is a fact about the server, and it
+ * does not change while somebody is using the app. Every ticket screen asked
+ * again as it mounted — and with the conversation and its ticket a swipe apart,
+ * reading one fault could mount its ticket screen over and over, spending a
+ * request each time. That is what ran the per-minute limit dry in normal use.
+ *
+ * Nothing live depends on this. Ticket and message updates arrive over the
+ * socket and through their own refreshes; this only decides whether one
+ * button is drawn, so holding the answer cannot make a screen stale.
+ *
+ * One in-flight request is shared, so two screens mounting together ask once.
+ * A failure is NOT remembered: on a phone a dropped connection is ordinary, and
+ * caching "unavailable" would hide the button for the rest of the session over
+ * one bad moment. The next screen simply asks again.
+ */
+let availability: Promise<boolean> | null = null;
+
+export function translationAvailable(): Promise<boolean> {
+  if (!availability) {
+    availability = apiClient
+      .get<{ available: boolean }>('/api/translate/availability')
+      .then(({ data }) => data.available)
+      .catch(() => {
+        availability = null;
+        // Hiding a button is recoverable; offering one that always errors is not.
+        return false;
+      });
   }
+  return availability;
 }
 
 /** The fault description in `lang` ("HR" | "EN" | "DE"). Cached server-side. */
