@@ -20,7 +20,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
-import { isNetworkError } from '../api/client';
+import { isNetworkError, isNotAvailable } from '../api/client';
 import { outbox } from '../offline/outbox';
 import { taskCache } from '../offline/taskCache';
 import { assignmentNote } from '../utils/systemLine';
@@ -88,7 +88,13 @@ export function TaskDetailScreen() {
 
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  /**
+   * Why the task is not on screen. 'unavailable' is the server saying it is
+   * not this account's to open (someone else's job now, or another account's
+   * ticket — a push can arrive for either), which no retry will change;
+   * 'failed' is everything else.
+   */
+  const [error, setError] = useState<'unavailable' | 'failed' | null>(null);
   /** When this was captured, if it is showing cached data rather than the server's. */
   const [staleAt, setStaleAt] = useState<number | null>(null);
   const [acting, setActing] = useState(false);
@@ -173,7 +179,7 @@ export function TaskDetailScreen() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
       const fresh = await tasksApi.getTask(ticketId);
       setTask(fresh);
@@ -188,7 +194,7 @@ export function TaskDetailScreen() {
         setTask(cached.data);
         setStaleAt(cached.at);
       } else {
-        setError(true);
+        setError(isNotAvailable(e) ? 'unavailable' : 'failed');
       }
     } finally {
       setLoading(false);
@@ -222,7 +228,7 @@ export function TaskDetailScreen() {
       ]);
       setTask(fresh);
       setHistory(freshHistory);
-      setError(false);
+      setError(null);
       setStaleAt(null);
       taskCache.putDetail(fresh);
       taskCache.putHistory(ticketId, freshHistory);
@@ -265,6 +271,19 @@ export function TaskDetailScreen() {
   }, [focused, ticketId, reload]);
 
   useLiveRefresh(reload, focused);
+
+  // Out of this screen when there is nothing to show on it. A notification
+  // opens it with the list underneath, but a stack can still hold it as its
+  // only screen — then this tab's own list is where to land: Tasks here, the
+  // thread list when it was opened from the Chat tab (it is registered in both).
+  const leave = useCallback(() => {
+    const state = navigation.getState();
+    if (state.index > 0) {
+      navigation.goBack();
+      return;
+    }
+    navigation.reset({ index: 0, routes: [{ name: state.routeNames[0] as keyof TasksStackParamList }] });
+  }, [navigation]);
 
   const callContact = () => {
     if (task?.locationContactPhone) Linking.openURL(`tel:${task.locationContactPhone}`);
@@ -420,13 +439,30 @@ export function TaskDetailScreen() {
     );
   }
 
+  // Under the same top inset and Back row as the task itself. This branch used
+  // to return a bare centred view, which put its text under the status bar and
+  // left no way back but a swipe — and borrowed primaryButton, whose flex: 1 is
+  // for the footer's row and stretched Retry down to the tab bar.
   if (error || !task) {
+    const unavailable = error === 'unavailable';
     return (
-      <View style={styles.center}>
-        <Text style={styles.muted}>{t('tasks.loadError')}</Text>
-        <TouchableOpacity style={styles.primaryButton} onPress={load}>
-          <Text style={styles.primaryButtonText}>{t('common.retry')}</Text>
-        </TouchableOpacity>
+      <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
+        <View style={styles.errorHeader}>
+          <TouchableOpacity onPress={leave} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Text style={styles.back}>‹ {t('common.back')}</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.errorTitle}>
+            {unavailable ? t('taskDetail.unavailableTitle') : t('taskDetail.loadError')}
+          </Text>
+          {unavailable && <Text style={styles.errorBody}>{t('taskDetail.unavailableBody')}</Text>}
+          {/* Retry cannot turn a "not yours" into a yes, so that case offers
+              the way out instead. */}
+          <TouchableOpacity style={styles.retryButton} onPress={unavailable ? leave : load}>
+            <Text style={styles.retryText}>{unavailable ? t('taskDetail.backToList') : t('common.retry')}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -1066,6 +1102,21 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.lg, gap: spacing.md },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.lg, backgroundColor: colors.surface },
   muted: { color: colors.muted, fontSize: 14 },
+
+  errorHeader: { paddingHorizontal: spacing.lg },
+  errorTitle: { color: colors.forest, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  errorBody: { color: colors.muted, fontSize: 14, lineHeight: 20, textAlign: 'center', marginTop: spacing.sm },
+  // Its own style on purpose, the same as TasksScreen's: primaryButton carries
+  // flex: 1 for the footer's action row, and in this column that stretches the
+  // button from the message down to the tab bar.
+  retryButton: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.sm,
+    backgroundColor: colors.green,
+  },
+  retryText: { color: colors.white, fontWeight: '700' },
 
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   back: { color: colors.forest, fontSize: 16, fontWeight: '600' },

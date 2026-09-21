@@ -128,15 +128,59 @@ export async function registerForPush(): Promise<void> {
 }
 
 /**
- * Forgets the local token on sign-out so the next person to use this phone
- * does not inherit the previous one's registration in this process.
+ * Takes this phone off the signed-in account's push list, on sign-out.
  *
- * The server row is deliberately left alone: the same device may sign back in,
- * and FCM prunes tokens it reports as gone. Removing it here would need an
- * authenticated call at the exact moment the session is being torn down.
+ * The server row used to be left in place on purpose, and that is how one
+ * phone ended up filed under three accounts: every account ever used on it
+ * kept pushing to it, and tapping one of those pushes opened a ticket the
+ * account now signed in could not see. The server now also moves a token to
+ * whoever registers it next — but that only happens when somebody signs in
+ * again. A venue manager never registers at all, and a shared phone left
+ * signed out would keep buzzing for the last person.
+ *
+ * Must run while the session still exists, because the endpoint is
+ * authenticated, so AuthContext calls it before the tokens are cleared.
+ * Best-effort and bounded like the revoke beside it: a sign-out must never
+ * wait on the network, and the next sign-in on this phone claims the token
+ * anyway.
+ */
+export async function unregisterPush(): Promise<void> {
+  try {
+    // No stored session means nothing can authenticate the delete. Trying
+    // anyway would 401, fail the refresh, and send the interceptor back into
+    // sign-out — the loop the revoke call avoids the same way.
+    if (!(await tokenStorage.getAccessToken())) return;
+
+    const endpoint = await tokenEndpoint();
+    if (!endpoint) return;
+
+    let token = registeredToken;
+    if (!token && Device.isDevice) {
+      // Without permission nothing was ever registered, and asking the system
+      // for a token is not worth doing at the moment somebody leaves.
+      const permission = await Notifications.getPermissionsAsync();
+      if (permission.granted) token = String((await Notifications.getDevicePushTokenAsync()).data);
+    }
+    if (!token) return;
+
+    await Promise.race([
+      apiClient.delete(endpoint, { data: { token } }),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+  } catch {
+    // Offline or already gone. Sign-out carries on regardless.
+  }
+}
+
+/**
+ * Forgets the local token on sign-out so the next person to use this phone
+ * does not inherit the previous one's registration in this process. The
+ * server row goes separately, in unregisterPush, while the session still
+ * exists to authenticate that call.
  */
 export function forgetPushRegistration(): void {
   registeredToken = null;
+  registeredLanguage = null;
 }
 
 /** True once this device has a token filed under the signed-in account. */

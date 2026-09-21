@@ -49,6 +49,10 @@
   },
   "taskDetail": {
     "description": "Beschreibung",
+    "loadError": "Diese Aufgabe konnte nicht geladen werden.",
+    "unavailableTitle": "Diese Aufgabe ist für Sie nicht verfügbar",
+    "unavailableBody": "Sie wurde möglicherweise jemand anderem zugewiesen, oder sie gehört zu einem anderen Konto als dem, mit dem Sie angemeldet sind.",
+    "backToList": "Zurück zur Liste",
     "assignmentNote": "Notiz des Disponenten",
     "reportedAt": "Gemeldet",
     "assignedAt": "Zugewiesen",

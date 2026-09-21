@@ -49,6 +49,10 @@
   },
   "taskDetail": {
     "description": "Opis",
+    "loadError": "Zadatak se nije mogao učitati.",
+    "unavailableTitle": "Ovaj zadatak vam nije dostupan",
+    "unavailableBody": "Možda je dodijeljen nekom drugom ili pripada drugom računu, a ne onom s kojim ste prijavljeni.",
+    "backToList": "Natrag na popis",
     "assignmentNote": "Poruka dispečera",
     "reportedAt": "Prijavljeno",
     "assignedAt": "Dodijeljeno",

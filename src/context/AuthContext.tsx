@@ -4,7 +4,7 @@ import * as authApi from '../api/auth';
 import { isNetworkError, registerSessionExpiredHandler } from '../api/client';
 import { signalRService } from '../realtime/signalr';
 import { taskCache } from '../offline/taskCache';
-import { forgetPushRegistration, registerForPush } from '../push/push';
+import { forgetPushRegistration, registerForPush, unregisterPush } from '../push/push';
 import { forgetPendingPushNavigation } from '../push/pushNavigation';
 import { appLock } from '../security/appLock';
 import { MobilePrincipal } from '../api/types';
@@ -81,6 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   statusRef.current = status;
 
   const doLogout = useCallback(async () => {
+    // First, while the session can still authenticate it: this phone stops
+    // receiving the account's pushes the moment the account leaves it.
+    await unregisterPush();
     await authApi.logout();
     await signalRService.disconnect();
     forgetPushRegistration();

@@ -33,6 +33,17 @@ export function isNetworkError(error: unknown): boolean {
   return axios.isAxiosError(error) && !error.response;
 }
 
+/**
+ * True when the server answered that this is not yours to open: 403 (a task
+ * handed to someone else) or 404 (another account's ticket, or gone). Retrying
+ * cannot change either answer, so a screen should offer a way out, not Retry.
+ */
+export function isNotAvailable(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  return status === 403 || status === 404;
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = await tokenStorage.getRefreshToken();
   if (!refreshToken) return null;

@@ -49,6 +49,10 @@
   },
   "taskDetail": {
     "description": "Description",
+    "loadError": "Couldn't load this task.",
+    "unavailableTitle": "This task isn't available to you",
+    "unavailableBody": "It may have been handed to someone else, or it belongs to a different account than the one you're signed in with.",
+    "backToList": "Back to the list",
     "assignmentNote": "Dispatcher note",
     "reportedAt": "Reported",
     "assignedAt": "Assigned",

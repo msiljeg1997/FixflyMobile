@@ -85,10 +85,14 @@ async function open(data: PushData): Promise<void> {
   // Addressed all the way down from the root stack. 'ChatTab' means nothing at
   // the root — the root knows only Login/Lock/Main — so a partial target is
   // dropped silently rather than failing loudly. Same reasoning as ChatBanner.
+  //
+  // initial: false keeps the tab's own list underneath. Without it a tab that
+  // was not mounted yet — a cold start from the notification — got the target
+  // as its ONLY screen, so Back had nowhere to go.
   navigationRef.navigate('Main', {
     screen: target.tab,
     params: target.screen
-      ? { screen: target.screen, params: { ticketId: target.ticketId } }
+      ? { screen: target.screen, params: { ticketId: target.ticketId }, initial: false }
       : undefined,
   } as never);
 }
